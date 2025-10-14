@@ -1,5 +1,6 @@
 import { CartProvider } from 'components/cart/cart-context';
-import { Navbar } from 'components/layout/navbar';
+import { FacebookHeader } from 'components/facebook-style/facebook-header';
+import { FacebookFooter } from 'components/facebook-style/facebook-footer';
 import { WelcomeToast } from 'components/welcome-toast';
 import { GeistSans } from 'geist/font/sans';
 import { getCart } from 'lib/shopify';
@@ -7,14 +8,13 @@ import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import './globals.css';
 import { baseUrl } from 'lib/utils';
+import type { Metadata } from 'next';
 
-const { SITE_NAME } = process.env;
-
-export const metadata = {
+export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: SITE_NAME!,
-    template: `%s | ${SITE_NAME}`
+    default: 'org123.xyz',
+    template: '%s | org123.xyz'
   },
   robots: {
     follow: true,
@@ -32,14 +32,15 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={GeistSans.variable}>
-      <body className="bg-neutral-50 text-black selection:bg-teal-300 dark:bg-neutral-900 dark:text-white dark:selection:bg-pink-500 dark:selection:text-white">
+      <body className="bg-[#e9eaed] text-gray-900">
         <CartProvider cartPromise={cart}>
-          <Navbar />
-          <main>
+          <FacebookHeader />
+          <main className="min-h-screen">
             {children}
             <Toaster closeButton />
             <WelcomeToast />
           </main>
+          <FacebookFooter />
         </CartProvider>
       </body>
     </html>
