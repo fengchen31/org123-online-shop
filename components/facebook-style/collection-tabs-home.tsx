@@ -1,6 +1,7 @@
 'use client';
 
 import clsx from 'clsx';
+import Image from 'next/image';
 import type { Collection } from 'lib/shopify/types';
 import { Suspense, useState } from 'react';
 
@@ -58,7 +59,16 @@ export function CollectionTabsHome({ collections, collectionContents }: Collecti
               {/* Avatar - positioned absolutely, extending up into gray area */}
               <div className="relative -mt-16 mb-4 w-full">
                 <div className="relative z-20 overflow-hidden rounded shadow-lg">
-                  <div className="flex aspect-square w-full items-center justify-center bg-gradient-to-br from-[#3b5998] to-[#8b9dc3]">
+                  <div className="relative flex aspect-square w-full items-center justify-center bg-white">
+                    <div className="relative h-[70%] w-[70%]">
+                      <Image
+                        src="/images/avatars/org123_logo.svg"
+                        alt="org123 logo"
+                        fill
+                        className="object-contain"
+                        priority
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
