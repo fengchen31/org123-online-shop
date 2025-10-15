@@ -14,16 +14,16 @@ function SubmitButton({ type }: { type: 'plus' | 'minus' }) {
         type === 'plus' ? 'Increase item quantity' : 'Reduce item quantity'
       }
       className={clsx(
-        'ease flex h-full min-w-[36px] max-w-[36px] flex-none items-center justify-center rounded-full p-2 transition-all duration-200 hover:border-neutral-800 hover:opacity-80',
+        'ease flex h-full min-w-[32px] max-w-[32px] flex-none items-center justify-center border-r border-gray-300 bg-gray-50 p-2 transition-all duration-200 hover:bg-gray-100 last:border-r-0',
         {
           'ml-auto': type === 'minus'
         }
       )}
     >
       {type === 'plus' ? (
-        <PlusIcon className="h-4 w-4 dark:text-neutral-500" />
+        <PlusIcon className="h-3.5 w-3.5 text-gray-700" />
       ) : (
-        <MinusIcon className="h-4 w-4 dark:text-neutral-500" />
+        <MinusIcon className="h-3.5 w-3.5 text-gray-700" />
       )}
     </button>
   );
