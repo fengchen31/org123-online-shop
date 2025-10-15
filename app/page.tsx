@@ -1,5 +1,5 @@
 import { CollectionTabsHome } from 'components/facebook-style/collection-tabs-home';
-import { CollectionProductsGrid } from 'components/facebook-style/collection-products-grid';
+import { CollectionProductsWrapper } from 'components/facebook-style/collection-products-wrapper';
 import { getCollections } from 'lib/shopify';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
@@ -36,7 +36,7 @@ export default async function HomePage() {
           </div>
         }
       >
-        <CollectionProductsGrid collectionHandle={collection.handle} />
+        <CollectionProductsWrapper collectionHandle={collection.handle} />
       </Suspense>
     );
   });

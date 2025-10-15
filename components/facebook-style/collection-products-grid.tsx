@@ -1,13 +1,18 @@
+'use client';
+
+import { useState } from 'react';
 import { getCollectionProducts } from 'lib/shopify';
-import Link from 'next/link';
-import Image from 'next/image';
+import { ProductCard } from './product-card';
+import { ProductDetailInGrid } from './product-detail-in-grid';
+import type { Product } from 'lib/shopify/types';
 
 interface CollectionProductsGridProps {
-  collectionHandle: string;
+  products: Product[];
 }
 
-export async function CollectionProductsGrid({ collectionHandle }: CollectionProductsGridProps) {
-  const products = await getCollectionProducts({ collection: collectionHandle });
+export function CollectionProductsGrid({ products }: CollectionProductsGridProps) {
+  const [expandedProduct, setExpandedProduct] = useState<Product | null>(null);
+  const [startRect, setStartRect] = useState<DOMRect | null>(null);
 
   if (!products?.length) {
     return (
@@ -20,52 +25,34 @@ export async function CollectionProductsGrid({ collectionHandle }: CollectionPro
     );
   }
 
+  const handleExpand = (product: Product, rect: DOMRect) => {
+    setStartRect(rect);
+    setExpandedProduct(product);
+  };
+
+  const handleClose = () => {
+    setExpandedProduct(null);
+    setStartRect(null);
+  };
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-      {products.map((product) => (
-        <Link
-          key={product.id}
-          href={`/product/${product.handle}`}
-          className="group overflow-hidden rounded-lg border border-gray-300 bg-white shadow-sm transition-shadow hover:shadow-md"
-        >
-          {/* Product Image */}
-          <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
-            {product.featuredImage ? (
-              <Image
-                src={product.featuredImage.url}
-                alt={product.title}
-                fill
-                sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center text-gray-400">
-                <span>No Image</span>
-              </div>
-            )}
-          </div>
-
-          {/* Product Info */}
-          <div className="p-4">
-            <h3 className="line-clamp-2 text-sm font-semibold text-gray-900 group-hover:text-[#3b5998]">
-              {product.title}
-            </h3>
-
-            {product.description && (
-              <p className="mt-1 line-clamp-2 text-xs text-gray-600">{product.description}</p>
-            )}
-
-            {/* Price */}
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-base font-bold text-[#3b5998]">
-                {product.priceRange.maxVariantPrice.currencyCode}{' '}
-                {product.priceRange.maxVariantPrice.amount}
-              </span>
-              <span className="text-xs text-gray-500 group-hover:underline">View →</span>
-            </div>
-          </div>
-        </Link>
-      ))}
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {expandedProduct ? (
+        <ProductDetailInGrid
+          product={expandedProduct}
+          startRect={startRect}
+          onClose={handleClose}
+        />
+      ) : (
+        products.map((product) => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            onExpand={(rect) => handleExpand(product, rect)}
+            isHidden={false}
+          />
+        ))
+      )}
     </div>
   );
 }
