@@ -137,10 +137,15 @@ export function CollectionTabsHome({ collections, collectionContents }: Collecti
                     {[1, 2, 3, 4, 5, 6].map((i) => (
                       <div
                         key={i}
-                        className="aspect-square border border-gray-300 bg-gray-100"
+                        className="relative aspect-square overflow-hidden border border-gray-300 bg-white p-2"
                       >
-                        <div className="flex h-full items-center justify-center text-xs text-gray-400">
-                          👤
+                        <div className="relative h-full w-full">
+                          <Image
+                            src="/images/avatars/org123xyz_head.svg"
+                            alt={`Fan ${i}`}
+                            fill
+                            className="object-contain"
+                          />
                         </div>
                       </div>
                     ))}
