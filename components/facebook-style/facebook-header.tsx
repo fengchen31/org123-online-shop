@@ -39,18 +39,8 @@ export async function FacebookHeader() {
             ) : null}
           </div>
 
-          {/* Right: Search and Cart */}
+          {/* Right: Cart */}
           <div className="flex items-center gap-4">
-            {/* Search Box with Label Above */}
-            <div className="hidden md:block">
-              <label className="mb-1 block text-right text-xs text-[#d9dfea]">Search</label>
-              <input
-                type="text"
-                placeholder=""
-                className="w-44 border border-white bg-white px-2.5 py-1.5 text-sm text-gray-900 outline-none focus:border-gray-300"
-              />
-            </div>
-
             {/* Cart */}
             <div className="text-white">
               <CartModal />
