@@ -8,7 +8,7 @@ export async function FacebookHeader() {
   const menu = await getMenu('next-js-frontend-header-menu');
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#2c4373] bg-[#3b5998] shadow-md">
+    <header className="border-b border-[#2c4373] bg-[#3b5998] shadow-md">
       <div className="mx-auto max-w-7xl">
         <div className="flex items-end justify-between px-4 pb-2 pt-3">
           {/* Left: Logo and Site Name */}
