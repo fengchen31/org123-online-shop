@@ -8,13 +8,23 @@ import { Suspense, useState } from 'react';
 interface CollectionTabsHomeProps {
   collections: Collection[];
   collectionContents: Record<string, React.ReactNode>;
+  onTabChange?: (handle: string) => void;
 }
 
-export function CollectionTabsHome({ collections, collectionContents }: CollectionTabsHomeProps) {
+export function CollectionTabsHome({
+  collections,
+  collectionContents,
+  onTabChange
+}: CollectionTabsHomeProps) {
   // 使用第一個 collection 作為預設
   const [activeTab, setActiveTab] = useState<string>(
     collections.length > 0 ? collections[0]!.handle : ''
   );
+
+  const handleTabChange = (handle: string) => {
+    setActiveTab(handle);
+    onTabChange?.(handle);
+  };
 
   return (
     <div className="min-h-screen bg-[#e9eaed]">
@@ -33,7 +43,7 @@ export function CollectionTabsHome({ collections, collectionContents }: Collecti
               {collections.map((collection) => (
                 <button
                   key={collection.handle}
-                  onClick={() => setActiveTab(collection.handle)}
+                  onClick={() => handleTabChange(collection.handle)}
                   className={clsx(
                     'px-5 py-2 text-sm font-bold transition-all',
                     activeTab === collection.handle
