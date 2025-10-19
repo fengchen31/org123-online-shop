@@ -4,15 +4,20 @@ import { useState } from 'react';
 import { getCollectionProducts } from 'lib/shopify';
 import { ProductCard } from './product-card';
 import { ProductDetailInGrid } from './product-detail-in-grid';
+import { ProductFilter } from './product-filter';
 import type { Product } from 'lib/shopify/types';
+import type { SortFilterItem } from 'lib/constants';
+import { defaultSort } from 'lib/constants';
 
 interface CollectionProductsGridProps {
   products: Product[];
+  onSortChange?: (sortOption: SortFilterItem) => void;
 }
 
-export function CollectionProductsGrid({ products }: CollectionProductsGridProps) {
+export function CollectionProductsGrid({ products, onSortChange }: CollectionProductsGridProps) {
   const [expandedProduct, setExpandedProduct] = useState<Product | null>(null);
   const [startRect, setStartRect] = useState<DOMRect | null>(null);
+  const [currentSort, setCurrentSort] = useState<SortFilterItem>(defaultSort);
 
   if (!products?.length) {
     return (
@@ -35,24 +40,32 @@ export function CollectionProductsGrid({ products }: CollectionProductsGridProps
     setStartRect(null);
   };
 
+  const handleSortChange = (sortOption: SortFilterItem) => {
+    setCurrentSort(sortOption);
+    onSortChange?.(sortOption);
+  };
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {expandedProduct ? (
-        <ProductDetailInGrid
-          product={expandedProduct}
-          startRect={startRect}
-          onClose={handleClose}
-        />
-      ) : (
-        products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            onExpand={(rect) => handleExpand(product, rect)}
-            isHidden={false}
+    <>
+      <ProductFilter onSortChange={handleSortChange} currentSort={currentSort} />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {expandedProduct ? (
+          <ProductDetailInGrid
+            product={expandedProduct}
+            startRect={startRect}
+            onClose={handleClose}
           />
-        ))
-      )}
-    </div>
+        ) : (
+          products.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onExpand={(rect) => handleExpand(product, rect)}
+              isHidden={false}
+            />
+          ))
+        )}
+      </div>
+    </>
   );
 }
