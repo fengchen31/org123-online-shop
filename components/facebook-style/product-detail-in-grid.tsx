@@ -5,6 +5,8 @@ import Image from 'next/image';
 import type { Product } from 'lib/shopify/types';
 import { ProductProvider } from 'components/product/product-context';
 import { AddToCart } from 'components/cart/add-to-cart';
+import { FacebookVariantSelector } from './facebook-variant-selector';
+import { FullscreenImageViewer } from './fullscreen-image-viewer';
 
 interface ProductDetailInGridProps {
   product: Product;
@@ -16,6 +18,7 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showContent, setShowContent] = useState(false);
   const [isAnimating, setIsAnimating] = useState(true);
+  const [showFullscreen, setShowFullscreen] = useState(false);
   const imageRef = useState<HTMLDivElement | null>(null);
   const images = product.images.length > 0 ? product.images : [product.featuredImage];
 
@@ -33,7 +36,7 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
   }, []);
 
   return (
-    <ProductProvider value={product}>
+    <ProductProvider>
       {/* 跨越所有欄位 */}
       <div className="relative col-span-full overflow-hidden border border-gray-300 bg-white shadow-lg">
         {/* Close button */}
@@ -53,13 +56,16 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
             className={`p-8 ${isAnimating ? 'animate-image-expand' : ''}`}
           >
             {/* Main image */}
-            <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
+            <div
+              className="relative aspect-square w-full cursor-pointer overflow-hidden bg-gray-100"
+              onClick={() => setShowFullscreen(true)}
+            >
               {images[selectedImageIndex] ? (
                 <Image
                   src={images[selectedImageIndex].url}
                   alt={product.title}
                   fill
-                  className="object-cover"
+                  className="object-cover transition-transform hover:scale-105"
                   priority
                 />
               ) : (
@@ -97,38 +103,25 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
             showContent ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'
           }`}>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold uppercase text-gray-900">
+              <h1 className="text-xl font-bold text-gray-900">
                 {product.title}
               </h1>
 
-              <p className="mt-4 text-3xl font-bold text-[#3b5998]">
-                {product.priceRange.maxVariantPrice.currencyCode}
-                {Math.floor(parseFloat(product.priceRange.maxVariantPrice.amount)).toLocaleString()}
+              <p className="mt-3 text-base font-semibold text-[#3b5998]">
+                {product.priceRange.maxVariantPrice.currencyCode} {Math.floor(parseFloat(product.priceRange.maxVariantPrice.amount)).toLocaleString()}
               </p>
 
               {product.description && (
-                <div className="mt-6">
-                  <h2 className="text-sm font-bold uppercase text-gray-700">Description</h2>
-                  <p className="mt-2 text-sm text-gray-600">{product.description}</p>
+                <div className="mt-4">
+                  <h2 className="text-xs font-bold uppercase text-gray-600">Description</h2>
+                  <p className="mt-1 text-sm leading-relaxed text-gray-700">{product.description}</p>
                 </div>
               )}
 
               {/* Variants/Options */}
-              {product.options.map((option) => (
-                <div key={option.id} className="mt-6">
-                  <h3 className="text-sm font-bold uppercase text-gray-700">{option.name}</h3>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {option.values.map((value) => (
-                      <button
-                        key={value}
-                        className="border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:border-[#3b5998] hover:bg-gray-50"
-                      >
-                        {value}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
+              <div className="mt-4">
+                <FacebookVariantSelector options={product.options} variants={product.variants} />
+              </div>
             </div>
 
             {/* Add to cart button */}
@@ -138,6 +131,15 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
           </div>
         </div>
       </div>
+
+      {/* Fullscreen image viewer */}
+      {showFullscreen && (
+        <FullscreenImageViewer
+          images={images}
+          initialIndex={selectedImageIndex}
+          onClose={() => setShowFullscreen(false)}
+        />
+      )}
     </ProductProvider>
   );
 }

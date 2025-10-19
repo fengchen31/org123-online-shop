@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import type { Page } from 'lib/shopify/types';
 import { NewsCarousel, type CarouselSlide } from './news-carousel';
 
@@ -49,7 +50,13 @@ function parseCarouselData(htmlBody: string): CarouselSlide[] {
 }
 
 export function NewsContent({ page, onTabChange }: NewsContentProps) {
-  const slides = parseCarouselData(page.body);
+  const [slides, setSlides] = useState<CarouselSlide[]>([]);
+
+  useEffect(() => {
+    // Parse on client side only
+    const parsedSlides = parseCarouselData(page.body);
+    setSlides(parsedSlides);
+  }, [page.body]);
 
   const handleSlideClick = (collectionHandle: string) => {
     if (collectionHandle) {
