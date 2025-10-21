@@ -19,10 +19,10 @@ export function FacebookHome({ wallContent, infoContent, sourceContent }: Facebo
       <ProfileHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Tab Content */}
-      <div className="mx-auto max-w-6xl px-4 py-6">
-        <div className="grid gap-6 lg:grid-cols-12">
-          {/* Left Sidebar */}
-          <aside className="lg:col-span-3">
+      <div className="mx-auto max-w-7xl px-4 py-6">
+        <div className="flex gap-6">
+          {/* Left Sidebar - Fixed width to match org123.xyz text */}
+          <aside className="hidden w-[180px] shrink-0 lg:block">
             <div className="rounded border border-gray-300 bg-white p-4 shadow-sm">
               <h3 className="mb-3 font-semibold text-[#3b5998]">About</h3>
               <div className="space-y-2 text-sm text-gray-700">
@@ -44,7 +44,7 @@ export function FacebookHome({ wallContent, infoContent, sourceContent }: Facebo
           </aside>
 
           {/* Main Content */}
-          <main className="lg:col-span-9">
+          <main className="flex-1">
             <div className="rounded border border-gray-300 bg-white shadow-sm">
               {activeTab === 'wall' && (
                 <div className="p-6">

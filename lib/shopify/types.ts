@@ -270,3 +270,93 @@ export type ShopifyProductsOperation = {
     sortKey?: string;
   };
 };
+
+export type Address = {
+  id: string;
+  address1: string;
+  address2?: string;
+  city: string;
+  province: string;
+  country: string;
+  zip: string;
+};
+
+export type Customer = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  defaultAddress?: Address;
+};
+
+export type OrderLineItem = {
+  title: string;
+  quantity: number;
+  variant: {
+    id: string;
+    image: Image;
+  };
+};
+
+export type Order = {
+  id: string;
+  orderNumber: number;
+  processedAt: string;
+  financialStatus: string;
+  fulfillmentStatus: string;
+  totalPrice: Money;
+  lineItems: Connection<OrderLineItem>;
+};
+
+export type ShopifyCustomerOperation = {
+  data: {
+    customer: Customer;
+  };
+};
+
+export type ShopifyCustomerOrdersOperation = {
+  data: {
+    customer: {
+      orders: Connection<Order>;
+    };
+  };
+  variables: {
+    first?: number;
+  };
+};
+
+export type ShopifyCustomerWishlistOperation = {
+  data: {
+    customer: {
+      metafield: {
+        value: string;
+      } | null;
+    };
+  };
+};
+
+export type ShopifyUpdateCustomerWishlistOperation = {
+  data: {
+    customerUpdate: {
+      customer: {
+        id: string;
+        metafield: {
+          value: string;
+        } | null;
+      };
+      customerUserErrors: Array<{
+        field: string[];
+        message: string;
+      }>;
+    };
+  };
+  variables: {
+    metafields: Array<{
+      namespace: string;
+      key: string;
+      value: string;
+      type: string;
+    }>;
+  };
+};

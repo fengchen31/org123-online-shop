@@ -17,7 +17,7 @@ export function ProfileHeader({ activeTab, onTabChange }: ProfileHeaderProps) {
 
   return (
     <div className="bg-[#d8dfea]">
-      <div className="mx-auto max-w-6xl px-4">
+      <div className="mx-auto max-w-7xl px-4">
         <div className="py-6">
           {/* Profile Info */}
           <div className="flex flex-col">

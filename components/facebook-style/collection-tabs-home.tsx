@@ -30,9 +30,9 @@ export function CollectionTabsHome({
     <div className="min-h-screen bg-[#e9eaed]">
       {/* Profile Header - Light gray background */}
       <div className="relative bg-[#e9eaed] pt-16">
-        <div className="mx-auto max-w-6xl px-4">
+        <div className="mx-auto max-w-7xl px-4">
           {/* Right: Title and Tabs - with left margin to avoid avatar */}
-          <div className="ml-[280px] flex flex-col">
+          <div className="ml-[204px] flex flex-col">
             {/* Title */}
             <div className="flex items-center gap-2 pb-2">
               <h1 className="text-2xl font-bold text-gray-900">org123.xyz</h1>
@@ -62,10 +62,10 @@ export function CollectionTabsHome({
       {/* White Content Section */}
       <div className="relative -mt-0 bg-white pt-0">
         {/* Content below tabs */}
-        <div className="mx-auto max-w-6xl px-4 pb-6">
-          <div className="grid gap-6 lg:grid-cols-12">
+        <div className="mx-auto max-w-7xl px-4 pb-6">
+          <div className="flex gap-6">
             {/* Left Column - Sidebar with Avatar */}
-            <div className="lg:col-span-3">
+            <div className="hidden w-[180px] shrink-0 lg:block">
               {/* Avatar - positioned absolutely, extending up into gray area */}
               <div className="relative -mt-20 mb-4 w-full">
                 <div className="relative z-20 overflow-hidden border border-gray-300 shadow-lg">
@@ -83,11 +83,29 @@ export function CollectionTabsHome({
                 </div>
               </div>
 
-              {/* Profile Description */}
-              <div className="mb-4 border border-gray-300 bg-white p-3 text-xs text-gray-700">
-                <p className="leading-relaxed">
-                  Giving people the power to shop and make the world more open and connected.
-                </p>
+              {/* Discount Marquee */}
+              <div className="mb-4 overflow-hidden border border-gray-300 bg-white p-2">
+                <div className="animate-marquee whitespace-nowrap text-xs text-gray-700">
+                  Special Offer: 20% OFF on all items! Use code: SAVE20
+                </div>
+              </div>
+
+              {/* SoundCloud Player Section */}
+              <div className="border-r border-t border-gray-300 bg-white">
+                <div className="border-b border-gray-300 bg-[#f7f7f7] px-3 py-2">
+                  <h3 className="text-xs font-bold text-gray-800">Music</h3>
+                </div>
+                <div className="p-2">
+                  <iframe
+                    width="100%"
+                    height="120"
+                    scrolling="no"
+                    frameBorder="no"
+                    allow="autoplay"
+                    src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/soundcloud/sets/new-exclusive&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false"
+                    className="w-full"
+                  ></iframe>
+                </div>
               </div>
 
               {/* Information Section */}
@@ -96,7 +114,22 @@ export function CollectionTabsHome({
                   <h3 className="text-xs font-bold text-gray-800">Information</h3>
                 </div>
                 <div className="px-3 py-2">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    {/* Facebook Icon */}
+                    <a
+                      href="https://facebook.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="transition-opacity hover:opacity-80"
+                    >
+                      <Image
+                        src="/images/fb.webp"
+                        alt="Facebook"
+                        width={28}
+                        height={28}
+                        className="h-7 w-7"
+                      />
+                    </a>
                     {/* Instagram Icon - 2009 vintage camera style */}
                     <a
                       href="https://instagram.com"
@@ -165,7 +198,7 @@ export function CollectionTabsHome({
             </div>
 
             {/* Right Column - Content */}
-            <div className="lg:col-span-9">
+            <div className="flex-1">
               {/* Main Content - Product Grid */}
               <div className="mt-6 border border-gray-300 bg-white p-6 shadow-sm">
                 <h2 className="mb-6 text-xl font-semibold text-[#3b5998]">
@@ -174,8 +207,8 @@ export function CollectionTabsHome({
 
                 <Suspense
                   fallback={
-                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-                      {[...Array(6)].map((_, i) => (
+                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                      {[...Array(8)].map((_, i) => (
                         <div key={i} className="animate-pulse">
                           <div className="aspect-square bg-gray-200"></div>
                           <div className="mt-2 h-4 bg-gray-200"></div>

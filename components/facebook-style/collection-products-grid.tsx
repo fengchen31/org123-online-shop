@@ -48,7 +48,7 @@ export function CollectionProductsGrid({ products, onSortChange }: CollectionPro
   return (
     <>
       <ProductFilter onSortChange={handleSortChange} currentSort={currentSort} />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {expandedProduct ? (
           <ProductDetailInGrid
             product={expandedProduct}

@@ -42,8 +42,8 @@ export default async function HomePage() {
       <Suspense
         key={collection.handle}
         fallback={
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {[...Array(8)].map((_, i) => (
               <div key={i} className="animate-pulse">
                 <div className="aspect-square rounded bg-gray-200"></div>
                 <div className="mt-2 h-4 rounded bg-gray-200"></div>

@@ -18,7 +18,13 @@ import {
   editCartItemsMutation,
   removeFromCartMutation
 } from './mutations/cart';
+import { updateCustomerWishlistMutation } from './mutations/customer';
 import { getCartQuery } from './queries/cart';
+import {
+  getCustomerQuery,
+  getCustomerOrdersQuery,
+  getCustomerWishlistQuery
+} from './queries/customer';
 import {
   getCollectionProductsQuery,
   getCollectionQuery,
@@ -35,8 +41,10 @@ import {
   Cart,
   Collection,
   Connection,
+  Customer,
   Image,
   Menu,
+  Order,
   Page,
   Product,
   ShopifyAddToCartOperation,
@@ -47,6 +55,9 @@ import {
   ShopifyCollectionProductsOperation,
   ShopifyCollectionsOperation,
   ShopifyCreateCartOperation,
+  ShopifyCustomerOperation,
+  ShopifyCustomerOrdersOperation,
+  ShopifyCustomerWishlistOperation,
   ShopifyMenuOperation,
   ShopifyPageOperation,
   ShopifyPagesOperation,
@@ -55,7 +66,8 @@ import {
   ShopifyProductRecommendationsOperation,
   ShopifyProductsOperation,
   ShopifyRemoveFromCartOperation,
-  ShopifyUpdateCartOperation
+  ShopifyUpdateCartOperation,
+  ShopifyUpdateCustomerWishlistOperation
 } from './types';
 
 const domain = process.env.SHOPIFY_STORE_DOMAIN
@@ -498,4 +510,134 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
   }
 
   return NextResponse.json({ status: 200, revalidated: true, now: Date.now() });
+}
+
+// Customer Account API functions
+const customerApiUrl = process.env.SHOPIFY_CUSTOMER_ACCOUNT_API_URL || '';
+
+export async function shopifyCustomerFetch<T>({
+  accessToken,
+  query,
+  variables
+}: {
+  accessToken: string;
+  query: string;
+  variables?: ExtractVariables<T>;
+}): Promise<{ status: number; body: T } | never> {
+  try {
+    const result = await fetch(customerApiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({
+        ...(query && { query }),
+        ...(variables && { variables })
+      })
+    });
+
+    const body = await result.json();
+
+    if (body.errors) {
+      throw body.errors[0];
+    }
+
+    return {
+      status: result.status,
+      body
+    };
+  } catch (e) {
+    if (isShopifyError(e)) {
+      throw {
+        cause: e.cause?.toString() || 'unknown',
+        status: e.status || 500,
+        message: e.message,
+        query
+      };
+    }
+
+    throw {
+      error: e,
+      query
+    };
+  }
+}
+
+export async function getCustomer(accessToken: string): Promise<Customer | null> {
+  try {
+    const res = await shopifyCustomerFetch<ShopifyCustomerOperation>({
+      accessToken,
+      query: getCustomerQuery
+    });
+
+    return res.body.data.customer;
+  } catch (e) {
+    console.error('Error fetching customer:', e);
+    return null;
+  }
+}
+
+export async function getCustomerOrders(
+  accessToken: string,
+  first: number = 10
+): Promise<Order[]> {
+  try {
+    const res = await shopifyCustomerFetch<ShopifyCustomerOrdersOperation>({
+      accessToken,
+      query: getCustomerOrdersQuery,
+      variables: { first }
+    });
+
+    return removeEdgesAndNodes(res.body.data.customer.orders);
+  } catch (e) {
+    console.error('Error fetching customer orders:', e);
+    return [];
+  }
+}
+
+export async function getCustomerWishlist(accessToken: string): Promise<string[]> {
+  try {
+    const res = await shopifyCustomerFetch<ShopifyCustomerWishlistOperation>({
+      accessToken,
+      query: getCustomerWishlistQuery
+    });
+
+    const wishlistData = res.body.data.customer.metafield;
+    if (!wishlistData || !wishlistData.value) {
+      return [];
+    }
+
+    return JSON.parse(wishlistData.value);
+  } catch (e) {
+    console.error('Error fetching customer wishlist:', e);
+    return [];
+  }
+}
+
+export async function updateCustomerWishlist(
+  accessToken: string,
+  productIds: string[]
+): Promise<boolean> {
+  try {
+    const res = await shopifyCustomerFetch<ShopifyUpdateCustomerWishlistOperation>({
+      accessToken,
+      query: updateCustomerWishlistMutation,
+      variables: {
+        metafields: [
+          {
+            namespace: 'custom',
+            key: 'wishlist',
+            value: JSON.stringify(productIds),
+            type: 'json'
+          }
+        ]
+      }
+    });
+
+    return res.body.data.customerUpdate.customerUserErrors.length === 0;
+  } catch (e) {
+    console.error('Error updating customer wishlist:', e);
+    return false;
+  }
 }
