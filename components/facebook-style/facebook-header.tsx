@@ -12,12 +12,12 @@ export async function FacebookHeader() {
   return (
     <header className="border-b border-[#2c4373] bg-[#3b5998] shadow-md">
       <div className="mx-auto max-w-7xl">
-        <div className="flex items-end justify-between px-4 pb-3 pt-4">
+        <div className="flex items-end justify-between pb-3 pt-4">
           {/* Left: Logo and Site Name */}
           <div className="flex items-end gap-6">
             {/* Logo - fixed width to match sidebar */}
-            <Link href="/" className="shrink-0" prefetch={true}>
-              <span className="inline-block w-[180px] text-[40px] font-bold lowercase leading-none tracking-[-0.06em] text-white">
+            <Link href="/" className="flex w-[180px] shrink-0 items-end pl-4" prefetch={true}>
+              <span className="inline-block text-[40px] font-bold lowercase leading-none tracking-[-0.06em] text-white">
                 org123.xyz
               </span>
             </Link>
@@ -43,7 +43,7 @@ export async function FacebookHeader() {
           </div>
 
           {/* Right: Wishlist, User, Cart */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pr-4">
             {/* Wishlist */}
             <FacebookWishlistButton />
 
