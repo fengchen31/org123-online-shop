@@ -17,8 +17,8 @@ export async function CollectionProductsWrapper({
     <CollectionProductsClient
       initialProducts={products}
       collectionHandle={collectionHandle}
-      collectionTitle={collection.title}
-      collectionDescription={collection.description}
+      collectionTitle={collection?.title || ''}
+      collectionDescription={collection?.description || ''}
     />
   );
 }
