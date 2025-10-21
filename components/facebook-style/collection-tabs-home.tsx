@@ -45,7 +45,7 @@ export function CollectionTabsHome({
                   key={collection.handle}
                   onClick={() => handleTabChange(collection.handle)}
                   className={clsx(
-                    'px-5 py-2 text-sm font-bold transition-all',
+                    'px-3 py-1.5 text-lg font-bold transition-all',
                     activeTab === collection.handle
                       ? 'bg-white text-gray-900'
                       : 'bg-[#d8dfea] text-[#3b5998]'

@@ -26,7 +26,7 @@ export function CategoryFilter({
           key={category.id}
           onClick={() => onCategoryChange(category.id)}
           className={clsx(
-            'border border-gray-300 px-4 py-1.5 text-sm font-medium transition-all',
+            'border border-gray-300 px-3 py-1 text-xs font-medium transition-all',
             activeCategory === category.id
               ? 'bg-[#3b5998] text-white shadow-md'
               : 'bg-[#f7f7f7] text-gray-800 hover:bg-gray-200'
