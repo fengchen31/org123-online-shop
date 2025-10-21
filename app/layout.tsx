@@ -1,14 +1,12 @@
 import { CartProvider } from 'components/cart/cart-context';
-import { FacebookHeader } from 'components/facebook-style/facebook-header';
 import { FacebookFooter } from 'components/facebook-style/facebook-footer';
-import { WelcomeToast } from 'components/welcome-toast';
+import { FacebookHeader } from 'components/facebook-style/facebook-header';
 import { GeistSans } from 'geist/font/sans';
 import { getCart } from 'lib/shopify';
-import { ReactNode } from 'react';
-import { Toaster } from 'sonner';
-import './globals.css';
 import { baseUrl } from 'lib/utils';
 import type { Metadata } from 'next';
+import { ReactNode } from 'react';
+import './globals.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -37,8 +35,6 @@ export default async function RootLayout({
           <FacebookHeader />
           <main className="min-h-screen">
             {children}
-            <Toaster closeButton />
-            <WelcomeToast />
           </main>
           <FacebookFooter />
         </CartProvider>
