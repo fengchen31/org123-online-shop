@@ -360,3 +360,30 @@ export type ShopifyUpdateCustomerWishlistOperation = {
     }>;
   };
 };
+
+export type WishlistVariant = {
+  id: string;
+  title: string;
+  availableForSale: boolean;
+  selectedOptions: {
+    name: string;
+    value: string;
+  }[];
+  price: Money;
+  image?: Image;
+  product: {
+    id: string;
+    handle: string;
+    title: string;
+    featuredImage?: Image;
+  };
+};
+
+export type ShopifyProductVariantOperation = {
+  data: {
+    node: WishlistVariant | null;
+  };
+  variables: {
+    id: string;
+  };
+};

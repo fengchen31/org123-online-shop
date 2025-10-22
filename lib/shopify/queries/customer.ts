@@ -1,6 +1,6 @@
 export const getCustomerQuery = /* GraphQL */ `
-  query getCustomer {
-    customer {
+  query getCustomer($customerAccessToken: String!) {
+    customer(customerAccessToken: $customerAccessToken) {
       id
       firstName
       lastName
@@ -20,8 +20,8 @@ export const getCustomerQuery = /* GraphQL */ `
 `;
 
 export const getCustomerOrdersQuery = /* GraphQL */ `
-  query getCustomerOrders($first: Int = 10) {
-    customer {
+  query getCustomerOrders($customerAccessToken: String!, $first: Int = 10) {
+    customer(customerAccessToken: $customerAccessToken) {
       orders(first: $first) {
         edges {
           node {
@@ -59,8 +59,8 @@ export const getCustomerOrdersQuery = /* GraphQL */ `
 `;
 
 export const getCustomerWishlistQuery = /* GraphQL */ `
-  query getCustomerWishlist {
-    customer {
+  query getCustomerWishlist($customerAccessToken: String!) {
+    customer(customerAccessToken: $customerAccessToken) {
       metafield(namespace: "custom", key: "wishlist") {
         value
       }

@@ -34,7 +34,7 @@ export function ProfileHeader({ activeTab, onTabChange }: ProfileHeaderProps) {
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
                 className={clsx(
-                  'rounded-t border-x border-t px-4 py-2 text-sm font-semibold transition-colors',
+                  'border-x border-t px-4 py-2 text-sm font-semibold transition-colors',
                   activeTab === tab.id
                     ? 'border-gray-300 bg-white text-[#3b5998]'
                     : 'border-transparent bg-transparent text-gray-700 hover:bg-gray-100'

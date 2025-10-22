@@ -30,3 +30,51 @@ export const getProductRecommendationsQuery = /* GraphQL */ `
   }
   ${productFragment}
 `;
+
+export const getProductByIdQuery = /* GraphQL */ `
+  query getProductById($id: ID!) {
+    node(id: $id) {
+      ... on Product {
+        ...product
+      }
+    }
+  }
+  ${productFragment}
+`;
+
+export const getProductVariantByIdQuery = /* GraphQL */ `
+  query getProductVariantById($id: ID!) {
+    node(id: $id) {
+      ... on ProductVariant {
+        id
+        title
+        availableForSale
+        selectedOptions {
+          name
+          value
+        }
+        price {
+          amount
+          currencyCode
+        }
+        image {
+          url
+          altText
+          width
+          height
+        }
+        product {
+          id
+          handle
+          title
+          featuredImage {
+            url
+            altText
+            width
+            height
+          }
+        }
+      }
+    }
+  }
+`;

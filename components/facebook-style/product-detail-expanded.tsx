@@ -5,6 +5,7 @@ import Image from 'next/image';
 import type { Product } from 'lib/shopify/types';
 import { ProductProvider } from 'components/product/product-context';
 import { AddToCart } from 'components/cart/add-to-cart';
+import { AddToWishlist } from 'components/wishlist/add-to-wishlist';
 import { FacebookVariantSelector } from './facebook-variant-selector';
 import { FullscreenImageViewer } from './fullscreen-image-viewer';
 
@@ -103,9 +104,10 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
               </div>
             </div>
 
-            {/* Add to cart button */}
-            <div className="mt-8">
+            {/* Add to cart and wishlist buttons */}
+            <div className="mt-8 space-y-3">
               <AddToCart product={product} />
+              <AddToWishlist product={product} />
             </div>
           </div>
         </div>

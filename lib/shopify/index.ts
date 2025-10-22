@@ -18,7 +18,12 @@ import {
   editCartItemsMutation,
   removeFromCartMutation
 } from './mutations/cart';
-import { updateCustomerWishlistMutation } from './mutations/customer';
+import {
+  customerAccessTokenCreateMutation,
+  customerCreateMutation,
+  customerRecoverMutation,
+  updateCustomerWishlistMutation
+} from './mutations/customer';
 import { getCartQuery } from './queries/cart';
 import {
   getCustomerQuery,
@@ -34,8 +39,10 @@ import { getMenuQuery } from './queries/menu';
 import { getPageQuery, getPagesQuery } from './queries/page';
 import {
   getProductQuery,
+  getProductByIdQuery,
   getProductRecommendationsQuery,
-  getProductsQuery
+  getProductsQuery,
+  getProductVariantByIdQuery
 } from './queries/product';
 import {
   Cart,
@@ -65,9 +72,11 @@ import {
   ShopifyProductOperation,
   ShopifyProductRecommendationsOperation,
   ShopifyProductsOperation,
+  ShopifyProductVariantOperation,
   ShopifyRemoveFromCartOperation,
   ShopifyUpdateCartOperation,
-  ShopifyUpdateCustomerWishlistOperation
+  ShopifyUpdateCustomerWishlistOperation,
+  WishlistVariant
 } from './types';
 
 const domain = process.env.SHOPIFY_STORE_DOMAIN
@@ -430,6 +439,53 @@ export async function getProduct(handle: string): Promise<Product | undefined> {
   return reshapeProduct(res.body.data.product, false);
 }
 
+export async function getProductById(id: string): Promise<Product | null> {
+  'use cache';
+  cacheTag(TAGS.products);
+  cacheLife('days');
+
+  try {
+    const res = await shopifyFetch<{
+      data: { node: ShopifyProduct | null };
+      variables: { id: string };
+    }>({
+      query: getProductByIdQuery,
+      variables: { id }
+    });
+
+    if (!res.body.data.node) {
+      return null;
+    }
+
+    return reshapeProduct(res.body.data.node, false);
+  } catch (error) {
+    console.error('Error fetching product by ID:', error);
+    return null;
+  }
+}
+
+export async function getProductVariantById(id: string): Promise<WishlistVariant | null> {
+  'use cache';
+  cacheTag(TAGS.products);
+  cacheLife('days');
+
+  try {
+    const res = await shopifyFetch<ShopifyProductVariantOperation>({
+      query: getProductVariantByIdQuery,
+      variables: { id }
+    });
+
+    if (!res.body.data.node) {
+      return null;
+    }
+
+    return res.body.data.node;
+  } catch (error) {
+    console.error('Error fetching variant by ID:', error);
+    return null;
+  }
+}
+
 export async function getProductRecommendations(
   productId: string
 ): Promise<Product[]> {
@@ -512,9 +568,7 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
   return NextResponse.json({ status: 200, revalidated: true, now: Date.now() });
 }
 
-// Customer Account API functions
-const customerApiUrl = process.env.SHOPIFY_CUSTOMER_ACCOUNT_API_URL || '';
-
+// Customer queries using Storefront API with access token
 export async function shopifyCustomerFetch<T>({
   accessToken,
   query,
@@ -524,44 +578,18 @@ export async function shopifyCustomerFetch<T>({
   query: string;
   variables?: ExtractVariables<T>;
 }): Promise<{ status: number; body: T } | never> {
-  try {
-    const result = await fetch(customerApiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`
-      },
-      body: JSON.stringify({
-        ...(query && { query }),
-        ...(variables && { variables })
-      })
-    });
+  // Merge customerAccessToken into variables
+  const mergedVariables = {
+    ...variables,
+    customerAccessToken: accessToken
+  };
 
-    const body = await result.json();
-
-    if (body.errors) {
-      throw body.errors[0];
-    }
-
-    return {
-      status: result.status,
-      body
-    };
-  } catch (e) {
-    if (isShopifyError(e)) {
-      throw {
-        cause: e.cause?.toString() || 'unknown',
-        status: e.status || 500,
-        message: e.message,
-        query
-      };
-    }
-
-    throw {
-      error: e,
-      query
-    };
-  }
+  // Use the standard Storefront API endpoint
+  return shopifyFetch<T>({
+    query,
+    variables: mergedVariables as ExtractVariables<T>,
+    cache: 'no-store'
+  });
 }
 
 export async function getCustomer(accessToken: string): Promise<Customer | null> {
@@ -639,5 +667,154 @@ export async function updateCustomerWishlist(
   } catch (e) {
     console.error('Error updating customer wishlist:', e);
     return false;
+  }
+}
+
+// 客戶登錄函數
+export async function customerLogin(
+  email: string,
+  password: string
+): Promise<{ accessToken: string; expiresAt: string } | { error: string }> {
+  try {
+    const res = await shopifyFetch<{
+      data: {
+        customerAccessTokenCreate: {
+          customerAccessToken?: {
+            accessToken: string;
+            expiresAt: string;
+          };
+          customerUserErrors: Array<{
+            code?: string;
+            field?: string[];
+            message: string;
+          }>;
+        };
+      };
+    }>({
+      query: customerAccessTokenCreateMutation,
+      variables: {
+        input: {
+          email,
+          password
+        }
+      },
+      cache: 'no-store'
+    });
+
+    if (res.body.data.customerAccessTokenCreate.customerUserErrors.length > 0) {
+      const error = res.body.data.customerAccessTokenCreate.customerUserErrors[0];
+      return { error: error?.message || '登錄失敗' };
+    }
+
+    const customerAccessToken = res.body.data.customerAccessTokenCreate.customerAccessToken;
+
+    if (!customerAccessToken) {
+      return { error: '登錄失敗' };
+    }
+
+    return {
+      accessToken: customerAccessToken.accessToken,
+      expiresAt: customerAccessToken.expiresAt
+    };
+  } catch (e) {
+    console.error('Error logging in customer:', e);
+    return { error: '登錄時發生錯誤' };
+  }
+}
+
+// 客戶註冊函數
+export async function customerRegister(input: {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}): Promise<{ success: boolean; customer?: any; error?: string }> {
+  try {
+    const res = await shopifyFetch<{
+      data: {
+        customerCreate: {
+          customer?: {
+            id: string;
+            email: string;
+            firstName: string;
+            lastName: string;
+          };
+          customerUserErrors: Array<{
+            code?: string;
+            field?: string[];
+            message: string;
+          }>;
+        };
+      };
+    }>({
+      query: customerCreateMutation,
+      variables: {
+        input: {
+          email: input.email,
+          password: input.password,
+          firstName: input.firstName,
+          lastName: input.lastName
+        }
+      },
+      cache: 'no-store'
+    });
+
+    if (res.body.data.customerCreate.customerUserErrors.length > 0) {
+      const error = res.body.data.customerCreate.customerUserErrors[0];
+      return {
+        success: false,
+        error: error?.message || '註冊失敗'
+      };
+    }
+
+    return {
+      success: true,
+      customer: res.body.data.customerCreate.customer
+    };
+  } catch (e) {
+    console.error('Error registering customer:', e);
+    return {
+      success: false,
+      error: '註冊時發生錯誤'
+    };
+  }
+}
+
+// 客戶密碼重設請求函數
+export async function customerRecover(email: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await shopifyFetch<{
+      data: {
+        customerRecover: {
+          customerUserErrors: Array<{
+            code?: string;
+            field?: string[];
+            message: string;
+          }>;
+        };
+      };
+    }>({
+      query: customerRecoverMutation,
+      variables: {
+        email
+      },
+      cache: 'no-store'
+    });
+
+    if (res.body.data.customerRecover.customerUserErrors.length > 0) {
+      const error = res.body.data.customerRecover.customerUserErrors[0];
+      return {
+        success: false,
+        error: error?.message || '密碼重設請求失敗'
+      };
+    }
+
+    return { success: true };
+  } catch (e) {
+    console.error('Error recovering customer password:', e);
+    return {
+      success: false,
+      error: '密碼重設時發生錯誤'
+    };
   }
 }

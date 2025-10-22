@@ -14,9 +14,10 @@ function SubmitButton({ type }: { type: 'plus' | 'minus' }) {
         type === 'plus' ? 'Increase item quantity' : 'Reduce item quantity'
       }
       className={clsx(
-        'ease flex h-full min-w-[32px] max-w-[32px] flex-none items-center justify-center border-r border-gray-300 bg-gray-50 p-2 transition-all duration-200 hover:bg-gray-100 last:border-r-0',
+        'ease flex h-full min-w-[32px] max-w-[32px] flex-none items-center justify-center bg-white p-2 transition-all duration-200 hover:bg-gray-50',
         {
-          'ml-auto': type === 'minus'
+          'ml-auto border-l border-gray-300': type === 'minus',
+          'border-r border-gray-300': type === 'plus'
         }
       )}
     >

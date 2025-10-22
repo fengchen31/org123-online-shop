@@ -3,13 +3,19 @@
 import clsx from 'clsx';
 import type { Collection } from 'lib/shopify/types';
 import Image from 'next/image';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 
 interface CollectionTabsHomeProps {
   collections: Collection[];
   collectionContents: Record<string, React.ReactNode>;
   onTabChange?: (handle: string) => void;
 }
+
+// Available login avatars
+const LOGIN_AVATARS = [
+  '/images/loginAvatars/122726524_10222938026866668_4834097733912607470_n.jpg',
+  '/images/loginAvatars/460959320_2440517949471558_1212324920682692175_n.jpg'
+];
 
 export function CollectionTabsHome({
   collections,
@@ -20,6 +26,35 @@ export function CollectionTabsHome({
   const [activeTab, setActiveTab] = useState<string>(
     collections.length > 0 ? collections[0]!.handle : ''
   );
+  const [customerName, setCustomerName] = useState<string>('org123.xyz');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Randomly select an avatar (stable across re-renders)
+  const randomAvatar = useMemo(() => {
+    return LOGIN_AVATARS[Math.floor(Math.random() * LOGIN_AVATARS.length)] || LOGIN_AVATARS[0]!;
+  }, []);
+
+  useEffect(() => {
+    const fetchCustomer = async () => {
+      try {
+        const res = await fetch('/api/customer');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.customer) {
+            const name = data.customer.firstName
+              ? `${data.customer.firstName} ${data.customer.lastName || ''}`.trim()
+              : data.customer.email;
+            setCustomerName(name);
+            setIsLoggedIn(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching customer:', error);
+      }
+    };
+
+    fetchCustomer();
+  }, []);
 
   const handleTabChange = (handle: string) => {
     setActiveTab(handle);
@@ -35,7 +70,7 @@ export function CollectionTabsHome({
           <div className="ml-[204px] flex flex-col">
             {/* Title */}
             <div className="flex items-center gap-2 pb-2">
-              <h1 className="text-2xl font-bold text-gray-900">org123.xyz</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{customerName}</h1>
             </div>
 
             {/* Tabs - positioned at the bottom, aligned with bottom of gray area */}
@@ -45,7 +80,7 @@ export function CollectionTabsHome({
                   key={collection.handle}
                   onClick={() => handleTabChange(collection.handle)}
                   className={clsx(
-                    'px-3 py-1.5 text-lg font-bold transition-all',
+                    'px-3 py-1.5 text-md font-bold transition-all',
                     activeTab === collection.handle
                       ? 'bg-white text-gray-900'
                       : 'bg-[#d8dfea] text-[#3b5998]'
@@ -69,16 +104,14 @@ export function CollectionTabsHome({
               {/* Avatar - positioned absolutely, extending up into gray area */}
               <div className="relative -mt-20 mb-4 w-full">
                 <div className="relative z-20 overflow-hidden border border-gray-300 shadow-lg">
-                  <div className="relative flex aspect-square w-full items-center justify-center bg-white">
-                    <div className="relative h-[70%] w-[70%]">
-                      <Image
-                        src="/images/avatars/org123_logo.svg"
-                        alt="org123 logo"
-                        fill
-                        className="object-contain"
-                        priority
-                      />
-                    </div>
+                  <div className="relative aspect-square w-full bg-white">
+                    <Image
+                      src={isLoggedIn ? randomAvatar : '/images/avatars/org123_logo.svg'}
+                      alt={isLoggedIn ? customerName : 'org123 logo'}
+                      fill
+                      className={isLoggedIn ? 'object-cover' : 'object-contain p-[15%]'}
+                      priority
+                    />
                   </div>
                 </div>
               </div>
