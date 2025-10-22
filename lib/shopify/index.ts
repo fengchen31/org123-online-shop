@@ -457,7 +457,7 @@ export async function getProductById(id: string): Promise<Product | null> {
       return null;
     }
 
-    return reshapeProduct(res.body.data.node, false);
+    return reshapeProduct(res.body.data.node, false) ?? null;
   } catch (error) {
     console.error('Error fetching product by ID:', error);
     return null;
@@ -587,8 +587,7 @@ export async function shopifyCustomerFetch<T>({
   // Use the standard Storefront API endpoint
   return shopifyFetch<T>({
     query,
-    variables: mergedVariables as ExtractVariables<T>,
-    cache: 'no-store'
+    variables: mergedVariables as ExtractVariables<T>
   });
 }
 
@@ -690,6 +689,12 @@ export async function customerLogin(
           }>;
         };
       };
+      variables: {
+        input: {
+          email: string;
+          password: string;
+        };
+      };
     }>({
       query: customerAccessTokenCreateMutation,
       variables: {
@@ -697,8 +702,7 @@ export async function customerLogin(
           email,
           password
         }
-      },
-      cache: 'no-store'
+      }
     });
 
     if (res.body.data.customerAccessTokenCreate.customerUserErrors.length > 0) {
@@ -746,6 +750,14 @@ export async function customerRegister(input: {
           }>;
         };
       };
+      variables: {
+        input: {
+          email: string;
+          password: string;
+          firstName: string;
+          lastName: string;
+        };
+      };
     }>({
       query: customerCreateMutation,
       variables: {
@@ -755,8 +767,7 @@ export async function customerRegister(input: {
           firstName: input.firstName,
           lastName: input.lastName
         }
-      },
-      cache: 'no-store'
+      }
     });
 
     if (res.body.data.customerCreate.customerUserErrors.length > 0) {
@@ -793,12 +804,14 @@ export async function customerRecover(email: string): Promise<{ success: boolean
           }>;
         };
       };
+      variables: {
+        email: string;
+      };
     }>({
       query: customerRecoverMutation,
       variables: {
         email
-      },
-      cache: 'no-store'
+      }
     });
 
     if (res.body.data.customerRecover.customerUserErrors.length > 0) {

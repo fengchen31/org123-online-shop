@@ -1,9 +1,10 @@
 'use client';
 
 import clsx from 'clsx';
-import type { Collection } from 'lib/shopify/types';
+import type { Collection, Product } from 'lib/shopify/types';
 import Image from 'next/image';
 import { Suspense, useEffect, useMemo, useState } from 'react';
+import { CollectionProductsGrid } from './collection-products-grid';
 
 interface CollectionTabsHomeProps {
   collections: Collection[];
@@ -13,8 +14,11 @@ interface CollectionTabsHomeProps {
 
 // Available login avatars
 const LOGIN_AVATARS = [
-  '/images/loginAvatars/122726524_10222938026866668_4834097733912607470_n.jpg',
-  '/images/loginAvatars/460959320_2440517949471558_1212324920682692175_n.jpg'
+  '/images/loginAvatars/CHP3SG__57026.jpg',
+  '/images/loginAvatars/JELC3M__66939.jpg',
+  '/images/loginAvatars/RR3F__13660.jpg',
+  '/images/loginAvatars/RR3FC__50145.jpg',
+  '/images/loginAvatars/TIM3TUR__22422.jpg'
 ];
 
 export function CollectionTabsHome({
@@ -28,6 +32,11 @@ export function CollectionTabsHome({
   );
   const [customerName, setCustomerName] = useState<string>('org123.xyz');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Search states
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Randomly select an avatar (stable across re-renders)
   const randomAvatar = useMemo(() => {
@@ -59,6 +68,32 @@ export function CollectionTabsHome({
   const handleTabChange = (handle: string) => {
     setActiveTab(handle);
     onTabChange?.(handle);
+  };
+
+  // Handle search
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+
+    if (!query.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSearchResults(data.products || []);
+      } else {
+        console.error('Search failed:', response.statusText);
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error('Error searching products:', error);
+      setSearchResults([]);
+    }
   };
 
   return (
@@ -120,6 +155,34 @@ export function CollectionTabsHome({
               <div className="mb-4 overflow-hidden border border-gray-300 bg-white p-2">
                 <div className="animate-marquee whitespace-nowrap text-xs text-gray-700">
                   Special Offer: 20% OFF on all items! Use code: SAVE20
+                </div>
+              </div>
+
+              {/* Search Section */}
+              <div className="border-b border-r border-t border-gray-300 bg-white">
+                <div className="border-b border-gray-300 bg-[#f7f7f7] px-3 py-2">
+                  <h3 className="text-xs font-bold text-gray-800">Search</h3>
+                </div>
+                <div className="p-3">
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="w-full border border-gray-300 px-3 py-2 text-xs text-gray-700 placeholder-gray-400 outline-none"
+                    style={{ boxShadow: 'none' }}
+                    onFocus={(e) => {
+                      e.target.style.outline = 'none';
+                      e.target.style.boxShadow = 'none';
+                      e.target.style.borderColor = '#d1d5db';
+                      e.target.style.borderWidth = '1px';
+                    }}
+                  />
+                  {isSearching && searchQuery && (
+                    <p className="mt-2 text-xs text-gray-600">
+                      Found {searchResults.length} product{searchResults.length !== 1 ? 's' : ''}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -235,24 +298,41 @@ export function CollectionTabsHome({
               {/* Main Content - Product Grid */}
               <div className="mt-6 border border-gray-300 bg-white p-6 shadow-sm">
                 <h2 className="mb-6 text-xl font-semibold text-[#3b5998]">
-                  {collections.find((c) => c.handle === activeTab)?.title || 'Products'}
+                  {isSearching && searchQuery
+                    ? `Search Results for "${searchQuery}"`
+                    : collections.find((c) => c.handle === activeTab)?.title || 'Products'}
                 </h2>
 
-                <Suspense
-                  fallback={
-                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                      {[...Array(8)].map((_, i) => (
-                        <div key={i} className="animate-pulse">
-                          <div className="aspect-square bg-gray-200"></div>
-                          <div className="mt-2 h-4 bg-gray-200"></div>
-                          <div className="mt-2 h-3 bg-gray-200"></div>
-                        </div>
-                      ))}
+                {isSearching && searchQuery ? (
+                  // Show search results
+                  searchResults.length > 0 ? (
+                    <CollectionProductsGrid products={searchResults} />
+                  ) : (
+                    <div className="flex min-h-[400px] items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        <p className="text-lg">No products found.</p>
+                        <p className="mt-2 text-sm">Try a different search term.</p>
+                      </div>
                     </div>
-                  }
-                >
-                  {collectionContents[activeTab]}
-                </Suspense>
+                  )
+                ) : (
+                  // Show collection contents
+                  <Suspense
+                    fallback={
+                      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        {[...Array(8)].map((_, i) => (
+                          <div key={i} className="animate-pulse">
+                            <div className="aspect-square bg-gray-200"></div>
+                            <div className="mt-2 h-4 bg-gray-200"></div>
+                            <div className="mt-2 h-3 bg-gray-200"></div>
+                          </div>
+                        ))}
+                      </div>
+                    }
+                  >
+                    {collectionContents[activeTab]}
+                  </Suspense>
+                )}
               </div>
             </div>
           </div>

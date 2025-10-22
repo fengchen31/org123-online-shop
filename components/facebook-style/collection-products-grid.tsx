@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { getCollectionProducts } from 'lib/shopify';
 import { ProductCard } from './product-card';
 import { ProductDetailInGrid } from './product-detail-in-grid';
 import { ProductFilter } from './product-filter';
