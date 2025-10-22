@@ -1,11 +1,9 @@
 'use client';
 
+import type { Collection, Page } from 'lib/shopify/types';
+import { useMemo, useState } from 'react';
 import { CollectionTabsHome } from './collection-tabs-home';
 import { NewsContent } from './news-content';
-import type { Collection } from 'lib/shopify/types';
-import type { Page } from 'lib/shopify/types';
-import { useState, useMemo } from 'react';
-import { Suspense } from 'react';
 
 interface HomeWrapperProps {
   collections: Collection[];

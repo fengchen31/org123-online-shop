@@ -7,13 +7,9 @@ export async function FacebookFooter() {
     <footer className="border-t border-gray-300 bg-white">
       {/* Bottom Bar */}
       <div className="bg-gray-50 py-4">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="flex flex-col items-center justify-center gap-2 text-xs text-gray-600">
-            <div className="flex items-center gap-4">
-              <span>© {currentYear} org123.xyz</span>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-4">
+        <div className="px-4">
+          <div className="flex flex-row items-center justify-between gap-2 text-xs text-gray-600">          
+            <div className="flex flex-wrap items-center justify-start gap-4">
               <Link href="/" className="text-gray-600 hover:underline">
                 Contact Us
               </Link>
@@ -29,6 +25,10 @@ export async function FacebookFooter() {
               <Link href="/" className="text-gray-600 hover:underline">
                 Terms of Service
               </Link>
+            </div>
+
+             <div className="flex items-center gap-4">
+              <span>© {currentYear} org123.xyz</span>
             </div>
           </div>
         </div>
