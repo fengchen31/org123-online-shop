@@ -57,26 +57,45 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
               )}
             </div>
 
-            {/* Thumbnail images */}
+            {/* Thumbnail images - Desktop only */}
             {images.length > 1 && (
-              <div className="mt-4 grid grid-cols-5 gap-2">
-                {images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImageIndex(index)}
-                    className={`relative aspect-square overflow-hidden border-2 bg-gray-100 ${
-                      selectedImageIndex === index ? 'border-[#3b5998]' : 'border-gray-300'
-                    }`}
-                  >
-                    <Image
-                      src={image.url}
-                      alt={`${product.title} - ${index + 1}`}
-                      fill
-                      className="object-cover"
+              <>
+                {/* Desktop: Thumbnail grid */}
+                <div className="mt-4 hidden grid-cols-5 lg:grid">
+                  {images.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`relative aspect-square overflow-hidden bg-gray-100 transition-all ${
+                        selectedImageIndex === index
+                          ? 'border-2 border-[#3b5998] shadow-md'
+                          : 'border border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      <Image
+                        src={image.url}
+                        alt={`${product.title} - ${index + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+
+                {/* Mobile: Dot indicators */}
+                <div className="mt-4 flex items-center justify-center gap-2 lg:hidden">
+                  {images.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`h-1.5 w-1.5 rounded-full transition-all ${
+                        selectedImageIndex === index ? 'bg-[#3b5998] scale-150' : 'bg-gray-400'
+                      }`}
+                      aria-label={`Select image ${index + 1}`}
                     />
-                  </button>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
 

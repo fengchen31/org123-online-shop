@@ -203,43 +203,43 @@ export function WishlistDrawer({ isOpen, onClose, onOpenCart }: WishlistDrawerPr
 
       {/* Drawer */}
       <div
-        className={`fixed right-0 top-0 z-50 h-full w-full bg-white shadow-2xl transition-transform duration-300 ease-in-out sm:w-[500px] ${
+        className={`fixed right-0 top-0 z-50 h-full w-full bg-white shadow-2xl transition-transform duration-300 ease-in-out sm:w-[420px] md:w-[500px] ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Wishlist</h2>
-            <p className="text-sm text-gray-600">
+            <h2 className="text-lg font-bold text-gray-900 sm:text-xl">Wishlist</h2>
+            <p className="text-xs text-gray-600 sm:text-sm">
               {variants.length} {variants.length === 1 ? 'item' : 'items'}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center text-gray-600 hover:bg-gray-100"
+            className="flex h-7 w-7 items-center justify-center text-gray-600 hover:bg-gray-100 sm:h-8 sm:w-8"
             aria-label="Close"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Content */}
-        <div className="h-[calc(100%-80px)] overflow-y-auto p-6">
+        <div className="h-[calc(100%-64px)] overflow-y-auto p-3 sm:h-[calc(100%-80px)] sm:p-4 md:p-6">
           {isLoading ? (
             <div className="flex h-full items-center justify-center">
               <div className="text-gray-500">Loading...</div>
             </div>
           ) : variants.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center space-y-4">            
+            <div className="flex h-full flex-col items-center justify-center space-y-4">
               <div className="text-center">
-                <h3 className="mb-1 text-lg font-semibold text-gray-900">Your wishlist is empty</h3>          
+                <h3 className="mb-1 text-base font-semibold text-gray-900 sm:text-lg">Your wishlist is empty</h3>
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {variants.map((variant) => {
                 const isRemoving = removingIds.has(variant.id);
                 const isAddingToCart = addingToCartIds.has(variant.id);
@@ -252,10 +252,10 @@ export function WishlistDrawer({ isOpen, onClose, onOpenCart }: WishlistDrawerPr
                       isRemoving ? 'scale-95 opacity-50' : ''
                     }`}
                   >
-                    <div className="flex gap-4 p-4">
+                    <div className="flex gap-2 p-2 sm:gap-3 sm:p-3 md:gap-4 md:p-4">
                       {/* Image */}
                       <Link href={`/product/${variant.product.handle}`} onClick={onClose}>
-                        <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden bg-gray-100">
+                        <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden bg-gray-100 sm:h-20 sm:w-20 md:h-24 md:w-24">
                           {imageUrl ? (
                             <Image
                               src={imageUrl}
@@ -275,7 +275,7 @@ export function WishlistDrawer({ isOpen, onClose, onOpenCart }: WishlistDrawerPr
                       {/* Info */}
                       <div className="flex flex-1 flex-col">
                         <Link href={`/product/${variant.product.handle}`} onClick={onClose}>
-                          <h3 className="mb-1 text-sm font-semibold text-gray-900 hover:text-[#3b5998]">
+                          <h3 className="mb-1 text-xs font-semibold text-gray-900 hover:text-[#3b5998] sm:text-sm">
                             {variant.product.title}
                           </h3>
                         </Link>

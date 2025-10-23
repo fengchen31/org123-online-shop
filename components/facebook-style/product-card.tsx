@@ -73,12 +73,12 @@ export function ProductCard({ product, onExpand, isHidden }: ProductCardProps) {
       </div>
 
       {/* Product Info */}
-      <div className="p-4">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="line-clamp-1 text-xs font-bold uppercase text-gray-900">
+      <div className="p-2 sm:p-3 lg:p-4">
+        <div className="flex items-center justify-between gap-1 sm:gap-2">
+          <h3 className="line-clamp-1 text-[10px] font-bold uppercase text-gray-900 sm:text-xs">
             {product.title}
           </h3>
-          <p className="whitespace-nowrap text-xs font-bold text-gray-900">
+          <p className="whitespace-nowrap text-[10px] font-bold text-gray-900 sm:text-xs">
             {product.priceRange.maxVariantPrice.currencyCode}
             {Math.floor(parseFloat(product.priceRange.maxVariantPrice.amount)).toLocaleString()}
           </p>

@@ -2,8 +2,18 @@
 
 import type { Customer, Order } from 'lib/shopify/types';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+
+// Available login avatars
+const LOGIN_AVATARS = [
+  '/images/loginAvatars/CHP3SG__57026.jpg',
+  '/images/loginAvatars/JELC3M__66939.jpg',
+  '/images/loginAvatars/RR3F__13660.jpg',
+  '/images/loginAvatars/RR3FC__50145.jpg',
+  '/images/loginAvatars/TIM3TUR__22422.jpg'
+];
 
 interface AccountDrawerProps {
   isOpen: boolean;
@@ -37,6 +47,11 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   });
   const [registerError, setRegisterError] = useState('');
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
+
+  // Randomly select an avatar (stable across re-renders)
+  const randomAvatar = useMemo(() => {
+    return LOGIN_AVATARS[Math.floor(Math.random() * LOGIN_AVATARS.length)] || LOGIN_AVATARS[0]!;
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -194,35 +209,57 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
 
       {/* Drawer */}
       <div
-        className={`fixed right-0 top-0 z-50 h-full w-full bg-white shadow-2xl transition-transform duration-300 ease-in-out sm:w-[500px] ${
+        className={`fixed right-0 top-0 z-50 h-full w-full bg-white shadow-2xl transition-transform duration-300 ease-in-out sm:w-[420px] md:w-[500px] ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-          <h2 className="text-xl font-bold text-gray-900">
+        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4">
+          <h2 className="text-lg font-bold text-gray-900 sm:text-xl">
             {viewMode === 'login' ? 'Sign In' : viewMode === 'register' ? 'Sign Up' : 'Account'}
           </h2>
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center text-gray-600 hover:bg-gray-100"
+            className="flex h-7 w-7 items-center justify-center text-gray-600 hover:bg-gray-100 sm:h-8 sm:w-8"
             aria-label="Close"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
         {/* Content */}
-        <div className="h-[calc(100%-64px)] overflow-y-auto p-6">
+        <div className="flex h-[calc(100%-56px)] flex-col sm:h-[calc(100%-64px)]">
           {isLoading ? (
-            <div className="flex h-full items-center justify-center">
+            <div className="flex h-full items-center justify-center p-3 sm:p-4 md:p-6">
               <div className="text-gray-500">Loading...</div>
             </div>
           ) : viewMode === 'account' && customer ? (
             /* Logged In View */
-            <div className="space-y-6">
+            <>
+              <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
+                <div className="space-y-6">
+              {/* Avatar Section */}
+              <div className="flex items-center gap-4 border-b border-gray-200 pb-6">
+                <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-gray-300">
+                  <Image
+                    src={randomAvatar}
+                    alt={`${customer.firstName} ${customer.lastName}`}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    {customer.firstName && customer.lastName
+                      ? `${customer.firstName} ${customer.lastName}`
+                      : customer.email}
+                  </h3>
+                </div>
+              </div>
+
               {/* Account Details */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-gray-900">Personal Information</h3>
@@ -358,18 +395,23 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                   </div>
                 )}
               </div>
+                </div>
+              </div>
 
-              {/* Logout Button */}
-              <button
-                onClick={handleLogout}
-                className="w-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
-              >
-                Log Out
-              </button>
-            </div>
+              {/* Logout Button - Fixed at bottom */}
+              <div className="border-t border-gray-200 p-3 sm:p-4 md:p-6">
+                <button
+                  onClick={handleLogout}
+                  className="w-full bg-[#3b5998] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#344e86]"
+                >
+                  Log Out
+                </button>
+              </div>
+            </>
           ) : viewMode === 'login' ? (
             /* Login View */
-            <div className="space-y-6">
+            <div className="overflow-y-auto p-3 sm:p-4 md:p-6">
+              <div className="space-y-6">
               <div>
                 <h3 className="mb-2 text-lg font-semibold text-gray-900">Welcome back</h3>
                 <p className="text-sm text-gray-600">Sign in to your account</p>
@@ -448,10 +490,12 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                   </button>
                 </p>
               </div>
+              </div>
             </div>
           ) : (
             /* Register View */
-            <div className="space-y-6">
+            <div className="overflow-y-auto p-3 sm:p-4 md:p-6">
+              <div className="space-y-6">
               <div>
                 <h3 className="mb-2 text-lg font-semibold text-gray-900">Create account</h3>
                 <p className="text-sm text-gray-600">Fill out the information below</p>
@@ -585,6 +629,7 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                     Sign in
                   </button>
                 </p>
+              </div>
               </div>
             </div>
           )}

@@ -65,27 +65,37 @@ export function FacebookHeaderClient({ menu }: FacebookHeaderClientProps) {
   return (
     <>
       <header className="border-b border-[#2c4373] bg-[#3b5998] shadow-md">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex items-end justify-between pb-3 pt-4">
+        <div className="mx-auto">
+          {/* Mobile Header - Centered Logo Only */}
+          <div className="flex items-center justify-center pb-3 pt-4 md:hidden">
+            <Link href="/" className="flex items-end" prefetch={true}>
+              <span className="inline-block text-[24px] font-bold lowercase leading-none tracking-[-0.06em] text-white">
+                org123.xyz
+              </span>
+            </Link>
+          </div>
+
+          {/* Desktop Header - Full Layout */}
+          <div className="hidden items-end justify-between pb-3 pt-4 md:flex">
             {/* Left: Logo and Site Name */}
-            <div className="flex items-end gap-6">
-              {/* Logo - fixed width to match sidebar */}
-              <Link href="/" className="flex w-[180px] shrink-0 items-end pl-4" prefetch={true}>
-                <span className="inline-block text-[40px] font-bold lowercase leading-none tracking-[-0.06em] text-white">
+            <div className="flex items-end gap-2 sm:gap-4 md:gap-6">
+              {/* Logo - responsive width */}
+              <Link href="/" className="flex w-[140px] shrink-0 items-end pl-3 lg:w-[180px] lg:pl-4" prefetch={true}>
+                <span className="inline-block text-[32px] font-bold lowercase leading-none tracking-[-0.06em] text-white lg:text-[40px]">
                   org123.xyz
                 </span>
               </Link>
 
               {/* Navigation Menu */}
               {menu.length ? (
-                <nav className="hidden md:block">
-                  <ul className="flex gap-4">
+                <nav>
+                  <ul className="flex gap-2 lg:gap-4">
                     {menu.map((item: Menu) => (
                       <li key={item.title}>
                         <Link
                           href={item.path}
                           prefetch={true}
-                          className="text-sm font-semibold text-white/90 transition-colors hover:text-white hover:underline"
+                          className="text-xs font-semibold text-white/90 transition-colors hover:text-white hover:underline lg:text-sm"
                         >
                           {item.title}
                         </Link>
@@ -97,11 +107,11 @@ export function FacebookHeaderClient({ menu }: FacebookHeaderClientProps) {
             </div>
 
             {/* Right: Wishlist, User, Cart */}
-            <div className="flex items-center gap-3 pr-4">
+            <div className="flex items-center gap-2 pr-2 sm:gap-3 sm:pr-4">
               {/* Wishlist */}
               <button
                 onClick={() => setIsWishlistDrawerOpen(true)}
-                className="relative flex h-8 w-8 items-center justify-center text-white transition-opacity hover:opacity-80"
+                className="relative flex h-7 w-7 items-center justify-center text-white transition-opacity hover:opacity-80 sm:h-8 sm:w-8"
                 aria-label="Wishlist"
               >
                 <svg
@@ -110,7 +120,7 @@ export function FacebookHeaderClient({ menu }: FacebookHeaderClientProps) {
                   viewBox="0 0 24 24"
                   strokeWidth={2}
                   stroke="currentColor"
-                  className="h-6 w-6"
+                  className="h-5 w-5 sm:h-6 sm:w-6"
                 >
                   <path
                     strokeLinecap="round"
@@ -119,7 +129,7 @@ export function FacebookHeaderClient({ menu }: FacebookHeaderClientProps) {
                   />
                 </svg>
                 {wishlistCount > 0 && (
-                  <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+                  <div className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:w-5 sm:text-[10px]">
                     {wishlistCount}
                   </div>
                 )}
@@ -128,7 +138,7 @@ export function FacebookHeaderClient({ menu }: FacebookHeaderClientProps) {
               {/* User Account */}
               <button
                 onClick={() => setIsAccountDrawerOpen(true)}
-                className="flex h-8 w-8 items-center justify-center text-white transition-opacity hover:opacity-80"
+                className="flex h-7 w-7 items-center justify-center text-white transition-opacity hover:opacity-80 sm:h-8 sm:w-8"
                 aria-label="Account"
               >
                 <svg
@@ -137,7 +147,7 @@ export function FacebookHeaderClient({ menu }: FacebookHeaderClientProps) {
                   viewBox="0 0 24 24"
                   strokeWidth={2}
                   stroke="currentColor"
-                  className="h-6 w-6"
+                  className="h-5 w-5 sm:h-6 sm:w-6"
                 >
                   <path
                     strokeLinecap="round"
@@ -150,7 +160,7 @@ export function FacebookHeaderClient({ menu }: FacebookHeaderClientProps) {
               {/* Cart - Rightmost */}
               <button
                 onClick={() => setIsCartDrawerOpen(true)}
-                className="relative flex h-8 w-8 items-center justify-center text-white transition-opacity hover:opacity-80"
+                className="relative flex h-7 w-7 items-center justify-center text-white transition-opacity hover:opacity-80 sm:h-8 sm:w-8"
                 aria-label="Cart"
               >
                 <svg
@@ -159,7 +169,7 @@ export function FacebookHeaderClient({ menu }: FacebookHeaderClientProps) {
                   viewBox="0 0 24 24"
                   strokeWidth={2}
                   stroke="currentColor"
-                  className="h-6 w-6"
+                  className="h-5 w-5 sm:h-6 sm:w-6"
                 >
                   <path
                     strokeLinecap="round"
@@ -168,7 +178,7 @@ export function FacebookHeaderClient({ menu }: FacebookHeaderClientProps) {
                   />
                 </svg>
                 {cart?.totalQuantity && cart.totalQuantity > 0 ? (
-                  <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+                  <div className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:w-5 sm:text-[10px]">
                     {cart.totalQuantity}
                   </div>
                 ) : null}

@@ -21,13 +21,16 @@ export default async function HomePage() {
   // 過濾掉 "All" collection
   const collections = allCollections.filter((c) => c.handle !== '');
 
-  // 建立一個假的 "News" collection 物件
+  // 建立一個 "News" collection 物件，使用從 Shopify page 獲取的標題
   const newsCollection = {
     handle: 'news',
-    title: 'News',
-    description: '',
-    seo: { title: 'News', description: '' },
-    updatedAt: new Date().toISOString(),
+    title: newsPage?.title || 'News',
+    description: newsPage?.bodySummary || '',
+    seo: {
+      title: newsPage?.seo?.title || newsPage?.title || 'News',
+      description: newsPage?.seo?.description || newsPage?.bodySummary || ''
+    },
+    updatedAt: newsPage?.updatedAt || new Date().toISOString(),
     path: '/news'
   };
 

@@ -6,10 +6,10 @@ export async function FacebookFooter() {
   return (
     <footer className="border-t border-gray-300 bg-white">
       {/* Bottom Bar */}
-      <div className="bg-gray-50 py-4">
-        <div className="px-4">
-          <div className="flex flex-row items-center justify-between gap-2 text-xs text-gray-600">          
-            <div className="flex flex-wrap items-center justify-start gap-4">
+      <div className="bg-gray-50 py-3 sm:py-4">
+        <div className="px-2 sm:px-4">
+          <div className="flex flex-col items-center justify-center gap-2 text-[10px] text-gray-600 sm:flex-row sm:justify-between sm:text-xs">
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start sm:gap-3 md:gap-4">
               <Link href="/" className="text-gray-600 hover:underline">
                 Contact Us
               </Link>
@@ -27,7 +27,7 @@ export async function FacebookFooter() {
               </Link>
             </div>
 
-             <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <span>© {currentYear} org123.xyz</span>
             </div>
           </div>

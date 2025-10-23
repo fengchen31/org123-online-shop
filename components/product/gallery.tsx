@@ -60,32 +60,56 @@ export function Gallery({ images }: { images: { src: string; altText: string }[]
       </div>
 
       {images.length > 1 ? (
-        <ul className="my-12 flex items-center flex-wrap justify-center gap-2 overflow-auto py-1 lg:mb-0">
-          {images.map((image, index) => {
-            const isActive = index === imageIndex;
+        <>
+          {/* Desktop: Thumbnail Images */}
+          <ul className="my-12 hidden items-center flex-wrap justify-center gap-2 overflow-auto py-1 lg:flex lg:mb-0">
+            {images.map((image, index) => {
+              const isActive = index === imageIndex;
 
-            return (
-              <li key={image.src} className="h-20 w-20">
+              return (
+                <li key={image.src} className="h-20 w-20">
+                  <button
+                    formAction={() => {
+                      const newState = updateImage(index.toString());
+                      updateURL(newState);
+                    }}
+                    aria-label="Select product image"
+                    className="h-full w-full"
+                  >
+                    <GridTileImage
+                      alt={image.altText}
+                      src={image.src}
+                      width={80}
+                      height={80}
+                      active={isActive}
+                    />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          {/* Mobile: Dot Indicators */}
+          <div className="my-6 flex items-center justify-center gap-2 lg:hidden">
+            {images.map((image, index) => {
+              const isActive = index === imageIndex;
+
+              return (
                 <button
+                  key={image.src}
                   formAction={() => {
                     const newState = updateImage(index.toString());
                     updateURL(newState);
                   }}
-                  aria-label="Select product image"
-                  className="h-full w-full"
-                >
-                  <GridTileImage
-                    alt={image.altText}
-                    src={image.src}
-                    width={80}
-                    height={80}
-                    active={isActive}
-                  />
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+                  aria-label={`Select image ${index + 1}`}
+                  className={`h-1.5 w-1.5 rounded-full transition-all ${
+                    isActive ? 'bg-[#3b5998] scale-150' : 'bg-gray-400'
+                  }`}
+                />
+              );
+            })}
+          </div>
+        </>
       ) : null}
     </form>
   );

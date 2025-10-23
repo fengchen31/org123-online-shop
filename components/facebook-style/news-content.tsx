@@ -2,80 +2,114 @@
 
 import { useState, useEffect } from 'react';
 import type { Page } from 'lib/shopify/types';
-import { NewsCarousel, type CarouselSlide } from './news-carousel';
+import { NewsFeed, type NewsPost } from './news-feed';
 
 interface NewsContentProps {
   page: Page;
   onTabChange: (handle: string) => void;
 }
 
-// Parse the page body to extract carousel data
-function parseCarouselData(htmlBody: string): CarouselSlide[] {
+// Parse the page body to extract news posts
+function parseNewsPosts(htmlBody: string): NewsPost[] {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlBody, 'text/html');
-  const slides: CarouselSlide[] = [];
+  const posts: NewsPost[] = [];
 
-  // Find all images with data-link-to attribute
-  const images = doc.querySelectorAll('img[data-link-to]');
-  images.forEach((img) => {
-    const imageUrl = img.getAttribute('src');
-    const linkTo = img.getAttribute('data-link-to');
-    const alt = img.getAttribute('alt');
+  // Find all article elements or div with class 'post'
+  const articles = doc.querySelectorAll('article, .post, [data-post]');
 
-    if (imageUrl && linkTo) {
-      slides.push({
-        imageUrl,
-        linkTo,
-        alt: alt || undefined
+  articles.forEach((article, index) => {
+    // Extract post data from article element
+    const author = article.getAttribute('data-author') || 'org123.xyz';
+    const timestamp = article.getAttribute('data-timestamp') || 'Just now';
+    const linkTo = article.getAttribute('data-link-to') || '';
+
+    // Get text content (all text not in img tags)
+    const textContent = Array.from(article.childNodes)
+      .filter(node => node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && node.nodeName !== 'IMG'))
+      .map(node => node.textContent?.trim())
+      .filter(Boolean)
+      .join(' ');
+
+    // Get first image if exists
+    const img = article.querySelector('img');
+    const imageUrl = img?.getAttribute('src') || '';
+
+    if (textContent || imageUrl) {
+      posts.push({
+        id: `post-${index}`,
+        author,
+        authorAvatar: '/images/avatars/org123xyz_head.svg',
+        timestamp,
+        content: textContent,
+        imageUrl: imageUrl || undefined,
+        linkTo: linkTo || undefined
       });
     }
   });
 
-  // If no special images found, try to extract all images as simple slides
-  if (slides.length === 0) {
-    const allImages = doc.querySelectorAll('img');
-    allImages.forEach((img, index) => {
+  // If no articles found, try to parse as simple image + text pairs
+  if (posts.length === 0) {
+    const images = doc.querySelectorAll('img');
+    images.forEach((img, index) => {
       const imageUrl = img.getAttribute('src');
+      const linkTo = img.getAttribute('data-link-to') || '';
+      const alt = img.getAttribute('alt') || '';
+
+      // Try to find associated text (next sibling or parent's text)
+      let content = alt;
+      const parent = img.parentElement;
+      if (parent) {
+        const textNodes = Array.from(parent.childNodes)
+          .filter(node => node.nodeType === Node.TEXT_NODE)
+          .map(node => node.textContent?.trim())
+          .filter(Boolean);
+        if (textNodes.length > 0) {
+          content = textNodes.join(' ');
+        }
+      }
+
       if (imageUrl) {
-        slides.push({
+        posts.push({
+          id: `post-${index}`,
+          author: 'org123.xyz',
+          authorAvatar: '/images/avatars/org123xyz_head.svg',
+          timestamp: 'Just now',
+          content: content,
           imageUrl,
-          linkTo: '', // No link by default
-          alt: img.getAttribute('alt') || `Image ${index + 1}`
+          linkTo: linkTo || undefined
         });
       }
     });
   }
 
-  return slides;
+  return posts;
 }
 
 export function NewsContent({ page, onTabChange }: NewsContentProps) {
-  const [slides, setSlides] = useState<CarouselSlide[]>([]);
+  const [posts, setPosts] = useState<NewsPost[]>([]);
 
   useEffect(() => {
     // Parse on client side only
-    const parsedSlides = parseCarouselData(page.body);
-    setSlides(parsedSlides);
+    const parsedPosts = parseNewsPosts(page.body);
+    setPosts(parsedPosts);
   }, [page.body]);
 
-  const handleSlideClick = (collectionHandle: string) => {
+  const handlePostClick = (collectionHandle: string) => {
     if (collectionHandle) {
       onTabChange(collectionHandle);
     }
   };
 
-  if (slides.length > 0) {
+  if (posts.length > 0) {
     return (
       <div className="space-y-4">
-        <NewsCarousel slides={slides} onSlideClick={handleSlideClick} />
-        {page.bodySummary && (
-          <div className="mt-4 text-sm text-gray-600">{page.bodySummary}</div>
-        )}
+        <NewsFeed posts={posts} onPostClick={handlePostClick} />
       </div>
     );
   }
 
-  // Fallback to original HTML display if no images found
+  // Fallback to original HTML display if no posts found
   return (
     <div className="space-y-4">
       <div

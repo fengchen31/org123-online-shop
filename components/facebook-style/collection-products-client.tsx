@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { CollectionProductsGrid } from './collection-products-grid';
-import { CategoryFilter, type CategoryType } from './category-filter';
+import { type CategoryType } from './category-filter';
 import { CollectionHeader } from './collection-header';
 import type { Product } from 'lib/shopify/types';
 import type { SortFilterItem } from 'lib/constants';
@@ -88,19 +88,19 @@ export function CollectionProductsClient({
         productCount={productCount}
       />
 
-      <CategoryFilter
-        categories={CATEGORIES}
-        activeCategory={activeCategory}
-        onCategoryChange={handleCategoryChange}
-      />
-
       {isLoading && (
         <div className="mb-4 border border-blue-200 bg-blue-50 px-4 py-2 text-xs text-blue-700">
           Loading products...
         </div>
       )}
 
-      <CollectionProductsGrid products={filteredProducts} onSortChange={handleSortChange} />
+      <CollectionProductsGrid
+        products={filteredProducts}
+        onSortChange={handleSortChange}
+        categories={CATEGORIES}
+        activeCategory={activeCategory}
+        onCategoryChange={handleCategoryChange}
+      />
     </>
   );
 }

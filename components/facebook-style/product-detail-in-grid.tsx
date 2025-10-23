@@ -43,18 +43,18 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center border border-gray-300 bg-white text-gray-600 hover:bg-gray-100"
+          className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center border border-gray-300 bg-white text-gray-600 hover:bg-gray-100 sm:right-3 sm:top-3 sm:h-8 sm:w-8 lg:right-4 lg:top-4"
           aria-label="Close"
         >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
-        <div className="grid gap-8 md:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-2 md:gap-6 lg:gap-8">
           {/* Left side - Images */}
           <div
-            className={`p-8 ${isAnimating ? 'animate-image-expand' : ''}`}
+            className={`p-3 sm:p-4 md:p-6 lg:p-8 ${isAnimating ? 'animate-image-expand' : ''}`}
           >
             {/* Main image */}
             <div
@@ -78,55 +78,74 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
 
             {/* Thumbnail images */}
             {images.length > 1 && (
-              <div className="mt-4 grid grid-cols-5 gap-2">
-                {images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImageIndex(index)}
-                    className={`relative aspect-square overflow-hidden border-2 bg-gray-100 ${
-                      selectedImageIndex === index ? 'border-[#3b5998]' : 'border-gray-300'
-                    }`}
-                  >
-                    <Image
-                      src={image.url}
-                      alt={`${product.title} - ${index + 1}`}
-                      fill
-                      className="object-cover"
+              <>
+                {/* Desktop: Thumbnail grid */}
+                <div className="mt-2 hidden grid-cols-5 lg:mt-4 lg:grid">
+                  {images.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`relative aspect-square overflow-hidden bg-gray-100 transition-all ${
+                        selectedImageIndex === index
+                          ? 'border-2 border-[#3b5998] shadow-md'
+                          : 'border border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      <Image
+                        src={image.url}
+                        alt={`${product.title} - ${index + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+
+                {/* Mobile: Dot indicators */}
+                <div className="mt-3 flex items-center justify-center gap-2 lg:hidden">
+                  {images.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`h-1.5 w-1.5 rounded-full transition-all ${
+                        selectedImageIndex === index ? 'bg-[#3b5998] scale-150' : 'bg-gray-400'
+                      }`}
+                      aria-label={`Select image ${index + 1}`}
                     />
-                  </button>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
 
           {/* Right side - Product info */}
-          <div className={`flex flex-col p-8 transition-all duration-500 ${
+          <div className={`flex flex-col p-3 transition-all duration-500 sm:p-4 md:p-6 lg:p-8 ${
             showContent ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'
           }`}>
             <div className="flex-1">
-              <h1 className="text-xl font-bold text-gray-900">
+              <h1 className="text-base font-bold text-gray-900 sm:text-lg lg:text-xl">
                 {product.title}
               </h1>
 
-              <p className="mt-3 text-base font-semibold text-[#3b5998]">
+              <p className="mt-2 text-sm font-semibold text-[#3b5998] sm:mt-3 sm:text-base">
                 {product.priceRange.maxVariantPrice.currencyCode} {Math.floor(parseFloat(product.priceRange.maxVariantPrice.amount)).toLocaleString()}
               </p>
 
               {product.description && (
-                <div className="mt-4">
-                  <h2 className="text-xs font-bold uppercase text-gray-600">Description</h2>
-                  <p className="mt-1 text-sm leading-relaxed text-gray-700">{product.description}</p>
+                <div className="mt-3 sm:mt-4">
+                  <h2 className="text-[10px] font-bold uppercase text-gray-600 sm:text-xs">Description</h2>
+                  <p className="mt-1 text-xs leading-relaxed text-gray-700 sm:text-sm">{product.description}</p>
                 </div>
               )}
 
               {/* Variants/Options */}
-              <div className="mt-4">
+              <div className="mt-3 sm:mt-4">
                 <FacebookVariantSelector options={product.options} variants={product.variants} />
               </div>
             </div>
 
             {/* Add to cart and wishlist buttons */}
-            <div className="mt-8 space-y-3">
+            <div className="mt-4 space-y-2 sm:mt-6 sm:space-y-3 lg:mt-8">
               <AddToCart product={product} />
               <AddToWishlist product={product} />
             </div>

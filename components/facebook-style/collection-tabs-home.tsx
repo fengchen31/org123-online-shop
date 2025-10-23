@@ -5,11 +5,19 @@ import type { Collection, Product } from 'lib/shopify/types';
 import Image from 'next/image';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { CollectionProductsGrid } from './collection-products-grid';
+import { MobileBottomBar } from './mobile-bottom-bar';
+import { CartDrawer } from './cart-drawer';
+import { WishlistDrawer } from './wishlist-drawer';
+import { AccountDrawer } from './account-drawer';
+import { useCart } from 'components/cart/cart-context';
 
 interface CollectionTabsHomeProps {
   collections: Collection[];
   collectionContents: Record<string, React.ReactNode>;
   onTabChange?: (handle: string) => void;
+  onOpenCart?: () => void;
+  onOpenWishlist?: () => void;
+  onOpenAccount?: () => void;
 }
 
 // Available login avatars
@@ -24,7 +32,10 @@ const LOGIN_AVATARS = [
 export function CollectionTabsHome({
   collections,
   collectionContents,
-  onTabChange
+  onTabChange,
+  onOpenCart,
+  onOpenWishlist,
+  onOpenAccount
 }: CollectionTabsHomeProps) {
   // 使用第一個 collection 作為預設
   const [activeTab, setActiveTab] = useState<string>(
@@ -37,6 +48,17 @@ export function CollectionTabsHome({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  // Wishlist count
+  const [wishlistCount, setWishlistCount] = useState(0);
+
+  // Cart from context
+  const { cart } = useCart();
+
+  // Drawer states for mobile
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+  const [isWishlistDrawerOpen, setIsWishlistDrawerOpen] = useState(false);
+  const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
 
   // Randomly select an avatar (stable across re-renders)
   const randomAvatar = useMemo(() => {
@@ -62,7 +84,31 @@ export function CollectionTabsHome({
       }
     };
 
+    const fetchWishlistCount = async () => {
+      try {
+        const res = await fetch('/api/wishlist');
+        if (res.ok) {
+          const data = await res.json();
+          setWishlistCount(data.wishlist?.length || 0);
+        }
+      } catch (error) {
+        console.error('Error fetching wishlist count:', error);
+      }
+    };
+
     fetchCustomer();
+    fetchWishlistCount();
+
+    // Listen for wishlist updates
+    const handleWishlistUpdate = (event: CustomEvent) => {
+      setWishlistCount(event.detail.count);
+    };
+
+    window.addEventListener('wishlistUpdate', handleWishlistUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('wishlistUpdate', handleWishlistUpdate as EventListener);
+    };
   }, []);
 
   const handleTabChange = (handle: string) => {
@@ -97,15 +143,22 @@ export function CollectionTabsHome({
   };
 
   return (
-    <div className="min-h-screen bg-[#e9eaed]">
-      {/* Profile Header - Light gray background */}
-      <div className="relative bg-[#e9eaed] pt-16">
-        <div className="mx-auto max-w-7xl px-4">
-          {/* Right: Title and Tabs - with left margin to avoid avatar */}
-          <div className="ml-[204px] flex flex-col">
+    <div className="min-h-screen bg-white md:bg-[#e9eaed] md:pt-0">
+      {/* Mobile Discount Marquee - Below header, only show on mobile */}
+      <div className="overflow-hidden bg-[#f7f7f7] md:hidden">
+        <div className="animate-marquee whitespace-nowrap py-1.5 text-xs text-gray-700">
+          Special Offer: 20% OFF on all items! Use code: SAVE20
+        </div>
+      </div>
+
+      {/* Profile Header - Light gray background - Hidden on mobile */}
+      <div className="relative hidden bg-[#e9eaed] pt-8 sm:pt-12 md:block lg:pt-16">
+        <div className="mx-auto px-2 sm:px-4">
+          {/* Right: Title and Tabs - with left margin to avoid avatar on desktop */}
+          <div className="ml-0 flex flex-col md:ml-[204px]">
             {/* Title */}
             <div className="flex items-center gap-2 pb-2">
-              <h1 className="text-2xl font-bold text-gray-900">{customerName}</h1>
+              <h1 className="text-lg font-bold text-gray-900 sm:text-xl lg:text-2xl">{customerName}</h1>
             </div>
 
             {/* Tabs - positioned at the bottom, aligned with bottom of gray area */}
@@ -115,7 +168,7 @@ export function CollectionTabsHome({
                   key={collection.handle}
                   onClick={() => handleTabChange(collection.handle)}
                   className={clsx(
-                    'px-3 py-1.5 text-md font-bold transition-all',
+                    'px-2 py-1 text-xs font-bold transition-all sm:px-3 sm:py-1.5 sm:text-sm lg:text-md',
                     activeTab === collection.handle
                       ? 'bg-white text-gray-900'
                       : 'bg-[#d8dfea] text-[#3b5998]'
@@ -132,12 +185,12 @@ export function CollectionTabsHome({
       {/* White Content Section */}
       <div className="relative -mt-0 bg-white pt-0">
         {/* Content below tabs */}
-        <div className="mx-auto max-w-7xl px-4 pb-6">
-          <div className="flex gap-6">
+        <div className="mx-auto px-2 pb-6 sm:px-4">
+          <div className="flex gap-3 sm:gap-4 lg:gap-6">
             {/* Left Column - Sidebar with Avatar */}
-            <div className="hidden w-[180px] shrink-0 lg:block">
+            <div className="hidden w-[180px] shrink-0 md:block">
               {/* Avatar - positioned absolutely, extending up into gray area */}
-              <div className="relative -mt-20 mb-4 w-full">
+              <div className="relative -mt-14 mb-4 w-full md:-mt-20">
                 <div className="relative z-20 overflow-hidden border border-gray-300 shadow-lg">
                   <div className="relative aspect-square w-full bg-white">
                     <Image
@@ -296,8 +349,8 @@ export function CollectionTabsHome({
             {/* Right Column - Content */}
             <div className="flex-1">
               {/* Main Content - Product Grid */}
-              <div className="mt-6 border border-gray-300 bg-white p-6 shadow-sm">
-                <h2 className="mb-6 text-xl font-semibold text-[#3b5998]">
+              <div className="mt-3 p-3 md:border md:border-gray-300 md:bg-white md:shadow-sm sm:mt-4 sm:p-4 lg:mt-6 lg:p-6">
+                <h2 className="mb-3 text-base font-semibold text-[#3b5998] sm:mb-4 sm:text-lg lg:mb-6 lg:text-xl">
                   {isSearching && searchQuery
                     ? `Search Results for "${searchQuery}"`
                     : collections.find((c) => c.handle === activeTab)?.title || 'Products'}
@@ -338,6 +391,42 @@ export function CollectionTabsHome({
           </div>
         </div>
       </div>
+
+      {/* Mobile Bottom Bar - Only show on screens smaller than 768px */}
+      <div className="md:hidden">
+        <MobileBottomBar
+          collections={collections}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          onOpenCart={() => setIsCartDrawerOpen(true)}
+          onOpenWishlist={() => setIsWishlistDrawerOpen(true)}
+          onOpenAccount={() => setIsAccountDrawerOpen(true)}
+          cartCount={cart?.totalQuantity || 0}
+          wishlistCount={wishlistCount}
+          onSearch={handleSearch}
+          searchQuery={searchQuery}
+        />
+      </div>
+
+      {/* Mobile Drawers */}
+      <div className="md:hidden">
+        <WishlistDrawer
+          isOpen={isWishlistDrawerOpen}
+          onClose={() => setIsWishlistDrawerOpen(false)}
+          onOpenCart={() => setIsCartDrawerOpen(true)}
+        />
+        <AccountDrawer isOpen={isAccountDrawerOpen} onClose={() => setIsAccountDrawerOpen(false)} />
+        <CartDrawer isOpen={isCartDrawerOpen} onClose={() => setIsCartDrawerOpen(false)} />
+      </div>
+
+      {/* Add padding on mobile to prevent content being hidden by sticky bar */}
+      <style jsx global>{`
+        @media (max-width: 767px) {
+          body {
+            padding-bottom: 56px;
+          }
+        }
+      `}</style>
     </div>
   );
 }

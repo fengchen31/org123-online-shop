@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ProductCard } from './product-card';
 import { ProductDetailInGrid } from './product-detail-in-grid';
 import { ProductFilter } from './product-filter';
+import { CategoryFilter, type CategoryType } from './category-filter';
 import type { Product } from 'lib/shopify/types';
 import type { SortFilterItem } from 'lib/constants';
 import { defaultSort } from 'lib/constants';
@@ -11,9 +12,22 @@ import { defaultSort } from 'lib/constants';
 interface CollectionProductsGridProps {
   products: Product[];
   onSortChange?: (sortOption: SortFilterItem) => void;
+  categories?: Array<{
+    id: CategoryType;
+    label: string;
+    icon: string;
+  }>;
+  activeCategory?: CategoryType;
+  onCategoryChange?: (category: CategoryType) => void;
 }
 
-export function CollectionProductsGrid({ products, onSortChange }: CollectionProductsGridProps) {
+export function CollectionProductsGrid({
+  products,
+  onSortChange,
+  categories,
+  activeCategory,
+  onCategoryChange
+}: CollectionProductsGridProps) {
   const [expandedProduct, setExpandedProduct] = useState<Product | null>(null);
   const [startRect, setStartRect] = useState<DOMRect | null>(null);
   const [currentSort, setCurrentSort] = useState<SortFilterItem>(defaultSort);
@@ -46,8 +60,22 @@ export function CollectionProductsGrid({ products, onSortChange }: CollectionPro
 
   return (
     <>
-      <ProductFilter onSortChange={handleSortChange} currentSort={currentSort} />
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      {/* Filters Row - Category on left, Sort on right */}
+      <div className="mb-3 flex items-center justify-between sm:mb-4">
+        {/* Left: Category Filter */}
+        {categories && activeCategory !== undefined && onCategoryChange && (
+          <CategoryFilter
+            categories={categories}
+            activeCategory={activeCategory}
+            onCategoryChange={onCategoryChange}
+          />
+        )}
+
+        {/* Right: Product Filter */}
+        <ProductFilter onSortChange={handleSortChange} currentSort={currentSort} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {expandedProduct ? (
           <ProductDetailInGrid
             product={expandedProduct}

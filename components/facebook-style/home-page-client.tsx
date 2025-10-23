@@ -9,12 +9,18 @@ interface HomePageClientProps {
   allTabs: Collection[];
   newsPage: Page | null;
   collectionProductsComponents: Record<string, React.ReactNode>;
+  onOpenCart?: () => void;
+  onOpenWishlist?: () => void;
+  onOpenAccount?: () => void;
 }
 
 export function HomePageClient({
   allTabs,
   newsPage,
-  collectionProductsComponents
+  collectionProductsComponents,
+  onOpenCart,
+  onOpenWishlist,
+  onOpenAccount
 }: HomePageClientProps) {
   const [currentTab, setCurrentTab] = useState<string>(
     allTabs.length > 0 ? allTabs[0]!.handle : ''
@@ -42,6 +48,9 @@ export function HomePageClient({
       collections={allTabs}
       collectionContents={tabContents}
       onTabChange={setCurrentTab}
+      onOpenCart={onOpenCart}
+      onOpenWishlist={onOpenWishlist}
+      onOpenAccount={onOpenAccount}
     />
   );
 }

@@ -8,9 +8,12 @@ import { NewsContent } from './news-content';
 interface HomeWrapperProps {
   collections: Collection[];
   newsPage: Page | null;
+  onOpenCart?: () => void;
+  onOpenWishlist?: () => void;
+  onOpenAccount?: () => void;
 }
 
-export function HomeWrapper({ collections, newsPage }: HomeWrapperProps) {
+export function HomeWrapper({ collections, newsPage, onOpenCart, onOpenWishlist, onOpenAccount }: HomeWrapperProps) {
   // 建立一個假的 "News" collection 物件
   const newsCollection = useMemo(
     () => ({
@@ -59,6 +62,9 @@ export function HomeWrapper({ collections, newsPage }: HomeWrapperProps) {
       collections={allTabs}
       collectionContents={tabContents}
       onTabChange={setCurrentTab}
+      onOpenCart={onOpenCart}
+      onOpenWishlist={onOpenWishlist}
+      onOpenAccount={onOpenAccount}
     />
   );
 }
