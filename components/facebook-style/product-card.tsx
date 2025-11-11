@@ -8,9 +8,10 @@ interface ProductCardProps {
   product: Product;
   onExpand: (rect: DOMRect) => void;
   isHidden: boolean;
+  collectionName?: string;
 }
 
-export function ProductCard({ product, onExpand, isHidden }: ProductCardProps) {
+export function ProductCard({ product, onExpand, isHidden, collectionName }: ProductCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
@@ -73,16 +74,21 @@ export function ProductCard({ product, onExpand, isHidden }: ProductCardProps) {
       </div>
 
       {/* Product Info */}
-      <div className="p-2 sm:p-3 lg:p-4">
-        <div className="flex items-center justify-between gap-1 sm:gap-2">
-          <h3 className="line-clamp-1 text-[10px] font-bold uppercase text-gray-900 sm:text-xs">
-            {product.title}
-          </h3>
-          <p className="whitespace-nowrap text-[10px] font-bold text-gray-900 sm:text-xs">
-            {product.priceRange.maxVariantPrice.currencyCode}
-            {Math.floor(parseFloat(product.priceRange.maxVariantPrice.amount)).toLocaleString()}
-          </p>
+      <div className="p-3 sm:p-4">
+        {/* Collection Name (Tab Name) - Larger */}
+        <div className="mb-1 text-sm font-bold tracking-wide text-gray-900 sm:text-base">
+          {collectionName || 'Product'}
         </div>
+
+        {/* Product Name - Smaller */}
+        <h3 className="mb-2 line-clamp-2 text-xs font-bold leading-tight text-gray-900 sm:text-sm">
+          {product.title}
+        </h3>
+
+        {/* Price - Smaller, same as product name */}
+        <p className="text-xs font-bold text-gray-900 sm:text-sm">
+          ${Math.floor(parseFloat(product.priceRange.maxVariantPrice.amount)).toLocaleString()} {product.priceRange.maxVariantPrice.currencyCode}
+        </p>
       </div>
     </div>
   );

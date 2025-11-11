@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { Collection } from 'lib/shopify/types';
 import clsx from 'clsx';
 
@@ -31,6 +31,12 @@ export function MobileBottomBar({
 }: MobileBottomBarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [localSearchQuery, setLocalSearchQuery] = useState(externalSearchQuery || '');
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number>(0);
+  const touchStartY = useRef<number>(0);
+  const touchCurrentX = useRef<number>(0);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleTabChangeAndClose = (handle: string) => {
     onTabChange(handle);
@@ -53,6 +59,79 @@ export function MobileBottomBar({
     }
   };
 
+  // Handle touch events for swipe to close
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches[0]) {
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+      touchCurrentX.current = e.touches[0].clientX;
+      setIsDragging(false);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches[0]) {
+      touchCurrentX.current = e.touches[0].clientX;
+      const diffX = touchCurrentX.current - touchStartX.current;
+      const diffY = e.touches[0].clientY - touchStartY.current;
+
+      // Determine if this is a horizontal swipe
+      if (!isDragging && Math.abs(diffX) > 10) {
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+          setIsDragging(true);
+        }
+      }
+
+      // Only allow right swipe (positive diff) and prevent default when dragging horizontally
+      if (isDragging || (Math.abs(diffX) > Math.abs(diffY) && diffX > 0)) {
+        if (diffX > 0) {
+          setDragOffset(diffX);
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    const diff = touchCurrentX.current - touchStartX.current;
+
+    // If swiped more than 100px to the right, close the drawer
+    if (diff > 100) {
+      setIsMenuOpen(false);
+    }
+
+    // Reset drag offset and dragging state
+    setDragOffset(0);
+    setIsDragging(false);
+    touchStartX.current = 0;
+    touchStartY.current = 0;
+    touchCurrentX.current = 0;
+  };
+
+  // Reset drag offset when drawer closes and prevent body scroll when open
+  useEffect(() => {
+    if (!isMenuOpen) {
+      setDragOffset(0);
+      // Re-enable body scroll
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    } else {
+      // Disable body scroll when drawer is open
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+    }
+
+    return () => {
+      // Cleanup on unmount
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, [isMenuOpen]);
+
   return (
     <>
       {/* Right Drawer - Unified Style */}
@@ -62,18 +141,31 @@ export function MobileBottomBar({
           <div
             className="fixed inset-0 z-40 bg-black/50 transition-opacity duration-300"
             onClick={() => setIsMenuOpen(false)}
+            onTouchMove={(e) => e.preventDefault()}
+            style={{ touchAction: 'none' }}
           />
         )}
 
-        {/* Drawer - From Right */}
+        {/* Drawer - From Right Bottom, 2/3 width, auto height */}
         <div
-          className={`fixed bottom-0 right-0 top-0 z-50 w-full max-w-md bg-white shadow-xl transition-transform duration-300 ${
+          ref={drawerRef}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          className={`fixed bottom-0 right-0 z-50 w-2/3 bg-white shadow-xl transition-transform duration-300 ${
             isMenuOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
+          style={{
+            transform: isMenuOpen
+              ? `translateX(${dragOffset}px)`
+              : 'translateX(100%)',
+            maxHeight: '70vh',
+            touchAction: 'pan-y'
+          }}
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
-            <h2 className="text-lg font-bold text-gray-900">Collections</h2>
+            <h2 className="text-base font-bold text-gray-900">Collections</h2>
             <button
               onClick={() => setIsMenuOpen(false)}
               className="flex h-8 w-8 items-center justify-center rounded text-gray-500 hover:bg-gray-100"
@@ -84,8 +176,8 @@ export function MobileBottomBar({
             </button>
           </div>
 
-          {/* Collections List */}
-          <div className="overflow-y-auto" style={{ height: 'calc(100vh - 60px)' }}>
+          {/* Collections List - Auto height with max height */}
+          <div className="max-h-[calc(70vh-60px)] overflow-y-auto">
             {collections.map((collection) => (
               <button
                 key={collection.handle}

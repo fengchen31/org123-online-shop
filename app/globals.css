@@ -73,3 +73,25 @@ button {
 .animate-marquee {
   animation: marquee 15s linear infinite;
 }
+
+/* Size chart table styling */
+.size-chart-table table {
+  @apply w-full border-collapse text-xs sm:text-sm;
+}
+
+.size-chart-table th,
+.size-chart-table td {
+  @apply border border-gray-300 px-2 py-2 sm:px-3;
+}
+
+.size-chart-table th {
+  @apply bg-gray-50 font-semibold text-gray-900;
+}
+
+.size-chart-table td {
+  @apply text-gray-700;
+}
+
+.size-chart-table tbody tr:hover {
+  @apply bg-gray-50;
+}

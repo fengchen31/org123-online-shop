@@ -11,6 +11,7 @@ import { defaultSort } from 'lib/constants';
 
 interface CollectionProductsGridProps {
   products: Product[];
+  collectionName?: string;
   onSortChange?: (sortOption: SortFilterItem) => void;
   categories?: Array<{
     id: CategoryType;
@@ -23,6 +24,7 @@ interface CollectionProductsGridProps {
 
 export function CollectionProductsGrid({
   products,
+  collectionName,
   onSortChange,
   categories,
   activeCategory,
@@ -89,6 +91,7 @@ export function CollectionProductsGrid({
               product={product}
               onExpand={(rect) => handleExpand(product, rect)}
               isHidden={false}
+              collectionName={collectionName}
             />
           ))
         )}

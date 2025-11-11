@@ -15,8 +15,12 @@ function parseNewsPosts(htmlBody: string): NewsPost[] {
   const doc = parser.parseFromString(htmlBody, 'text/html');
   const posts: NewsPost[] = [];
 
+  console.log('=== Parsing News Posts ===');
+  console.log('HTML Body:', htmlBody);
+
   // Find all article elements or div with class 'post'
   const articles = doc.querySelectorAll('article, .post, [data-post]');
+  console.log('Found articles:', articles.length);
 
   articles.forEach((article, index) => {
     // Extract post data from article element
@@ -35,6 +39,8 @@ function parseNewsPosts(htmlBody: string): NewsPost[] {
     const img = article.querySelector('img');
     const imageUrl = img?.getAttribute('src') || '';
 
+    console.log(`Article ${index}:`, { textContent, imageUrl, linkTo });
+
     if (textContent || imageUrl) {
       posts.push({
         id: `post-${index}`,
@@ -50,38 +56,69 @@ function parseNewsPosts(htmlBody: string): NewsPost[] {
 
   // If no articles found, try to parse as simple image + text pairs
   if (posts.length === 0) {
-    const images = doc.querySelectorAll('img');
-    images.forEach((img, index) => {
-      const imageUrl = img.getAttribute('src');
-      const linkTo = img.getAttribute('data-link-to') || '';
-      const alt = img.getAttribute('alt') || '';
+    console.log('No articles found, trying fallback parsing...');
 
-      // Try to find associated text (next sibling or parent's text)
-      let content = alt;
-      const parent = img.parentElement;
-      if (parent) {
-        const textNodes = Array.from(parent.childNodes)
-          .filter(node => node.nodeType === Node.TEXT_NODE)
-          .map(node => node.textContent?.trim())
-          .filter(Boolean);
-        if (textNodes.length > 0) {
-          content = textNodes.join(' ');
+    // Try to find all images and group them with nearby text
+    const body = doc.body;
+    const allElements = Array.from(body.children);
+
+    console.log('Body children:', allElements.length);
+
+    // Strategy: Look for patterns of text followed by image, or image with surrounding text
+    let i = 0;
+    while (i < allElements.length) {
+      const element = allElements[i];
+
+      // Check if this element or its children contain an image
+      const img = element?.tagName === 'IMG' ? element as HTMLImageElement : element?.querySelector('img');
+
+      if (img) {
+        const imageUrl = img.getAttribute('src');
+        const linkTo = img.getAttribute('data-link-to') || '';
+
+        // Collect text from current element (excluding img) and previous elements
+        let content = '';
+
+        // Get text from current element
+        const clone = element?.cloneNode(true) as HTMLElement;
+        const images = clone?.querySelectorAll('img');
+        images?.forEach(i => i.remove());
+        content = clone?.textContent?.trim() || '';
+
+        // If no text in current element, look at previous element
+        if (!content && i > 0) {
+          const prevElement = allElements[i - 1];
+          if (prevElement && !prevElement.querySelector('img')) {
+            content = prevElement.textContent?.trim() || '';
+          }
+        }
+
+        // Use alt text as fallback
+        if (!content) {
+          content = img.getAttribute('alt') || '';
+        }
+
+        console.log(`Image ${posts.length}:`, { content, imageUrl, linkTo });
+
+        if (imageUrl) {
+          posts.push({
+            id: `post-${posts.length}`,
+            author: 'org123.xyz',
+            authorAvatar: '/images/avatars/org123xyz_head.svg',
+            timestamp: 'Just now',
+            content: content,
+            imageUrl,
+            linkTo: linkTo || undefined
+          });
         }
       }
 
-      if (imageUrl) {
-        posts.push({
-          id: `post-${index}`,
-          author: 'org123.xyz',
-          authorAvatar: '/images/avatars/org123xyz_head.svg',
-          timestamp: 'Just now',
-          content: content,
-          imageUrl,
-          linkTo: linkTo || undefined
-        });
-      }
-    });
+      i++;
+    }
   }
+
+  console.log('Total posts parsed:', posts.length);
+  console.log('Posts:', posts);
 
   return posts;
 }

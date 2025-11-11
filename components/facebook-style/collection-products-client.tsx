@@ -96,6 +96,7 @@ export function CollectionProductsClient({
 
       <CollectionProductsGrid
         products={filteredProducts}
+        collectionName={collectionTitle}
         onSortChange={handleSortChange}
         categories={CATEGORIES}
         activeCategory={activeCategory}

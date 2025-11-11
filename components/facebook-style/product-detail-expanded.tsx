@@ -8,6 +8,7 @@ import { AddToCart } from 'components/cart/add-to-cart';
 import { AddToWishlist } from 'components/wishlist/add-to-wishlist';
 import { FacebookVariantSelector } from './facebook-variant-selector';
 import { FullscreenImageViewer } from './fullscreen-image-viewer';
+import { CollapsibleDescription } from './collapsible-description';
 
 interface ProductDetailExpandedProps {
   product: Product;
@@ -110,10 +111,13 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
                 {product.priceRange.maxVariantPrice.currencyCode} {Math.floor(parseFloat(product.priceRange.maxVariantPrice.amount)).toLocaleString()}
               </p>
 
+              {/* Collapsible Description - After price */}
               {product.description && (
                 <div className="mt-4">
-                  <h2 className="text-xs font-bold uppercase text-gray-600">Description</h2>
-                  <p className="mt-1 text-sm leading-relaxed text-gray-700">{product.description}</p>
+                  <CollapsibleDescription
+                    description={product.description}
+                    descriptionHtml={product.descriptionHtml}
+                  />
                 </div>
               )}
 
