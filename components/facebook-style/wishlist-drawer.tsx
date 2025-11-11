@@ -136,6 +136,7 @@ export function WishlistDrawer({ isOpen, onClose, onOpenCart }: WishlistDrawerPr
             availableForSale: true,
             description: '',
             descriptionHtml: '',
+            productType: '',
             options: [],
             priceRange: {
               maxVariantPrice: variant.price,
