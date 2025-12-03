@@ -10,6 +10,7 @@ import { CartDrawer } from './cart-drawer';
 import { WishlistDrawer } from './wishlist-drawer';
 import { AccountDrawer } from './account-drawer';
 import { useCart } from 'components/cart/cart-context';
+import { NewsletterSuccessModal } from 'components/newsletter-success-modal';
 
 interface CollectionTabsHomeProps {
   collections: Collection[];
@@ -62,6 +63,10 @@ export function CollectionTabsHome({
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
   const [isWishlistDrawerOpen, setIsWishlistDrawerOpen] = useState(false);
   const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
+
+  // Newsletter success modal state
+  const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false);
+  const [newsletterDiscountCode, setNewsletterDiscountCode] = useState('');
 
   // Randomly select an avatar (stable across re-renders)
   const randomAvatar = useMemo(() => {
@@ -365,6 +370,72 @@ export function CollectionTabsHome({
                   </div>
                 </div>
               </div>
+
+              {/* Newsletter Section */}
+              <div className="border-b-0 border-r border-t border-gray-300 bg-white">
+                <div className="border-b border-gray-300 bg-[#f7f7f7] px-3 py-2">
+                  <h3 className="text-xs font-bold text-gray-800">Newsletter</h3>
+                </div>
+                <div className="p-3">
+                  <p className="mb-3 text-xs text-gray-700">
+                    Get the latest updates and exclusive offers!
+                  </p>
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      const form = e.target as HTMLFormElement;
+                      const emailInput = form.elements.namedItem('email') as HTMLInputElement;
+                      const email = emailInput.value;
+                      const button = form.elements.namedItem('submit') as HTMLButtonElement;
+
+                      // Disable button
+                      button.disabled = true;
+                      button.textContent = 'Subscribing...';
+
+                      try {
+                        const response = await fetch('/api/newsletter', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ email })
+                        });
+
+                        const data = await response.json();
+
+                        // Clear email input
+                        emailInput.value = '';
+
+                        // Always show modal with discount code (success or error)
+                        setNewsletterDiscountCode(data.discountCode || 'WELCOME10');
+                        setIsNewsletterModalOpen(true);
+                      } catch (error) {
+                        // Even on error, show modal
+                        console.error('Newsletter subscription error:', error);
+                        setNewsletterDiscountCode('WELCOME10');
+                        setIsNewsletterModalOpen(true);
+                      } finally {
+                        button.disabled = false;
+                        button.textContent = 'Subscribe';
+                      }
+                    }}
+                  >
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="Enter your email"
+                      required
+                      className="w-full border border-gray-300 px-3 py-2 text-xs text-gray-700 placeholder-gray-400 outline-none focus:border-gray-300"
+                      style={{ boxShadow: 'none' }}
+                    />
+                    <button
+                      type="submit"
+                      name="submit"
+                      className="mt-2 w-full bg-[#3b5998] px-3 py-2 text-xs font-bold text-white transition-opacity hover:opacity-90"
+                    >
+                      Subscribe
+                    </button>
+                  </form>
+                </div>
+              </div>
             </div>
 
             {/* Right Column - Content */}
@@ -439,6 +510,13 @@ export function CollectionTabsHome({
         <AccountDrawer isOpen={isAccountDrawerOpen} onClose={() => setIsAccountDrawerOpen(false)} />
         <CartDrawer isOpen={isCartDrawerOpen} onClose={() => setIsCartDrawerOpen(false)} />
       </div>
+
+      {/* Newsletter Success Modal */}
+      <NewsletterSuccessModal
+        isOpen={isNewsletterModalOpen}
+        onClose={() => setIsNewsletterModalOpen(false)}
+        discountCode={newsletterDiscountCode}
+      />
 
       {/* Add padding on mobile to prevent content being hidden by sticky bar */}
       <style jsx global>{`
