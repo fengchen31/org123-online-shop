@@ -7,6 +7,7 @@ import { CollectionHeader } from './collection-header';
 import type { Product } from 'lib/shopify/types';
 import type { SortFilterItem } from 'lib/constants';
 import { defaultSort } from 'lib/constants';
+import { HIDDEN_PRODUCT_TAG } from 'lib/constants';
 
 interface CollectionProductsClientProps {
   initialProducts: Product[];
@@ -14,14 +15,6 @@ interface CollectionProductsClientProps {
   collectionTitle: string;
   collectionDescription: string;
 }
-
-const CATEGORIES = [
-  { id: 'all' as CategoryType, label: 'All', icon: '' },
-  { id: 'accessories' as CategoryType, label: 'Accessories', icon: '' },
-  { id: 'clothing' as CategoryType, label: 'Clothing', icon: '' },
-  { id: 'footwear' as CategoryType, label: 'Footwear', icon: '' },
-  { id: 'lifestyle' as CategoryType, label: 'Lifestyle', icon: '' }
-];
 
 export function CollectionProductsClient({
   initialProducts,
@@ -33,15 +26,63 @@ export function CollectionProductsClient({
   const [isLoading, setIsLoading] = useState(false);
   const [currentSort, setCurrentSort] = useState<SortFilterItem>(defaultSort);
   const [activeCategory, setActiveCategory] = useState<CategoryType>('all');
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // 從商品中動態生成 categories
+  const categories = useMemo(() => {
+    const allTags = new Set<string>();
+
+    products.forEach((product) => {
+      if (product.tags) {
+        product.tags.forEach((tag) => {
+          if (tag && tag.trim() !== '' && tag !== HIDDEN_PRODUCT_TAG) {
+            allTags.add(tag.trim());
+          }
+        });
+      }
+    });
+
+    const tagCategories = Array.from(allTags)
+      .sort((a, b) => a.localeCompare(b))
+      .map((tag) => ({
+        id: tag,
+        label: tag,
+        icon: ''
+      }));
+
+    return [{ id: 'all', label: 'All', icon: '' }, ...tagCategories];
+  }, [products]);
 
   const handleSortChange = async (sortOption: SortFilterItem) => {
+    // 開始過渡動畫
+    setIsTransitioning(true);
+
+    // 短暫延遲讓淡出動畫完成
+    await new Promise(resolve => setTimeout(resolve, 150));
+
     setCurrentSort(sortOption);
     await fetchProducts(sortOption, activeCategory);
+
+    // 淡入動畫
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 50);
   };
 
   const handleCategoryChange = async (category: CategoryType) => {
+    // 開始過渡動畫
+    setIsTransitioning(true);
+
+    // 短暫延遲讓淡出動畫完成
+    await new Promise(resolve => setTimeout(resolve, 150));
+
     setActiveCategory(category);
     await fetchProducts(currentSort, category);
+
+    // 淡入動畫
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 50);
   };
 
   const fetchProducts = async (sortOption: SortFilterItem, category: CategoryType) => {
@@ -94,14 +135,20 @@ export function CollectionProductsClient({
         </div>
       )}
 
-      <CollectionProductsGrid
-        products={filteredProducts}
-        collectionName={collectionTitle}
-        onSortChange={handleSortChange}
-        categories={CATEGORIES}
-        activeCategory={activeCategory}
-        onCategoryChange={handleCategoryChange}
-      />
+      <div
+        className={`transition-opacity duration-200 ease-in-out ${
+          isTransitioning ? 'opacity-0' : 'opacity-100'
+        }`}
+      >
+        <CollectionProductsGrid
+          products={filteredProducts}
+          collectionName={collectionTitle}
+          onSortChange={handleSortChange}
+          categories={categories}
+          activeCategory={activeCategory}
+          onCategoryChange={handleCategoryChange}
+        />
+      </div>
     </>
   );
 }

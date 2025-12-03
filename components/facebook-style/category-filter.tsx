@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import clsx from 'clsx';
 
-export type CategoryType = 'all' | 'accessories' | 'clothing' | 'footwear' | 'lifestyle';
+export type CategoryType = string;
 
 interface CategoryFilterProps {
   categories: Array<{
