@@ -37,6 +37,7 @@ import {
 } from './queries/collection';
 import { getMenuQuery } from './queries/menu';
 import { getPageQuery, getPagesQuery } from './queries/page';
+import { getShopMetafieldsQuery, getMetaobjectQuery } from './queries/shop';
 import {
   getProductQuery,
   getProductByIdQuery,
@@ -76,7 +77,11 @@ import {
   ShopifyRemoveFromCartOperation,
   ShopifyUpdateCartOperation,
   ShopifyUpdateCustomerWishlistOperation,
-  WishlistVariant
+  WishlistVariant,
+  ShopMetafieldOperation,
+  DiscountBanner,
+  ShopifyMetaobjectOperation,
+  Metaobject
 } from './types';
 
 const domain = process.env.SHOPIFY_STORE_DOMAIN
@@ -829,5 +834,54 @@ export async function customerRecover(email: string): Promise<{ success: boolean
       success: false,
       error: '密碼重設時發生錯誤'
     };
+  }
+}
+
+// 獲取折扣橫幅信息 (從 Shopify Metaobject)
+export async function getDiscountBanner(): Promise<DiscountBanner | null> {
+  'use cache';
+  cacheTag('discount-banner');
+  cacheLife('minutes');
+
+  try {
+    // Get the metaobject handle from environment variable
+    const metaobjectHandle = process.env.DISCOUNT_BANNER_HANDLE || '15-off-for-new-user';
+
+    const res = await shopifyFetch<ShopifyMetaobjectOperation>({
+      query: getMetaobjectQuery,
+      variables: {
+        handle: metaobjectHandle
+      }
+    });
+
+    const metaobject = res.body.data.metaobject;
+
+    if (!metaobject) {
+      console.log('No metaobject found for discount banner');
+      return null;
+    }
+
+    // Parse fields from metaobject
+    const fields = metaobject.fields.reduce((acc, field) => {
+      acc[field.key] = field.value;
+      return acc;
+    }, {} as Record<string, string>);
+
+    const enabled = fields.enabled === 'true';
+    const message = fields.message || '';
+    const code = fields.code || '';
+
+    if (!enabled || !message) {
+      return null;
+    }
+
+    return {
+      message,
+      code: code || undefined,
+      enabled
+    };
+  } catch (e) {
+    console.error('Error fetching discount banner from metaobject:', e);
+    return null;
   }
 }

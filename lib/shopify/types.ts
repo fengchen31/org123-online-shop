@@ -388,3 +388,50 @@ export type ShopifyProductVariantOperation = {
     id: string;
   };
 };
+
+export type Metafield = {
+  value: string;
+  type: string;
+};
+
+export type ShopMetafield = {
+  name: string;
+  metafield: Metafield | null;
+};
+
+export type ShopMetafieldOperation = {
+  data: {
+    shop: ShopMetafield;
+  };
+  variables?: {
+    namespace?: string;
+    key?: string;
+  };
+};
+
+export type DiscountBanner = {
+  message: string;
+  code?: string;
+  enabled: boolean;
+};
+
+export type MetaobjectField = {
+  key: string;
+  value: string;
+};
+
+export type Metaobject = {
+  id: string;
+  handle: string;
+  type: string;
+  fields: MetaobjectField[];
+};
+
+export type ShopifyMetaobjectOperation = {
+  data: {
+    metaobject: Metaobject | null;
+  };
+  variables: {
+    handle: string;
+  };
+};

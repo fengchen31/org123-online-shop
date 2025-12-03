@@ -52,6 +52,9 @@ export function CollectionTabsHome({
   // Wishlist count
   const [wishlistCount, setWishlistCount] = useState(0);
 
+  // Discount banner
+  const [discountMessage, setDiscountMessage] = useState<string>('Special Offer: 20% OFF on all items! Use code: SAVE20');
+
   // Cart from context
   const { cart } = useCart();
 
@@ -96,8 +99,26 @@ export function CollectionTabsHome({
       }
     };
 
+    const fetchDiscountBanner = async () => {
+      try {
+        const res = await fetch('/api/discount-banner');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.discountBanner && data.discountBanner.enabled) {
+            const message = data.discountBanner.code
+              ? `${data.discountBanner.message} Use code: ${data.discountBanner.code}`
+              : data.discountBanner.message;
+            setDiscountMessage(message);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching discount banner:', error);
+      }
+    };
+
     fetchCustomer();
     fetchWishlistCount();
+    fetchDiscountBanner();
 
     // Listen for wishlist updates
     const handleWishlistUpdate = (event: CustomEvent) => {
@@ -147,7 +168,7 @@ export function CollectionTabsHome({
       {/* Mobile Discount Marquee - Below header, only show on mobile */}
       <div className="overflow-hidden bg-[#f7f7f7] md:hidden">
         <div className="animate-marquee whitespace-nowrap py-1.5 text-xs text-gray-700">
-          Special Offer: 20% OFF on all items! Use code: SAVE20
+          {discountMessage}
         </div>
       </div>
 
@@ -207,7 +228,7 @@ export function CollectionTabsHome({
               {/* Discount Marquee */}
               <div className="mb-4 overflow-hidden border border-gray-300 bg-white p-2">
                 <div className="animate-marquee whitespace-nowrap text-xs text-gray-700">
-                  Special Offer: 20% OFF on all items! Use code: SAVE20
+                  {discountMessage}
                 </div>
               </div>
 
