@@ -331,10 +331,68 @@ function CollapsibleSection({ title, content, htmlContent, defaultOpen = false }
   );
 }
 
+// Check if a title represents a size option
+function isSizeTitle(title: string): boolean {
+  const sizeKeywords = ['small', 'medium', 'large', 'x-large', 'xl', 'xxl', '2xl', 'xs', 's', 'm', 'l', '3xl', 'xxxl'];
+  const lowerTitle = title.toLowerCase().trim();
+
+  return sizeKeywords.some(keyword =>
+    lowerTitle === keyword ||
+    lowerTitle === keyword.replace('-', '') ||
+    lowerTitle.startsWith(keyword + ' ') ||
+    lowerTitle.startsWith(keyword.replace('-', '') + ' ')
+  );
+}
+
+// Merge size-related sections into a single Size Chart section
+function mergeSizeSections(sections: DescriptionSection[]): DescriptionSection[] {
+  const sizeSections: DescriptionSection[] = [];
+  const otherSections: DescriptionSection[] = [];
+
+  sections.forEach(section => {
+    if (isSizeTitle(section.title)) {
+      sizeSections.push(section);
+    } else {
+      otherSections.push(section);
+    }
+  });
+
+  // If we have any size sections, create a combined Size Chart
+  if (sizeSections.length >= 1) {
+    // Create a table from size sections
+    let tableHtml = '<table class="w-full border-collapse"><thead><tr class="border-b border-gray-300 bg-gray-50">';
+    tableHtml += '<th class="px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">Size</th>';
+    tableHtml += '<th class="px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">Measurements</th>';
+    tableHtml += '</tr></thead><tbody>';
+
+    sizeSections.forEach(section => {
+      tableHtml += '<tr class="border-b border-gray-200 last:border-b-0">';
+      tableHtml += `<td class="px-2 py-2 font-medium text-gray-900 sm:px-3">${section.title}</td>`;
+      tableHtml += `<td class="px-2 py-2 text-gray-700 sm:px-3">${section.content.split('\n').join('<br>')}</td>`;
+      tableHtml += '</tr>';
+    });
+
+    tableHtml += '</tbody></table>';
+
+    const sizeChartSection: DescriptionSection = {
+      title: 'Size Chart',
+      content: sizeSections.map(s => `${s.title}:\n${s.content}`).join('\n\n'),
+      htmlContent: tableHtml
+    };
+
+    return [...otherSections, sizeChartSection];
+  }
+
+  return sections;
+}
+
 export function CollapsibleDescription({ description, descriptionHtml }: CollapsibleDescriptionProps) {
-  const sections = descriptionHtml
+  let sections = descriptionHtml
     ? parseDescriptionHtml(descriptionHtml)
     : parseDescriptionText(description);
+
+  // Merge size sections into a Size Chart if applicable
+  sections = mergeSizeSections(sections);
 
   if (sections.length === 0) {
     return null;
