@@ -254,7 +254,7 @@ function parseSizeChart(content: string): { size: string; measurements: string[]
   return sizes.length > 0 ? sizes : null;
 }
 
-function CollapsibleSection({ title, content, htmlContent, defaultOpen = false }: DescriptionSection & { defaultOpen?: boolean }) {
+function CollapsibleSection({ title, content, htmlContent, defaultOpen = false, isFirst = false }: DescriptionSection & { defaultOpen?: boolean; isFirst?: boolean }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   // Check if this is a size chart
@@ -262,7 +262,7 @@ function CollapsibleSection({ title, content, htmlContent, defaultOpen = false }
   const sizeData = !htmlContent && isSizeChart ? parseSizeChart(content) : null;
 
   return (
-    <div className="mt-4 border-b border-gray-200">
+    <div className={`border-b border-gray-200 ${isFirst ? 'mt-4' : ''}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between py-3 text-left sm:py-4"
@@ -458,6 +458,7 @@ export function CollapsibleDescription({ description, descriptionHtml }: Collaps
           content={section.content}
           htmlContent={section.htmlContent}
           defaultOpen={index === 0}
+          isFirst={index === 0}
         />
       ))}
     </div>
