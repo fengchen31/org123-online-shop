@@ -64,6 +64,11 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
       const res = await fetch('/api/customer');
       if (res.ok) {
         const data = await res.json();
+        console.log('=== Fetched Customer Data ===');
+        console.log('Has avatar:', !!data.customer?.avatar);
+        if (data.customer?.avatar) {
+          console.log('Avatar preview:', data.customer.avatar.substring(0, 50) + '...');
+        }
         setCustomer(data.customer);
         setViewMode('account');
       } else {

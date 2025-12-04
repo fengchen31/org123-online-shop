@@ -122,6 +122,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const updateData = await updateRes.json();
 
+    console.log('=== Avatar Upload Response ===');
+    console.log('Update response:', JSON.stringify(updateData, null, 2));
+
     if (updateData.data?.customerUpdate?.userErrors?.length > 0) {
       console.error('Shopify errors:', updateData.data.customerUpdate.userErrors);
       return NextResponse.json(
@@ -130,9 +133,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
+    const avatarValue = updateData.data?.customerUpdate?.customer?.metafield?.value;
+    console.log('Avatar value to return:', avatarValue ? 'Base64 string present' : 'No avatar value');
+
     return NextResponse.json({
       success: true,
-      avatar: updateData.data?.customerUpdate?.customer?.metafield?.value
+      avatar: avatarValue
     });
   } catch (error) {
     console.error('Error updating avatar:', error);
