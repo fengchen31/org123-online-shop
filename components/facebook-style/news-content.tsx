@@ -42,8 +42,10 @@ function parseNewsPosts(htmlBody: string): NewsPost[] {
     console.log(`Article ${index}:`, { textContent, imageUrl, linkTo });
 
     if (textContent || imageUrl) {
+      // Use collection handle as ID if linkTo exists
+      const postId = linkTo ? `collection-${linkTo}` : `post-${index}`;
       posts.push({
-        id: `post-${index}`,
+        id: postId,
         author,
         authorAvatar: '/images/avatars/org123xyz_head.svg',
         timestamp,
@@ -101,8 +103,10 @@ function parseNewsPosts(htmlBody: string): NewsPost[] {
         console.log(`Image ${posts.length}:`, { content, imageUrl, linkTo });
 
         if (imageUrl) {
+          // Use collection handle as ID if linkTo exists
+          const postId = linkTo ? `collection-${linkTo}` : `post-${posts.length}`;
           posts.push({
-            id: `post-${posts.length}`,
+            id: postId,
             author: 'org123.xyz',
             authorAvatar: '/images/avatars/org123xyz_head.svg',
             timestamp: 'Just now',

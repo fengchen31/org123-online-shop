@@ -272,15 +272,21 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
   };
 
   const handleShare = (post: NewsPost) => {
+    // Build URL with post parameter for OG tags, and anchor for scrolling
+    const shareUrl = `${window.location.origin}?post=${encodeURIComponent(post.id)}#post-${post.id}`;
+
+    console.log('Share URL:', shareUrl);
+    console.log('Post ID:', post.id);
+    console.log('Post linkTo:', post.linkTo);
+
     if (navigator.share) {
       navigator.share({
-        title: post.author,
+        title: post.content || post.author,
         text: post.content,
-        url: window.location.href
+        url: shareUrl
       }).catch(() => {});
     } else {
-      const url = window.location.href;
-      navigator.clipboard.writeText(url).then(() => {
+      navigator.clipboard.writeText(shareUrl).then(() => {
         alert('Link copied to clipboard!');
       });
     }
@@ -307,7 +313,8 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
         return (
           <div
             key={post.id}
-            className="border border-gray-300 bg-white shadow-sm"
+            id={`post-${post.id}`}
+            className="border border-gray-300 bg-white shadow-sm scroll-mt-4"
           >
             <div className="flex items-center gap-3 border-b border-gray-200 bg-[#f7f7f7] px-4 py-3">
               <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-sm border border-gray-300 bg-white">
