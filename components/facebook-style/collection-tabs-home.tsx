@@ -442,12 +442,6 @@ export function CollectionTabsHome({
             <div className="flex-1">
               {/* Main Content - Product Grid */}
               <div className="mt-3 p-3 md:border md:border-gray-300 md:bg-white md:shadow-sm sm:mt-4 sm:p-4 lg:mt-6 lg:p-6">
-                <h2 className="mb-3 text-base font-semibold text-[#3b5998] sm:mb-4 sm:text-lg lg:mb-6 lg:text-xl">
-                  {isSearching && searchQuery
-                    ? `Search Results for "${searchQuery}"`
-                    : collections.find((c) => c.handle === activeTab)?.title || 'Products'}
-                </h2>
-
                 {isSearching && searchQuery ? (
                   // Show search results
                   searchResults.length > 0 ? (

@@ -81,7 +81,7 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
         </div>
 
         {/* Product Name - Smaller */}
-        <h3 className="mb-2 line-clamp-2 text-xs font-bold leading-tight text-gray-900 sm:text-sm">
+        <h3 className="mb-2 line-clamp-2 text-xs leading-tight text-gray-900 sm:text-sm">
           {product.title}
         </h3>
 
