@@ -12,6 +12,7 @@ interface ImageWithFallbackProps {
   sizes?: string;
   className?: string;
   priority?: boolean;
+  enableBlurEffect?: boolean; // New prop to enable blur effect
 }
 
 export function ImageWithFallback({
@@ -22,15 +23,16 @@ export function ImageWithFallback({
   height,
   sizes,
   className = '',
-  priority = false
+  priority = false,
+  enableBlurEffect = false
 }: ImageWithFallbackProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
   return (
     <div className="relative h-full w-full">
-      {/* Loading Skeleton - Facebook style gray shimmer */}
-      {isLoading && !hasError && (
+      {/* Loading Skeleton - Only show if blur effect is disabled */}
+      {isLoading && !hasError && !enableBlurEffect && (
         <div className="absolute inset-0 animate-pulse bg-gray-200">
           <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-shimmer" />
         </div>
@@ -64,7 +66,7 @@ export function ImageWithFallback({
           width={width}
           height={height}
           sizes={sizes}
-          className={className}
+          className={`${className} ${enableBlurEffect && isLoading ? 'scale-110 blur-lg' : 'scale-100 blur-0'} transition-all duration-700 ease-out`}
           priority={priority}
           onLoad={() => setIsLoading(false)}
           onError={() => {
