@@ -1,7 +1,7 @@
 'use client';
 
 import clsx from 'clsx';
-import Image from 'next/image';
+import { ImageWithFallback } from './image-with-fallback';
 
 export interface NewsPost {
   id: string;
@@ -39,7 +39,7 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
             {/* Avatar */}
             <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-sm border border-gray-300 bg-white">
               {post.authorAvatar ? (
-                <Image
+                <ImageWithFallback
                   src={post.authorAvatar}
                   alt={post.author}
                   fill
@@ -70,23 +70,21 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
               </div>
             )}
 
-            {/* Image Content */}
-            {post.imageUrl && (
-              <div
-                className={clsx(
-                  'relative h-[300px] w-full overflow-hidden sm:h-[400px] md:h-[500px]',
-                  post.linkTo && 'cursor-pointer transition-opacity hover:opacity-90'
-                )}
-                onClick={() => post.linkTo && onPostClick?.(post.linkTo)}
-              >
-                <Image
-                  src={post.imageUrl}
-                  alt={post.content || 'Post image'}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            )}
+            {/* Image Content - Always show, use default fallback if no imageUrl */}
+            <div
+              className={clsx(
+                'relative h-[300px] w-full overflow-hidden sm:h-[400px] md:h-[500px]',
+                post.linkTo && 'cursor-pointer transition-opacity hover:opacity-90'
+              )}
+              onClick={() => post.linkTo && onPostClick?.(post.linkTo)}
+            >
+              <ImageWithFallback
+                src={post.imageUrl || '/images/default-fallback-image.png'}
+                alt={post.content || 'Post image'}
+                fill
+                className="object-cover"
+              />
+            </div>
           </div>
 
           {/* Post Actions - Old Facebook style */}

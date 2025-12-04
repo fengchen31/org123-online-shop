@@ -7,7 +7,7 @@ import LoadingDots from 'components/loading-dots';
 import Price from 'components/price';
 import { DEFAULT_OPTION } from 'lib/constants';
 import { createUrl } from 'lib/utils';
-import Image from 'next/image';
+import { ImageWithFallback } from './image-with-fallback';
 import Link from 'next/link';
 import { useFormStatus } from 'react-dom';
 import { useCart } from '../cart/cart-context';

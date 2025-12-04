@@ -74,6 +74,20 @@ button {
   animation: marquee 15s linear infinite;
 }
 
+/* Facebook-style shimmer loading animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
 /* Size chart table styling */
 .size-chart-table table {
   @apply w-full border-collapse text-xs sm:text-sm;

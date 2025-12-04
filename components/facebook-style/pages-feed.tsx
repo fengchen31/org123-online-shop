@@ -25,7 +25,11 @@ function formatRelativeTime(dateString: string): string {
 
 // 從 HTML body 中提取第一張圖片 URL
 function extractFirstImageUrl(htmlBody: string): string | undefined {
-  if (typeof window === 'undefined') return undefined;
+  if (typeof window === 'undefined') {
+    // Server-side: use regex to extract image URL
+    const imgMatch = htmlBody.match(/<img[^>]+src=["']([^"']+)["']/i);
+    return imgMatch ? imgMatch[1] : undefined;
+  }
 
   try {
     const parser = new DOMParser();

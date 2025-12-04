@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import type { Product } from 'lib/shopify/types';
 import { ProductProvider } from 'components/product/product-context';
 import { AddToCart } from 'components/cart/add-to-cart';
@@ -10,6 +9,7 @@ import { FacebookVariantSelector } from './facebook-variant-selector';
 import { FullscreenImageViewer } from './fullscreen-image-viewer';
 import { CollapsibleDescription } from './collapsible-description';
 import { useCurrency } from '../currency-context';
+import { ImageWithFallback } from './image-with-fallback';
 
 interface ProductDetailInGridProps {
   product: Product;
@@ -64,19 +64,13 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
               className="relative aspect-square w-full cursor-pointer overflow-hidden bg-gray-100"
               onClick={() => setShowFullscreen(true)}
             >
-              {images[selectedImageIndex] ? (
-                <Image
-                  src={images[selectedImageIndex].url}
-                  alt={product.title}
-                  fill
-                  className="object-cover transition-transform hover:scale-105"
-                  priority
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center text-gray-400">
-                  <span>No Image</span>
-                </div>
-              )}
+              <ImageWithFallback
+                src={images[selectedImageIndex]?.url || '/images/default-fallback-image.png'}
+                alt={product.title}
+                fill
+                className="object-cover transition-transform hover:scale-105"
+                priority
+              />
             </div>
 
             {/* Thumbnail images */}
@@ -94,7 +88,7 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
                           : 'border border-gray-300 hover:border-gray-400'
                       }`}
                     >
-                      <Image
+                      <ImageWithFallback
                         src={image.url}
                         alt={`${product.title} - ${index + 1}`}
                         fill

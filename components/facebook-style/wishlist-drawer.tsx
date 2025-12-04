@@ -3,7 +3,7 @@
 import { addItem } from 'components/cart/actions';
 import { useCart } from 'components/cart/cart-context';
 import type { WishlistVariant } from 'lib/shopify/types';
-import Image from 'next/image';
+import { ImageWithFallback } from './image-with-fallback';
 import Link from 'next/link';
 import { useEffect, useState, useTransition } from 'react';
 

@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
 import type { Product } from 'lib/shopify/types';
 import { useCurrency } from '../currency-context';
+import { ImageWithFallback } from './image-with-fallback';
 
 interface ProductCardProps {
   product: Product;
@@ -60,19 +60,13 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
     >
       {/* Product Image */}
       <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
-        {images[currentImageIndex] ? (
-          <Image
-            src={images[currentImageIndex].url}
-            alt={product.title}
-            fill
-            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-gray-400">
-            <span>No Image</span>
-          </div>
-        )}
+        <ImageWithFallback
+          src={images[currentImageIndex]?.url || '/images/default-fallback-image.png'}
+          alt={product.title}
+          fill
+          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          className="object-cover"
+        />
       </div>
 
       {/* Product Info */}
