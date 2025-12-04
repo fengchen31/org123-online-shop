@@ -66,17 +66,17 @@ export function NewsletterSuccessModal({
         <div className="border-t border-gray-300 bg-[#f7f7f7] px-6 py-6">
           <div className="mb-5">
             <p className="mb-4 text-sm text-gray-900">
-              Thank you for subscribing to our newsletter!
+              Welcome! Thank you for subscribing to our newsletter!
             </p>
             <p className="text-xs text-gray-700">
-              Here's your exclusive discount code:
+              Here's your exclusive first-time subscriber discount code:
             </p>
           </div>
 
           {/* Discount Code */}
           <div className="mb-1 border border-gray-300 bg-white px-4 py-4 text-center">
             <p className="mb-2 text-2xl font-bold text-[#3b5998]">{discountCode}</p>
-            <p className="text-xs text-gray-600">10% off your first order</p>
+            <p className="text-xs text-gray-600">Special discount for new subscribers</p>
           </div>
         </div>
 

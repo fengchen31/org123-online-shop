@@ -456,14 +456,19 @@ export function CollectionTabsHome({
                         // Clear email input
                         emailInput.value = '';
 
-                        // Always show modal with discount code (success or error)
-                        setNewsletterDiscountCode(data.discountCode || 'WELCOME10');
-                        setIsNewsletterModalOpen(true);
+                        // Only show discount code modal for FIRST-TIME subscribers
+                        if (!data.isExisting && data.discountCode) {
+                          setNewsletterDiscountCode(data.discountCode);
+                          setIsNewsletterModalOpen(true);
+                        } else if (data.isExisting) {
+                          // Show simple success message for existing subscribers
+                          alert('Thank you! You are already subscribed to our newsletter.');
+                        } else if (!response.ok) {
+                          alert(data.error || 'Subscription failed. Please try again.');
+                        }
                       } catch (error) {
-                        // Even on error, show modal
                         console.error('Newsletter subscription error:', error);
-                        setNewsletterDiscountCode('WELCOME10');
-                        setIsNewsletterModalOpen(true);
+                        alert('An error occurred. Please try again.');
                       } finally {
                         button.disabled = false;
                         button.textContent = 'Subscribe';
