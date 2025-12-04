@@ -188,13 +188,13 @@ export function CollectionTabsHome({
             </div>
 
             {/* Tabs - positioned at the bottom, aligned with bottom of gray area */}
-            <div className="relative z-10 flex flex-wrap gap-1">
+            <div className="relative z-30 flex flex-nowrap gap-1 overflow-x-auto">
               {collections.map((collection) => (
                 <button
                   key={collection.handle}
                   onClick={() => handleTabChange(collection.handle)}
                   className={clsx(
-                    'px-2 py-1 text-xs font-bold transition-all sm:px-3 sm:py-1.5 sm:text-sm lg:text-md',
+                    'whitespace-nowrap px-2 py-1 text-xs font-bold transition-all sm:px-2.5 sm:py-1 md:px-3 md:py-1.5 md:text-sm lg:px-4 lg:py-2 lg:text-sm',
                     activeTab === collection.handle
                       ? 'bg-white text-gray-900'
                       : 'bg-[#d8dfea] text-[#3b5998]'
@@ -214,9 +214,9 @@ export function CollectionTabsHome({
         <div className="mx-auto px-2 pb-6 sm:px-4">
           <div className="flex gap-3 sm:gap-4 lg:gap-6">
             {/* Left Column - Sidebar with Avatar */}
-            <div className="hidden w-[180px] shrink-0 md:block lg:w-1/5">
-              {/* Avatar - positioned absolutely, extending up into gray area */}
-              <div className="relative -mt-14 mb-14 w-full md:-mt-20 md:mb-20">
+            <div className="hidden w-[180px] shrink-0 pt-3 md:block sm:pt-4 md:pt-6 lg:w-1/5 lg:pt-5">
+              {/* Avatar - positioned with negative margin to overlap gray area, with equal spacing below */}
+              <div className="relative -mt-[66px] mb-3 w-full sm:-mt-[78px] sm:mb-4 md:-mt-[88px] md:mb-6 lg:-mt-[94px] lg:mb-5">
                 <div className="relative z-20 overflow-hidden border border-gray-300 shadow-lg">
                   <div className="relative aspect-square w-full bg-white">
                     <Image
