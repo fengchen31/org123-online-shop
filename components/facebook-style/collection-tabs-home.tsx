@@ -181,7 +181,7 @@ export function CollectionTabsHome({
       <div className="relative hidden bg-[#e9eaed] pt-3 sm:pt-4 md:block md:pt-6 lg:pt-5">
         <div className="mx-auto px-2 sm:px-4">
           {/* Right: Title and Tabs - with left margin to avoid avatar on desktop */}
-          <div className="ml-0 flex flex-col md:ml-[204px]">
+          <div className="ml-0 flex flex-col md:ml-[204px] lg:ml-[calc(20%+1.5rem)]">
             {/* Title */}
             <div className="flex items-center gap-2 pb-2">
               <h1 className="text-lg font-bold text-gray-900 sm:text-xl lg:text-2xl">{customerName}</h1>
@@ -214,7 +214,7 @@ export function CollectionTabsHome({
         <div className="mx-auto px-2 pb-6 sm:px-4">
           <div className="flex gap-3 sm:gap-4 lg:gap-6">
             {/* Left Column - Sidebar with Avatar */}
-            <div className="hidden w-[180px] shrink-0 md:block">
+            <div className="hidden w-[180px] shrink-0 md:block lg:w-1/5">
               {/* Avatar - positioned absolutely, extending up into gray area */}
               <div className="relative -mt-14 mb-4 w-full md:-mt-20">
                 <div className="relative z-20 overflow-hidden border border-gray-300 shadow-lg">
