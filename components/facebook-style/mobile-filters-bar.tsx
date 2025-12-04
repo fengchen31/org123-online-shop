@@ -2,6 +2,7 @@
 
 import clsx from 'clsx';
 import { useState } from 'react';
+import { useCurrency } from '../currency-context';
 import type { CategoryType } from './category-filter';
 import type { SortFilterItem } from 'lib/constants';
 import { sorting } from 'lib/constants';
@@ -26,6 +27,7 @@ export function MobileFiltersBar({
   currentSort
 }: MobileFiltersBarProps) {
   const [isSortOpen, setIsSortOpen] = useState(false);
+  const { currency, setCurrency } = useCurrency();
 
   return (
     <div className="fixed left-0 right-0 z-40 bg-[#3b5998] md:hidden" style={{ bottom: '56px' }}>
@@ -48,48 +50,77 @@ export function MobileFiltersBar({
           ))}
         </div>
 
-        {/* Right: Sort Filter */}
-        <div className="relative shrink-0">
-          <button
-            onClick={() => setIsSortOpen(!isSortOpen)}
-            className="flex items-center gap-1 border border-white/40 bg-transparent px-2 py-1 text-[10px] font-medium text-white transition-all hover:bg-white/10"
-          >
-            <span>Sort</span>
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+        {/* Right: Currency Toggle and Sort Filter */}
+        <div className="flex shrink-0 items-center gap-1">
+          {/* Currency Toggle */}
+          <div className="flex items-center gap-0.5 border border-white/40 bg-transparent">
+            <button
+              onClick={() => setCurrency('TWD')}
+              className={clsx(
+                'px-1.5 py-1 text-[9px] font-semibold transition-all',
+                currency === 'TWD'
+                  ? 'bg-white text-[#3b5998]'
+                  : 'text-white hover:bg-white/10'
+              )}
+            >
+              TWD
+            </button>
+            <button
+              onClick={() => setCurrency('USD')}
+              className={clsx(
+                'px-1.5 py-1 text-[9px] font-semibold transition-all',
+                currency === 'USD'
+                  ? 'bg-white text-[#3b5998]'
+                  : 'text-white hover:bg-white/10'
+              )}
+            >
+              USD
+            </button>
+          </div>
 
-          {isSortOpen && (
-            <>
-              {/* Backdrop */}
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setIsSortOpen(false)}
-              />
+          {/* Sort Filter */}
+          <div className="relative">
+            <button
+              onClick={() => setIsSortOpen(!isSortOpen)}
+              className="flex items-center gap-1 border border-white/40 bg-transparent px-2 py-1 text-[10px] font-medium text-white transition-all hover:bg-white/10"
+            >
+              <span>Sort</span>
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-              {/* Dropdown */}
-              <div className="absolute bottom-full right-0 z-50 mb-1 min-w-[160px] border border-gray-300 bg-white shadow-lg">
-                {sorting.map((option) => (
-                  <button
-                    key={option.slug || 'default'}
-                    onClick={() => {
-                      onSortChange(option);
-                      setIsSortOpen(false);
-                    }}
-                    className={clsx(
-                      'block w-full px-3 py-2 text-left text-[10px] transition-colors',
-                      currentSort.slug === option.slug
-                        ? 'bg-[#3b5998] font-semibold text-white'
-                        : 'text-gray-700 hover:bg-[#e9eaed]'
-                    )}
-                  >
-                    {option.title}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
+            {isSortOpen && (
+              <>
+                {/* Backdrop */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setIsSortOpen(false)}
+                />
+
+                {/* Dropdown */}
+                <div className="absolute bottom-full right-0 z-50 mb-1 min-w-[160px] border border-gray-300 bg-white shadow-lg">
+                  {sorting.map((option) => (
+                    <button
+                      key={option.slug || 'default'}
+                      onClick={() => {
+                        onSortChange(option);
+                        setIsSortOpen(false);
+                      }}
+                      className={clsx(
+                        'block w-full px-3 py-2 text-left text-[10px] transition-colors',
+                        currentSort.slug === option.slug
+                          ? 'bg-[#3b5998] font-semibold text-white'
+                          : 'text-gray-700 hover:bg-[#e9eaed]'
+                      )}
+                    >
+                      {option.title}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

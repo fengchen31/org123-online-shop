@@ -1,4 +1,5 @@
 import { CartProvider } from 'components/cart/cart-context';
+import { CurrencyProvider } from 'components/currency-context';
 import { FacebookFooter } from 'components/facebook-style/facebook-footer';
 import { FacebookHeader } from 'components/facebook-style/facebook-header';
 import { GeistSans } from 'geist/font/sans';
@@ -31,13 +32,15 @@ export default async function RootLayout({
   return (
     <html lang="en" className={GeistSans.variable}>
       <body className="bg-[#e9eaed] text-gray-900">
-        <CartProvider cartPromise={cart}>
-          <FacebookHeader />
-          <main className="min-h-screen">
-            {children}
-          </main>
-          <FacebookFooter />
-        </CartProvider>
+        <CurrencyProvider>
+          <CartProvider cartPromise={cart}>
+            <FacebookHeader />
+            <main className="min-h-screen">
+              {children}
+            </main>
+            <FacebookFooter />
+          </CartProvider>
+        </CurrencyProvider>
       </body>
     </html>
   );

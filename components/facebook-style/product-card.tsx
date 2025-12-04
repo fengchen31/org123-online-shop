@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import type { Product } from 'lib/shopify/types';
+import { useCurrency } from '../currency-context';
 
 interface ProductCardProps {
   product: Product;
@@ -16,6 +17,7 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const { convertPrice } = useCurrency();
 
   const images = product.images.length > 0 ? product.images : [product.featuredImage];
 
@@ -87,7 +89,12 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
 
         {/* Price - Smaller, same as product name */}
         <p className="text-xs font-bold text-gray-900 sm:text-sm">
-          ${Math.floor(parseFloat(product.priceRange.maxVariantPrice.amount)).toLocaleString()} {product.priceRange.maxVariantPrice.currencyCode}
+          {(() => {
+            const originalAmount = product.priceRange.maxVariantPrice.amount;
+            const originalCurrency = product.priceRange.maxVariantPrice.currencyCode;
+            const converted = convertPrice(originalAmount, originalCurrency);
+            return `${converted.currency === 'TWD' ? 'NT$' : '$'}${Math.floor(parseFloat(converted.amount)).toLocaleString()} ${converted.currency}`;
+          })()}
         </p>
       </div>
     </div>

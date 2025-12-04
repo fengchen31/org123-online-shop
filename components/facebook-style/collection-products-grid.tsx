@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ProductCard } from './product-card';
 import { ProductDetailInGrid } from './product-detail-in-grid';
 import { ProductFilter } from './product-filter';
+import { CurrencyToggle } from './currency-toggle';
 import { CategoryFilter, type CategoryType } from './category-filter';
 import type { Product } from 'lib/shopify/types';
 import type { SortFilterItem } from 'lib/constants';
@@ -62,7 +63,7 @@ export function CollectionProductsGrid({
 
   return (
     <>
-      {/* Filters Row - Category on left, Sort on right */}
+      {/* Filters Row - Category on left, Sort and Currency on right */}
       <div className="mb-3 flex items-center justify-between sm:mb-4">
         {/* Left: Category Filter */}
         {categories && activeCategory !== undefined && onCategoryChange && (
@@ -73,8 +74,11 @@ export function CollectionProductsGrid({
           />
         )}
 
-        {/* Right: Product Filter */}
-        <ProductFilter onSortChange={handleSortChange} currentSort={currentSort} />
+        {/* Right: Currency Toggle and Product Filter */}
+        <div className="flex items-center gap-2">
+          <CurrencyToggle />
+          <ProductFilter onSortChange={handleSortChange} currentSort={currentSort} />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
