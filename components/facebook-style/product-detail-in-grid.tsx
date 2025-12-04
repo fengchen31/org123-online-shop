@@ -9,6 +9,7 @@ import { AddToWishlist } from 'components/wishlist/add-to-wishlist';
 import { FacebookVariantSelector } from './facebook-variant-selector';
 import { FullscreenImageViewer } from './fullscreen-image-viewer';
 import { CollapsibleDescription } from './collapsible-description';
+import { useCurrency } from '../currency-context';
 
 interface ProductDetailInGridProps {
   product: Product;
@@ -23,6 +24,7 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
   const [showFullscreen, setShowFullscreen] = useState(false);
   const imageRef = useState<HTMLDivElement | null>(null);
   const images = product.images.length > 0 ? product.images : [product.featuredImage];
+  const { convertPrice } = useCurrency();
 
   useEffect(() => {
     // 立即開始動畫
@@ -129,7 +131,12 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
               </h1>
 
               <p className="mt-2 text-sm font-semibold text-[#3b5998] sm:mt-3 sm:text-base">
-                {product.priceRange.maxVariantPrice.currencyCode} {Math.floor(parseFloat(product.priceRange.maxVariantPrice.amount)).toLocaleString()}
+                {(() => {
+                  const originalAmount = product.priceRange.maxVariantPrice.amount;
+                  const originalCurrency = product.priceRange.maxVariantPrice.currencyCode;
+                  const converted = convertPrice(originalAmount, originalCurrency);
+                  return `${converted.currency === 'TWD' ? 'NT$' : '$'}${Math.floor(parseFloat(converted.amount)).toLocaleString()} ${converted.currency}`;
+                })()}
               </p>
 
               {/* Collapsible Description - After price */}

@@ -9,6 +9,7 @@ import { AddToWishlist } from 'components/wishlist/add-to-wishlist';
 import { FacebookVariantSelector } from './facebook-variant-selector';
 import { FullscreenImageViewer } from './fullscreen-image-viewer';
 import { CollapsibleDescription } from './collapsible-description';
+import { useCurrency } from '../currency-context';
 
 interface ProductDetailExpandedProps {
   product: Product;
@@ -19,6 +20,7 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const images = product.images.length > 0 ? product.images : [product.featuredImage];
+  const { convertPrice } = useCurrency();
 
   return (
     <ProductProvider>
@@ -108,7 +110,12 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
               </h1>
 
               <p className="mt-3 text-base font-semibold text-[#3b5998]">
-                {product.priceRange.maxVariantPrice.currencyCode} {Math.floor(parseFloat(product.priceRange.maxVariantPrice.amount)).toLocaleString()}
+                {(() => {
+                  const originalAmount = product.priceRange.maxVariantPrice.amount;
+                  const originalCurrency = product.priceRange.maxVariantPrice.currencyCode;
+                  const converted = convertPrice(originalAmount, originalCurrency);
+                  return `${converted.currency === 'TWD' ? 'NT$' : '$'}${Math.floor(parseFloat(converted.amount)).toLocaleString()} ${converted.currency}`;
+                })()}
               </p>
 
               {/* Collapsible Description - After price */}
