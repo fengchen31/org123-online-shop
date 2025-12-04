@@ -1,6 +1,6 @@
 import { CollectionProductsWrapper } from 'components/facebook-style/collection-products-wrapper';
 import { HomePageClient } from 'components/facebook-style/home-page-client';
-import { getCollections, getPage } from 'lib/shopify';
+import { getCollections, getPages } from 'lib/shopify';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 
@@ -12,30 +12,11 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  // 獲取所有 collections 和 News page
-  const [allCollections, newsPage] = await Promise.all([
-    getCollections(),
-    getPage('news').catch(() => null) // 如果找不到 News page 就返回 null
-  ]);
+  // 獲取所有 Shopify pages 和 collections
+  const [pages, allCollections] = await Promise.all([getPages(), getCollections()]);
 
   // 過濾掉 "All" collection
   const collections = allCollections.filter((c) => c.handle !== '');
-
-  // 建立一個 "News" collection 物件，使用從 Shopify page 獲取的標題
-  const newsCollection = {
-    handle: 'news',
-    title: newsPage?.title || 'News',
-    description: newsPage?.bodySummary || '',
-    seo: {
-      title: newsPage?.seo?.title || newsPage?.title || 'News',
-      description: newsPage?.seo?.description || newsPage?.bodySummary || ''
-    },
-    updatedAt: newsPage?.updatedAt || new Date().toISOString(),
-    path: '/news'
-  };
-
-  // 將 News 放在第一個位置
-  const allTabs = newsPage ? [newsCollection, ...collections] : collections;
 
   // 為 collection tabs 準備 server-rendered 內容
   const collectionProductsComponents: Record<string, React.ReactNode> = {};
@@ -63,8 +44,8 @@ export default async function HomePage() {
 
   return (
     <HomePageClient
-      allTabs={allTabs}
-      newsPage={newsPage}
+      pages={pages}
+      collections={collections}
       collectionProductsComponents={collectionProductsComponents}
     />
   );

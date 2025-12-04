@@ -1,13 +1,13 @@
 'use client';
 
 import { CollectionTabsHome } from './collection-tabs-home';
-import { NewsContent } from './news-content';
-import type { Collection, Page } from 'lib/shopify/types';
+import { PagesFeed } from './pages-feed';
+import type { Page, Collection } from 'lib/shopify/types';
 import { useState, useMemo } from 'react';
 
 interface HomePageClientProps {
-  allTabs: Collection[];
-  newsPage: Page | null;
+  pages: Page[];
+  collections: Collection[];
   collectionProductsComponents: Record<string, React.ReactNode>;
   onOpenCart?: () => void;
   onOpenWishlist?: () => void;
@@ -15,37 +15,49 @@ interface HomePageClientProps {
 }
 
 export function HomePageClient({
-  allTabs,
-  newsPage,
+  pages,
+  collections,
   collectionProductsComponents,
   onOpenCart,
   onOpenWishlist,
   onOpenAccount
 }: HomePageClientProps) {
-  const [currentTab, setCurrentTab] = useState<string>(
-    allTabs.length > 0 ? allTabs[0]!.handle : ''
-  );
+  const [currentTab, setCurrentTab] = useState<string>('news-feed');
 
-  // 為每個 tab 準備內容
+  // 建立 tabs：第一個是 News Feed，後面接著所有 collections
+  const tabs = useMemo(() => {
+    const newsFeedTab = {
+      handle: 'news-feed',
+      title: 'News Feed',
+      description: 'Latest updates and news',
+      seo: {
+        title: 'News Feed',
+        description: 'Latest updates and news'
+      },
+      updatedAt: new Date().toISOString(),
+      path: '/news-feed'
+    };
+
+    return [newsFeedTab, ...collections];
+  }, [collections]);
+
+  // 組合所有 tab 的內容：News Feed + collections
   const tabContents: Record<string, React.ReactNode> = useMemo(() => {
-    const contents: Record<string, React.ReactNode> = {};
+    const contents: Record<string, React.ReactNode> = {
+      'news-feed': <PagesFeed pages={pages} />
+    };
 
-    // News tab 內容
-    if (newsPage) {
-      contents['news'] = <NewsContent page={newsPage} onTabChange={setCurrentTab} />;
-    }
-
-    // Collection tabs 內容來自 server components
+    // 加入所有 collection 的內容
     Object.keys(collectionProductsComponents).forEach((handle) => {
       contents[handle] = collectionProductsComponents[handle];
     });
 
     return contents;
-  }, [newsPage, collectionProductsComponents]);
+  }, [pages, collectionProductsComponents]);
 
   return (
     <CollectionTabsHome
-      collections={allTabs}
+      collections={tabs}
       collectionContents={tabContents}
       onTabChange={setCurrentTab}
       onOpenCart={onOpenCart}
