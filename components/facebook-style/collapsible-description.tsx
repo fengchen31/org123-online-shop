@@ -17,6 +17,9 @@ interface CollapsibleDescriptionProps {
 function parseDescriptionHtml(html: string): DescriptionSection[] {
   const sections: DescriptionSection[] = [];
 
+  console.log('=== PARSING HTML ===');
+  console.log('Original HTML:', html);
+
   // Parse HTML
   if (typeof window === 'undefined') {
     // Server-side fallback - simple regex approach
@@ -71,9 +74,37 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
       // Make sure this isn't a child of another bold element we already found
       const isNested = boldElements.some(parent => parent.contains(element));
       if (!isNested) {
+        // Check if this element has direct text that could be a title
+        // We need to check child nodes to see if there's a short title before nested content
+        let hasShortTitle = false;
+        let directText = '';
+
+        element.childNodes.forEach(node => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            directText += node.textContent || '';
+          } else if (node.nodeType === Node.ELEMENT_NODE) {
+            const el = node as HTMLElement;
+            const childStyle = el.getAttribute('style');
+            // If child has font-weight: 400, it's content not title
+            if (!childStyle || !/font-weight:\s*(400|normal)/i.test(childStyle)) {
+              directText += el.textContent || '';
+            }
+          }
+        });
+
+        directText = directText.trim();
+        if (directText.length > 0 && directText.length < 50) {
+          hasShortTitle = true;
+        }
+
+        // Also accept elements with textContent < 50 if they don't contain nested font-weight: 400
         const text = element.textContent?.trim() || '';
-        // Only consider non-empty short text as titles (< 50 chars), longer text is likely content
-        if (text.length > 0 && text.length < 50) {
+        const hasNestedNormalWeight = Array.from(element.querySelectorAll('*')).some(child => {
+          const childStyle = (child as HTMLElement).getAttribute('style');
+          return childStyle && /font-weight:\s*(400|normal)/i.test(childStyle);
+        });
+
+        if (hasShortTitle || (text.length > 0 && text.length < 50 && !hasNestedNormalWeight)) {
           boldElements.push(element);
         }
       }
@@ -82,14 +113,71 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
 
   // Process each bold element as a section title
   boldElements.forEach((boldEl, index) => {
-    const title = boldEl.textContent?.trim() || '';
+    // Extract only the direct text nodes of the bold element, not nested elements with different font-weight
+    let title = '';
+    boldEl.childNodes.forEach(node => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        title += node.textContent || '';
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const el = node as HTMLElement;
+        // Only include text from child elements that maintain bold styling
+        const childStyle = el.getAttribute('style');
+        if (!childStyle || !/font-weight:\s*(400|normal)/i.test(childStyle)) {
+          // This child doesn't override to normal weight, include its text
+          title += el.textContent || '';
+        }
+      }
+    });
+    title = title.trim();
 
     if (!title) return;
 
     // Find content between this bold element and the next one
     let content = '';
 
-    // Start from the bold element's next sibling
+    // First, check if there are child nodes with font-weight: 400 (nested content in the same element)
+    boldEl.childNodes.forEach(node => {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const el = node as HTMLElement;
+        const childStyle = el.getAttribute('style');
+        if (childStyle && /font-weight:\s*(400|normal)/i.test(childStyle)) {
+          // This is nested content with normal font-weight, extract it
+          const clone = el.cloneNode(true) as HTMLElement;
+          clone.querySelectorAll('br').forEach(br => {
+            const textNode = document.createTextNode('\n');
+            br.replaceWith(textNode);
+          });
+          const text = clone.textContent || '';
+          if (text.trim()) {
+            content += text;
+          }
+        }
+      }
+    });
+
+    // If we found content inside the bold element, we're done with this section
+    if (content.trim()) {
+      // Clean up content: remove leading underscores and trim lines
+      const lines = content.split('\n');
+      const cleanedLines = lines
+        .map(l => {
+          const trimmed = l.trim();
+          return trimmed.startsWith('_') ? trimmed.substring(1).trim() : trimmed;
+        })
+        .filter(l => l.length > 0);
+      content = cleanedLines.join('\n');
+
+      if (content.trim()) {
+        sections.push({
+          title: title,
+          content: content.trim()
+        });
+      }
+      console.log(`Section "${title}" (nested content):`, content);
+      return; // Skip to next bold element
+    }
+
+    // Otherwise, start from the bold element's next sibling
     let currentNode: Node | null = boldEl.nextSibling;
 
     // If no next sibling, try parent's next sibling (up to 5 levels)
@@ -173,12 +261,20 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
     }
 
     if (content.trim() || htmlContent) {
+      console.log(`Section "${title}" (normal):`, content.trim());
       sections.push({
         title: title,
         content: content.trim(),
         htmlContent: hasTable ? htmlContent : undefined
       });
     }
+  });
+
+  console.log('=== PARSED SECTIONS ===');
+  sections.forEach(s => {
+    console.log(`Title: "${s.title}"`);
+    console.log(`Content: "${s.content}"`);
+    if (s.htmlContent) console.log(`Has HTML content`);
   });
 
   // If no sections found, create a default one
@@ -352,6 +448,9 @@ function isSizeChartSection(section: DescriptionSection): boolean {
 
 // Merge all non-size sections into Features and keep Size Chart separate
 function mergeIntoFeaturesAndSizeChart(sections: DescriptionSection[]): DescriptionSection[] {
+  console.log('=== BEFORE MERGE ===');
+  sections.forEach(s => console.log(`Title: "${s.title}", Content length: ${s.content.length}`));
+
   const sizeChartSections: DescriptionSection[] = [];
   const featureSections: DescriptionSection[] = [];
 
@@ -390,6 +489,8 @@ function mergeIntoFeaturesAndSizeChart(sections: DescriptionSection[]): Descript
       content: featuresContent,
       htmlContent: featuresHtml
     });
+    console.log('=== FEATURES HTML ===');
+    console.log(featuresHtml);
   }
 
   // Create a single Size Chart section
