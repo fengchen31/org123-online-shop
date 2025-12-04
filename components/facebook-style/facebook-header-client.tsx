@@ -76,7 +76,7 @@ export function FacebookHeaderClient({ menu }: FacebookHeaderClientProps) {
           </div>
 
           {/* Desktop Header - Full Layout */}
-          <div className="hidden items-end justify-between pb-3 pt-4 md:flex">
+          <div className="hidden items-end justify-between pb-2 pt-6 md:flex md:pt-8 lg:pb-2 lg:pt-8 xl:pb-2 xl:pt-9">
             {/* Left: Logo and Site Name */}
             <div className="flex items-end gap-2 sm:gap-4 md:gap-6">
               {/* Logo - responsive width */}
@@ -107,7 +107,7 @@ export function FacebookHeaderClient({ menu }: FacebookHeaderClientProps) {
             </div>
 
             {/* Right: Wishlist, User, Cart */}
-            <div className="flex items-center gap-2 pr-2 sm:gap-3 sm:pr-4">
+            <div className="flex items-end gap-2 pr-2 sm:gap-3 sm:pr-4">
               {/* Wishlist */}
               <button
                 onClick={() => setIsWishlistDrawerOpen(true)}

@@ -178,7 +178,7 @@ export function CollectionTabsHome({
       </div>
 
       {/* Profile Header - Light gray background - Hidden on mobile */}
-      <div className="relative hidden bg-[#e9eaed] pt-8 sm:pt-12 md:block lg:pt-16">
+      <div className="relative hidden bg-[#e9eaed] pt-3 sm:pt-4 md:block md:pt-6 lg:pt-5">
         <div className="mx-auto px-2 sm:px-4">
           {/* Right: Title and Tabs - with left margin to avoid avatar on desktop */}
           <div className="ml-0 flex flex-col md:ml-[204px]">
