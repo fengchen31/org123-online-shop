@@ -68,6 +68,11 @@ export function CollectionTabsHome({
   const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false);
   const [newsletterDiscountCode, setNewsletterDiscountCode] = useState('');
 
+  // Fans avatars from country
+  const [fansAvatars, setFansAvatars] = useState<Array<{ username: string; avatarUrl: string; profileUrl: string }>>([]);
+  const [fansPopulation, setFansPopulation] = useState<number>(3227043);
+  const [fansCountry, setFansCountry] = useState<string>('');
+
   // Randomly select an avatar (stable across re-renders)
   const randomAvatar = useMemo(() => {
     return LOGIN_AVATARS[Math.floor(Math.random() * LOGIN_AVATARS.length)] || LOGIN_AVATARS[0]!;
@@ -121,9 +126,30 @@ export function CollectionTabsHome({
       }
     };
 
+    const fetchCountryFans = async () => {
+      try {
+        const res = await fetch('/api/country-fans');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.avatars) {
+            setFansAvatars(data.avatars);
+          }
+          if (data.population) {
+            setFansPopulation(data.population);
+          }
+          if (data.countryName) {
+            setFansCountry(data.countryName);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching country fans:', error);
+      }
+    };
+
     fetchCustomer();
     fetchWishlistCount();
     fetchDiscountBanner();
+    fetchCountryFans();
 
     // Listen for wishlist updates
     const handleWishlistUpdate = (event: CustomEvent) => {
@@ -357,30 +383,30 @@ export function CollectionTabsHome({
               {/* Fans Section */}
               <div className="border-b border-r border-t border-gray-300 bg-white">
                 <div className="border-b border-gray-300 bg-[#f7f7f7] px-3 py-2">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-gray-800">Fans</h3>
-                    <a href="/search" className="text-xs text-[#3b5998] hover:underline">
-                      See All
-                    </a>
-                  </div>
+                  <h3 className="text-xs font-bold text-gray-800">Fans</h3>
                 </div>
                 <div className="p-3">
-                  <p className="text-xs text-gray-700">6 of 3,227,043 fans</p>
+                  <p className="text-xs text-gray-700">
+                    6 of {fansPopulation.toLocaleString()} fans
+                  </p>
                   <div className="mt-3 grid grid-cols-3 gap-2">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                      <div
-                        key={i}
-                        className="relative aspect-square overflow-hidden border border-gray-300 bg-white p-2"
+                    {(fansAvatars.length > 0 ? fansAvatars : [1, 2, 3, 4, 5, 6]).map((fan, i) => (
+                      <a
+                        key={typeof fan === 'object' ? fan.username : i}
+                        href={typeof fan === 'object' ? fan.profileUrl : '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="relative aspect-square overflow-hidden border border-gray-300 bg-white transition-transform hover:scale-105"
+                        title={typeof fan === 'object' ? `@${fan.username}` : undefined}
                       >
-                        <div className="relative h-full w-full">
-                          <Image
-                            src="/images/avatars/org123xyz_head.svg"
-                            alt={`Fan ${i}`}
-                            fill
-                            className="object-contain"
-                          />
-                        </div>
-                      </div>
+                        <Image
+                          src={typeof fan === 'object' ? fan.avatarUrl : '/images/avatars/org123xyz_head.svg'}
+                          alt={typeof fan === 'object' ? `@${fan.username}` : `Fan ${i}`}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </a>
                     ))}
                   </div>
                 </div>
