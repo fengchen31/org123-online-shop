@@ -403,7 +403,7 @@ function mergeIntoFeaturesAndSizeChart(sections: DescriptionSection[]): Descript
         content: htmlSection.content,
         htmlContent: htmlSection.htmlContent
       });
-    } else if (sizeChartSections.length >= 1 && isSizeTitle(sizeChartSections[0].title)) {
+    } else if (sizeChartSections.length >= 1 && sizeChartSections[0] && isSizeTitle(sizeChartSections[0].title)) {
       // Create a table from size sections
       let tableHtml = '<table class="w-full border-collapse"><thead><tr class="border-b border-gray-300 bg-gray-50">';
       tableHtml += '<th class="px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">Size</th>';
@@ -424,7 +424,7 @@ function mergeIntoFeaturesAndSizeChart(sections: DescriptionSection[]): Descript
         content: sizeChartSections.map(s => `${s.title}:\n${s.content}`).join('\n\n'),
         htmlContent: tableHtml
       });
-    } else {
+    } else if (sizeChartSections.length > 0 && sizeChartSections[0]) {
       // Just use the first size chart section as-is
       result.push({
         title: 'Size Chart',

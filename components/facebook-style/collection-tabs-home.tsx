@@ -216,7 +216,7 @@ export function CollectionTabsHome({
             {/* Left Column - Sidebar with Avatar */}
             <div className="hidden w-[180px] shrink-0 md:block lg:w-1/5">
               {/* Avatar - positioned absolutely, extending up into gray area */}
-              <div className="relative -mt-14 mb-4 w-full md:-mt-20">
+              <div className="relative -mt-14 mb-14 w-full md:-mt-20 md:mb-20">
                 <div className="relative z-20 overflow-hidden border border-gray-300 shadow-lg">
                   <div className="relative aspect-square w-full bg-white">
                     <Image
