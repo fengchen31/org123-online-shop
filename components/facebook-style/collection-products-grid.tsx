@@ -63,21 +63,25 @@ export function CollectionProductsGrid({
 
   return (
     <>
-      {/* Filters Row - Category on left, Sort and Currency on right */}
-      <div className="mb-3 flex items-center justify-between sm:mb-4">
-        {/* Left: Category Filter */}
-        {categories && activeCategory !== undefined && onCategoryChange && (
-          <CategoryFilter
-            categories={categories}
-            activeCategory={activeCategory}
-            onCategoryChange={onCategoryChange}
-          />
-        )}
+      {/* Filters Section - Responsive: one row when wide, two rows when narrow */}
+      <div className="mb-3 sm:mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          {/* Category Filter */}
+          {categories && activeCategory !== undefined && onCategoryChange && (
+            <div className="flex-shrink min-w-0">
+              <CategoryFilter
+                categories={categories}
+                activeCategory={activeCategory}
+                onCategoryChange={onCategoryChange}
+              />
+            </div>
+          )}
 
-        {/* Right: Currency Toggle and Product Filter */}
-        <div className="flex items-center gap-2">
-          <CurrencyToggle />
-          <ProductFilter onSortChange={handleSortChange} currentSort={currentSort} />
+          {/* Currency Toggle and Sort Filter */}
+          <div className="flex items-center gap-2">
+            <CurrencyToggle />
+            <ProductFilter onSortChange={handleSortChange} currentSort={currentSort} />
+          </div>
         </div>
       </div>
 
