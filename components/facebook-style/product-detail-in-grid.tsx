@@ -46,10 +46,10 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center border border-gray-300 bg-white text-gray-600 hover:bg-gray-100 sm:right-3 sm:top-3 sm:h-8 sm:w-8 lg:right-4 lg:top-4"
+          className="absolute right-2 top-2 z-10 flex h-5 w-5 items-center justify-center border border-gray-300 bg-white text-gray-600 hover:bg-gray-100 sm:right-3 sm:top-3 sm:h-6 sm:w-6"
           aria-label="Close"
         >
-          <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
@@ -116,11 +116,11 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
           </div>
 
           {/* Right side - Product info */}
-          <div className={`flex flex-col p-3 transition-all duration-500 sm:p-4 md:p-6 lg:p-8 ${
+          <div className={`flex flex-col p-3 pt-8 transition-all duration-500 sm:p-4 sm:pt-10 md:p-6 md:pt-12 lg:p-8 lg:pt-14 ${
             showContent ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'
           }`}>
             <div className="flex-1">
-              <h1 className="text-base font-bold text-gray-900 sm:text-lg lg:text-xl">
+              <h1 className="pr-8 text-base font-bold text-gray-900 sm:pr-10 sm:text-lg lg:text-xl">
                 {product.title}
               </h1>
 

@@ -30,10 +30,10 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center border border-gray-300 bg-white text-gray-600 hover:bg-gray-100"
+          className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center border border-gray-300 bg-white text-gray-600 hover:bg-gray-100 sm:right-3 sm:top-3"
           aria-label="Close"
         >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
@@ -98,9 +98,9 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
           </div>
 
           {/* Right side - Product info */}
-          <div className="flex flex-col p-8">
+          <div className="flex flex-col p-8 pt-16">
             <div className="flex-1">
-              <h1 className="text-xl font-bold text-gray-900">
+              <h1 className="pr-12 text-xl font-bold text-gray-900">
                 {product.title}
               </h1>
 
