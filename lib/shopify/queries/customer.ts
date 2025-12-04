@@ -15,6 +15,9 @@ export const getCustomerQuery = /* GraphQL */ `
         country
         zip
       }
+      metafield(namespace: "custom", key: "avatar") {
+        value
+      }
     }
   }
 `;

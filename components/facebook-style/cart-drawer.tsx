@@ -100,7 +100,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                           {/* Image */}
                           <Link href={merchandiseUrl} onClick={onClose}>
                             <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden bg-gray-100 sm:h-20 sm:w-20 md:h-24 md:w-24">
-                              <Image
+                              <ImageWithFallback
                                 src={item.merchandise.product.featuredImage.url}
                                 alt={
                                   item.merchandise.product.featuredImage.altText ||

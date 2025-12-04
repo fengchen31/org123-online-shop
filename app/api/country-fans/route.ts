@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     const country = request.headers.get('x-vercel-ip-country') || 'US';
 
     // 獲取該國家的名人帳號
-    const celebrities = COUNTRY_CELEBRITIES[country] || COUNTRY_CELEBRITIES.DEFAULT;
+    const celebrities = COUNTRY_CELEBRITIES[country] || COUNTRY_CELEBRITIES.DEFAULT || [];
 
     // 生成 Twitter avatar URLs
     const avatars = celebrities.map((username) => ({

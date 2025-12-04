@@ -603,7 +603,14 @@ export async function getCustomer(accessToken: string): Promise<Customer | null>
       query: getCustomerQuery
     });
 
-    return res.body.data.customer;
+    const customer = res.body.data.customer;
+
+    // Extract avatar from metafield if exists
+    if (customer && (customer as any).metafield?.value) {
+      customer.avatar = (customer as any).metafield.value;
+    }
+
+    return customer;
   } catch (e) {
     console.error('Error fetching customer:', e);
     return null;

@@ -258,7 +258,7 @@ export function WishlistDrawer({ isOpen, onClose, onOpenCart }: WishlistDrawerPr
                       <Link href={`/product/${variant.product.handle}`} onClick={onClose}>
                         <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden bg-gray-100 sm:h-20 sm:w-20 md:h-24 md:w-24">
                           {imageUrl ? (
-                            <Image
+                            <ImageWithFallback
                               src={imageUrl}
                               alt={variant.product.title}
                               fill

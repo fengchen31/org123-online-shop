@@ -289,6 +289,7 @@ export type Customer = {
   email: string;
   phone?: string;
   defaultAddress?: Address;
+  avatar?: string;
 };
 
 export type OrderLineItem = {

@@ -21,15 +21,6 @@ interface CollectionTabsHomeProps {
   onOpenAccount?: () => void;
 }
 
-// Available login avatars
-const LOGIN_AVATARS = [
-  '/images/loginAvatars/CHP3SG__57026.jpg',
-  '/images/loginAvatars/JELC3M__66939.jpg',
-  '/images/loginAvatars/RR3F__13660.jpg',
-  '/images/loginAvatars/RR3FC__50145.jpg',
-  '/images/loginAvatars/TIM3TUR__22422.jpg'
-];
-
 export function CollectionTabsHome({
   collections,
   collectionContents,
@@ -44,6 +35,7 @@ export function CollectionTabsHome({
   );
   const [customerName, setCustomerName] = useState<string>('org123.xyz');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [customerAvatar, setCustomerAvatar] = useState<string>('');
 
   // Search states
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -73,11 +65,6 @@ export function CollectionTabsHome({
   const [fansPopulation, setFansPopulation] = useState<number>(3227043);
   const [fansCountry, setFansCountry] = useState<string>('');
 
-  // Randomly select an avatar (stable across re-renders)
-  const randomAvatar = useMemo(() => {
-    return LOGIN_AVATARS[Math.floor(Math.random() * LOGIN_AVATARS.length)] || LOGIN_AVATARS[0]!;
-  }, []);
-
   useEffect(() => {
     const fetchCustomer = async () => {
       try {
@@ -90,6 +77,10 @@ export function CollectionTabsHome({
               : data.customer.email;
             setCustomerName(name);
             setIsLoggedIn(true);
+            // Use custom avatar if exists
+            if (data.customer.avatar) {
+              setCustomerAvatar(data.customer.avatar);
+            }
           }
         }
       } catch (error) {
@@ -245,13 +236,33 @@ export function CollectionTabsHome({
               <div className="relative -mt-[66px] mb-3 w-full sm:-mt-[78px] sm:mb-4 md:-mt-[88px] md:mb-6 lg:-mt-[94px] lg:mb-5">
                 <div className="relative z-20 overflow-hidden border border-gray-300 shadow-lg">
                   <div className="relative aspect-square w-full bg-white">
-                    <Image
-                      src={isLoggedIn ? randomAvatar : '/images/avatars/org123_logo.svg'}
-                      alt={isLoggedIn ? customerName : 'org123 logo'}
-                      fill
-                      className={isLoggedIn ? 'object-cover' : 'object-contain p-[15%]'}
-                      priority
-                    />
+                    {isLoggedIn ? (
+                      customerAvatar ? (
+                        <Image
+                          src={customerAvatar}
+                          alt={customerName}
+                          fill
+                          className="object-cover"
+                          priority
+                        />
+                      ) : (
+                        <Image
+                          src="/images/avatars/org123xyz_head.svg"
+                          alt="Default avatar"
+                          fill
+                          className="object-contain p-[10%]"
+                          priority
+                        />
+                      )
+                    ) : (
+                      <Image
+                        src="/images/avatars/org123_logo.svg"
+                        alt="org123 logo"
+                        fill
+                        className="object-contain p-[15%]"
+                        priority
+                      />
+                    )}
                   </div>
                 </div>
               </div>

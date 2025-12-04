@@ -66,3 +66,33 @@ export const updateCustomerWishlistMutation = /* GraphQL */ `
     }
   }
 `;
+
+// 更新大頭照 Mutation
+export const updateCustomerAvatarMutation = /* GraphQL */ `
+  mutation updateCustomerAvatar($customerAccessToken: String!, $avatar: String!) {
+    customerUpdate(
+      customerAccessToken: $customerAccessToken
+      customer: {
+        metafields: [
+          {
+            namespace: "custom"
+            key: "avatar"
+            value: $avatar
+            type: "single_line_text_field"
+          }
+        ]
+      }
+    ) {
+      customer {
+        id
+        metafield(namespace: "custom", key: "avatar") {
+          value
+        }
+      }
+      customerUserErrors {
+        field
+        message
+      }
+    }
+  }
+`;

@@ -41,19 +41,11 @@ interface Customer {
   email: string;
   firstName?: string;
   lastName?: string;
+  avatar?: string;
 }
-
-const LOGIN_AVATARS = [
-  '/images/loginAvatars/CHP3SG__57026.jpg',
-  '/images/loginAvatars/JELC3M__66939.jpg',
-  '/images/loginAvatars/RR3F__13660.jpg',
-  '/images/loginAvatars/RR3FC__50145.jpg',
-  '/images/loginAvatars/TIM3TUR__22422.jpg'
-];
 
 export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [customerAvatar, setCustomerAvatar] = useState<string>('');
 
   const [postStates, setPostStates] = useState<Record<string, PostState>>({});
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
@@ -66,9 +58,6 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
         if (res.ok) {
           const data = await res.json();
           setCustomer(data.customer);
-          // Select a random avatar for this customer
-          const avatar = LOGIN_AVATARS[Math.floor(Math.random() * LOGIN_AVATARS.length)];
-          setCustomerAvatar(avatar || LOGIN_AVATARS[0]!);
         } else {
           setCustomer(null);
         }
@@ -137,8 +126,8 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
     setPostStates(prev => ({
       ...prev,
       [postId]: {
-        ...prev[postId],
-        isLiked: !prev[postId].isLiked,
+        ...prev[postId]!,
+        isLiked: !prev[postId]!.isLiked,
         likeCount: optimisticCount
       }
     }));
@@ -155,7 +144,7 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
       setPostStates(prev => ({
         ...prev,
         [postId]: {
-          ...prev[postId],
+          ...prev[postId]!,
           likeCount: data.count,
           isLiked: data.isLiked
         }
@@ -194,7 +183,7 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
     setPostStates(prev => ({
       ...prev,
       [postId]: {
-        ...prev[postId],
+        ...prev[postId]!,
         comments: [...(prev[postId]?.comments || []), optimisticComment]
       }
     }));
@@ -213,9 +202,9 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
       setPostStates(prev => ({
         ...prev,
         [postId]: {
-          ...prev[postId],
+          ...prev[postId]!,
           comments: [
-            ...prev[postId].comments.filter(c => c.id !== optimisticComment.id),
+            ...prev[postId]!.comments.filter(c => c.id !== optimisticComment.id),
             data.comment
           ]
         }
@@ -225,8 +214,8 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
       setPostStates(prev => ({
         ...prev,
         [postId]: {
-          ...prev[postId],
-          comments: prev[postId].comments.filter(c => c.id !== optimisticComment.id)
+          ...prev[postId]!,
+          comments: prev[postId]!.comments.filter(c => c.id !== optimisticComment.id)
         }
       }));
     }
@@ -240,8 +229,8 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
     setPostStates(prev => ({
       ...prev,
       [postId]: {
-        ...prev[postId],
-        comments: prev[postId].comments.filter(c => c.id !== commentId)
+        ...prev[postId]!,
+        comments: prev[postId]!.comments.filter(c => c.id !== commentId)
       }
     }));
 
@@ -254,7 +243,7 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
       setPostStates(prev => ({
         ...prev,
         [postId]: {
-          ...prev[postId],
+          ...prev[postId]!,
           comments: currentComments
         }
       }));
@@ -265,7 +254,7 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
     setPostStates(prev => ({
       ...prev,
       [postId]: {
-        ...prev[postId],
+        ...prev[postId]!,
         showComments: !prev[postId]?.showComments
       }
     }));
@@ -317,7 +306,7 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
             className="border border-gray-300 bg-white shadow-sm scroll-mt-4"
           >
             <div className="flex items-center gap-3 border-b border-gray-200 bg-[#f7f7f7] px-4 py-3">
-              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-sm border border-gray-300 bg-white">
+              <div className="relative h-10 w-10 shrink-0 overflow-hidden border border-gray-300 bg-white">
                 {post.authorAvatar ? (
                   <ImageWithFallback
                     src={post.authorAvatar}
@@ -406,13 +395,13 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
             </div>
 
             {state.showComments && customer && (
-              <div className="border-t border-[#e9ebee] bg-[#f6f7f9] px-3 py-3">
+              <div className="border-t border-[#e9ebee] bg-[#eceff5] px-3 py-3">
                 <div className="space-y-3">
                   {/* Existing Comments - 2010 Facebook style */}
                   {state.comments.map((comment) => (
                     <div key={comment.id}>
                       <div className="flex gap-2">
-                        <div className="relative h-8 w-8 shrink-0 overflow-hidden bg-gray-200">
+                        <div className="relative h-8 w-8 shrink-0 overflow-hidden border border-gray-300 bg-gray-200">
                           <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-gray-600">
                             {comment.author.charAt(0).toUpperCase()}
                           </div>
@@ -453,18 +442,21 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
 
                   {/* Comment Input - 2010 Facebook style */}
                   <div className="flex gap-2">
-                    <div className="relative h-8 w-8 shrink-0 overflow-hidden bg-gray-200">
-                      {customerAvatar ? (
+                    <div className="relative h-8 w-8 shrink-0 overflow-hidden border border-gray-300 bg-white">
+                      {customer.avatar ? (
                         <Image
-                          src={customerAvatar}
+                          src={customer.avatar}
                           alt="Your avatar"
                           fill
                           className="object-cover"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-gray-600">
-                          {customer.firstName?.charAt(0).toUpperCase() || 'U'}
-                        </div>
+                        <Image
+                          src="/images/avatars/org123xyz_head.svg"
+                          alt="Default avatar"
+                          fill
+                          className="object-contain p-0.5"
+                        />
                       )}
                     </div>
                     <input

@@ -93,17 +93,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
           openGraph: {
             type: 'website' as const,
             title: collection.title,
-            description: collection.description || collection.seo?.description || 'org123.xyz',
-            images: collection.image?.url
-              ? [
-                  {
-                    url: collection.image.url,
-                    width: collection.image.width || 1200,
-                    height: collection.image.height || 630,
-                    alt: collection.image.altText || collection.title
-                  }
-                ]
-              : undefined
+            description: collection.description || collection.seo?.description || 'org123.xyz'
           }
         };
         console.log('Generated metadata for collection:', metadata);

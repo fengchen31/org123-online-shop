@@ -48,10 +48,9 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   const [registerError, setRegisterError] = useState('');
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
 
-  // Randomly select an avatar (stable across re-renders)
-  const randomAvatar = useMemo(() => {
-    return LOGIN_AVATARS[Math.floor(Math.random() * LOGIN_AVATARS.length)] || LOGIN_AVATARS[0]!;
-  }, []);
+  // Avatar upload state
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -200,6 +199,95 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     }
   };
 
+  const handleAvatarClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/jpeg,image/png,image/jpg,image/webp';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      // Validate file size (max 5MB before compression)
+      if (file.size > 5 * 1024 * 1024) {
+        setAvatarError('Image too large. Please select an image smaller than 5MB.');
+        return;
+      }
+
+      setIsUploadingAvatar(true);
+      setAvatarError('');
+
+      try {
+        // Compress and convert to base64
+        const base64 = await compressImage(file);
+
+        // Upload to server
+        const res = await fetch('/api/customer/avatar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ avatarBase64: base64 })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to upload avatar');
+        }
+
+        // Refresh customer data to get new avatar
+        await fetchCustomer();
+        router.refresh();
+      } catch (err) {
+        setAvatarError(err instanceof Error ? err.message : 'Failed to upload avatar');
+      } finally {
+        setIsUploadingAvatar(false);
+      }
+    };
+    input.click();
+  };
+
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = document.createElement('img');
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 400;
+          const MAX_HEIGHT = 400;
+
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          // Convert to base64 with compression
+          const base64 = canvas.toDataURL('image/jpeg', 0.8);
+          resolve(base64);
+        };
+        img.onerror = reject;
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   return (
     <>
       {/* Backdrop */}
@@ -242,21 +330,54 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                 <div className="space-y-6">
               {/* Avatar Section */}
               <div className="flex items-center gap-4 border-b border-gray-200 pb-6">
-                <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-gray-300">
-                  <Image
-                    src={randomAvatar}
-                    alt={`${customer.firstName} ${customer.lastName}`}
-                    fill
-                    className="object-cover"
-                    priority
-                  />
+                <div
+                  className="relative h-20 w-20 shrink-0 overflow-hidden border-2 border-gray-300 cursor-pointer hover:opacity-80 transition-opacity group"
+                  onClick={handleAvatarClick}
+                  title="Click to upload avatar"
+                >
+                  {isUploadingAvatar ? (
+                    <div className="flex h-full w-full items-center justify-center bg-gray-200">
+                      <div className="text-xs text-gray-600">Uploading...</div>
+                    </div>
+                  ) : customer.avatar ? (
+                    <Image
+                      src={customer.avatar}
+                      alt={`${customer.firstName} ${customer.lastName}`}
+                      fill
+                      className="object-cover"
+                      priority
+                    />
+                  ) : (
+                    <Image
+                      src="/images/avatars/org123xyz_head.svg"
+                      alt="Default avatar"
+                      fill
+                      className="object-contain p-2"
+                      priority
+                    />
+                  )}
+                  {/* Upload overlay on hover */}
+                  {!isUploadingAvatar && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                  )}
                 </div>
-                <div>
+                <div className="flex-1">
                   <h3 className="text-lg font-bold text-gray-900">
                     {customer.firstName && customer.lastName
                       ? `${customer.firstName} ${customer.lastName}`
                       : customer.email}
                   </h3>
+                  {avatarError && (
+                    <p className="mt-1 text-xs text-red-600">{avatarError}</p>
+                  )}
+                  {!avatarError && !isUploadingAvatar && (
+                    <p className="mt-1 text-xs text-gray-500">Click avatar to change</p>
+                  )}
                 </div>
               </div>
 
