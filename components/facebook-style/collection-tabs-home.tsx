@@ -298,7 +298,7 @@ export function CollectionTabsHome({
                       className="transition-opacity hover:opacity-80"
                     >
                       <Image
-                        src="/images/fb.webp"
+                        src="/images/fb.jpg"
                         alt="Facebook"
                         width={28}
                         height={28}
@@ -313,8 +313,23 @@ export function CollectionTabsHome({
                       className="transition-opacity hover:opacity-80"
                     >
                       <Image
-                        src="/images/ig.webp"
+                        src="/images/ig.jpg"
                         alt="Instagram"
+                        width={28}
+                        height={28}
+                        className="h-7 w-7"
+                      />
+                    </a>
+                    {/* YouTube Icon */}
+                    <a
+                      href="https://youtube.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="transition-opacity hover:opacity-80"
+                    >
+                      <Image
+                        src="/images/youtube.jpg"
+                        alt="YouTube"
                         width={28}
                         height={28}
                         className="h-7 w-7"

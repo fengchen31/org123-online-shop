@@ -262,7 +262,7 @@ function CollapsibleSection({ title, content, htmlContent, defaultOpen = false }
   const sizeData = !htmlContent && isSizeChart ? parseSizeChart(content) : null;
 
   return (
-    <div className="border-b border-gray-200">
+    <div className="mt-4 border-b border-gray-200">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between py-3 text-left sm:py-4"
@@ -344,46 +344,97 @@ function isSizeTitle(title: string): boolean {
   );
 }
 
-// Merge size-related sections into a single Size Chart section
-function mergeSizeSections(sections: DescriptionSection[]): DescriptionSection[] {
-  const sizeSections: DescriptionSection[] = [];
-  const otherSections: DescriptionSection[] = [];
+// Check if a section is a Size Chart
+function isSizeChartSection(section: DescriptionSection): boolean {
+  const title = section.title.toLowerCase();
+  return title.includes('size') && title.includes('chart');
+}
 
+// Merge all non-size sections into Features and keep Size Chart separate
+function mergeIntoFeaturesAndSizeChart(sections: DescriptionSection[]): DescriptionSection[] {
+  const sizeChartSections: DescriptionSection[] = [];
+  const featureSections: DescriptionSection[] = [];
+
+  // Separate Size Chart sections from feature sections
   sections.forEach(section => {
-    if (isSizeTitle(section.title)) {
-      sizeSections.push(section);
+    if (isSizeChartSection(section) || isSizeTitle(section.title)) {
+      sizeChartSections.push(section);
     } else {
-      otherSections.push(section);
+      featureSections.push(section);
     }
   });
 
-  // If we have any size sections, create a combined Size Chart
-  if (sizeSections.length >= 1) {
-    // Create a table from size sections
-    let tableHtml = '<table class="w-full border-collapse"><thead><tr class="border-b border-gray-300 bg-gray-50">';
-    tableHtml += '<th class="px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">Size</th>';
-    tableHtml += '<th class="px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">Measurements</th>';
-    tableHtml += '</tr></thead><tbody>';
+  const result: DescriptionSection[] = [];
 
-    sizeSections.forEach(section => {
-      tableHtml += '<tr class="border-b border-gray-200 last:border-b-0">';
-      tableHtml += `<td class="px-2 py-2 font-medium text-gray-900 sm:px-3">${section.title}</td>`;
-      tableHtml += `<td class="px-2 py-2 text-gray-700 sm:px-3">${section.content.split('\n').join('<br>')}</td>`;
-      tableHtml += '</tr>';
+  // Create a single Features section from all feature sections
+  if (featureSections.length > 0) {
+    // Create HTML for better formatting with inline styles
+    let featuresHtml = '<div style="display: flex; flex-direction: column; gap: 0.75rem;">';
+    featureSections.forEach((section) => {
+      featuresHtml += '<div>';
+      featuresHtml += `<div style="font-weight: 700; color: #111827; font-size: 0.875rem;">${section.title}</div>`;
+      featuresHtml += `<div style="color: #374151; margin-top: 0.25rem; font-size: 0.875rem;">${section.content.split('\n').join('<br>')}</div>`;
+      featuresHtml += '</div>';
+    });
+    featuresHtml += '</div>';
+
+    // Also create plain text version as fallback
+    let featuresContent = '';
+    featureSections.forEach((section, index) => {
+      if (index > 0) featuresContent += '\n\n';
+      featuresContent += `${section.title}\n${section.content}`;
     });
 
-    tableHtml += '</tbody></table>';
-
-    const sizeChartSection: DescriptionSection = {
-      title: 'Size Chart',
-      content: sizeSections.map(s => `${s.title}:\n${s.content}`).join('\n\n'),
-      htmlContent: tableHtml
-    };
-
-    return [...otherSections, sizeChartSection];
+    result.push({
+      title: 'Features',
+      content: featuresContent,
+      htmlContent: featuresHtml
+    });
   }
 
-  return sections;
+  // Create a single Size Chart section
+  if (sizeChartSections.length > 0) {
+    // Check if any section already has HTML table
+    const htmlSection = sizeChartSections.find(s => s.htmlContent);
+
+    if (htmlSection) {
+      result.push({
+        title: 'Size Chart',
+        content: htmlSection.content,
+        htmlContent: htmlSection.htmlContent
+      });
+    } else if (sizeChartSections.length >= 1 && isSizeTitle(sizeChartSections[0].title)) {
+      // Create a table from size sections
+      let tableHtml = '<table class="w-full border-collapse"><thead><tr class="border-b border-gray-300 bg-gray-50">';
+      tableHtml += '<th class="px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">Size</th>';
+      tableHtml += '<th class="px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">Measurements</th>';
+      tableHtml += '</tr></thead><tbody>';
+
+      sizeChartSections.forEach(section => {
+        tableHtml += '<tr class="border-b border-gray-200 last:border-b-0">';
+        tableHtml += `<td class="px-2 py-2 font-medium text-gray-900 sm:px-3">${section.title}</td>`;
+        tableHtml += `<td class="px-2 py-2 text-gray-700 sm:px-3">${section.content.split('\n').join('<br>')}</td>`;
+        tableHtml += '</tr>';
+      });
+
+      tableHtml += '</tbody></table>';
+
+      result.push({
+        title: 'Size Chart',
+        content: sizeChartSections.map(s => `${s.title}:\n${s.content}`).join('\n\n'),
+        htmlContent: tableHtml
+      });
+    } else {
+      // Just use the first size chart section as-is
+      result.push({
+        title: 'Size Chart',
+        content: sizeChartSections.map(s => s.content).join('\n\n'),
+        htmlContent: sizeChartSections[0].htmlContent
+      });
+    }
+  }
+
+  return result;
 }
 
 export function CollapsibleDescription({ description, descriptionHtml }: CollapsibleDescriptionProps) {
@@ -391,8 +442,8 @@ export function CollapsibleDescription({ description, descriptionHtml }: Collaps
     ? parseDescriptionHtml(descriptionHtml)
     : parseDescriptionText(description);
 
-  // Merge size sections into a Size Chart if applicable
-  sections = mergeSizeSections(sections);
+  // Merge all sections into Features and Size Chart
+  sections = mergeIntoFeaturesAndSizeChart(sections);
 
   if (sections.length === 0) {
     return null;
