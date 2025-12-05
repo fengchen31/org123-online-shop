@@ -1,29 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
+import { getMetafields, setMetafields } from 'lib/shopify/admin';
 
-const DATA_FILE = path.join(process.cwd(), 'data', 'likes.json');
+const NAMESPACE = 'news_feed';
+const KEY = 'likes';
 
-// 確保資料目錄和檔案存在
-async function ensureDataFile() {
-  try {
-    const dataDir = path.dirname(DATA_FILE);
-    await fs.mkdir(dataDir, { recursive: true });
-
-    try {
-      await fs.access(DATA_FILE);
-    } catch {
-      await fs.writeFile(DATA_FILE, JSON.stringify({}));
-    }
-  } catch (error) {
-    console.error('Error ensuring data file:', error);
-  }
+interface LikesData {
+  [postId: string]: {
+    count: number;
+    users: string[];
+  };
 }
 
 // GET: 獲取某個貼文的 likes
 export async function GET(request: NextRequest) {
   try {
-    await ensureDataFile();
     const { searchParams } = new URL(request.url);
     const postId = searchParams.get('postId');
 
@@ -31,13 +21,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'postId is required' }, { status: 400 });
     }
 
-    const data = await fs.readFile(DATA_FILE, 'utf-8');
-    const likes = JSON.parse(data);
+    // 從 Shopify Page metafields 讀取 likes 資料
+    const metafields = await getMetafields(postId, NAMESPACE);
+    const likesMetafield = metafields.find((m) => m.key === KEY);
+
+    let likesData: LikesData[string] = { count: 0, users: [] };
+
+    if (likesMetafield && likesMetafield.value) {
+      try {
+        likesData = JSON.parse(likesMetafield.value);
+      } catch (error) {
+        console.error('Error parsing likes data:', error);
+      }
+    }
 
     return NextResponse.json({
       postId,
-      count: likes[postId]?.count || 0,
-      users: likes[postId]?.users || []
+      count: likesData.count || 0,
+      users: likesData.users || []
     });
   } catch (error) {
     console.error('Error reading likes:', error);
@@ -48,7 +49,6 @@ export async function GET(request: NextRequest) {
 // POST: 新增或移除 like
 export async function POST(request: NextRequest) {
   try {
-    await ensureDataFile();
     const body = await request.json();
     const { postId, userId, action } = body;
 
@@ -59,29 +59,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = await fs.readFile(DATA_FILE, 'utf-8');
-    const likes = JSON.parse(data);
+    // 從 Shopify Page metafields 讀取現有 likes 資料
+    const metafields = await getMetafields(postId, NAMESPACE);
+    const likesMetafield = metafields.find((m) => m.key === KEY);
 
-    if (!likes[postId]) {
-      likes[postId] = { count: 0, users: [] };
+    let likesData: LikesData[string] = { count: 0, users: [] };
+
+    if (likesMetafield && likesMetafield.value) {
+      try {
+        likesData = JSON.parse(likesMetafield.value);
+      } catch (error) {
+        console.error('Error parsing existing likes data:', error);
+      }
     }
 
+    // 更新 likes 資料
     if (action === 'like') {
-      if (!likes[postId].users.includes(userId)) {
-        likes[postId].users.push(userId);
-        likes[postId].count = likes[postId].users.length;
+      if (!likesData.users.includes(userId)) {
+        likesData.users.push(userId);
+        likesData.count = likesData.users.length;
       }
     } else if (action === 'unlike') {
-      likes[postId].users = likes[postId].users.filter((id: string) => id !== userId);
-      likes[postId].count = likes[postId].users.length;
+      likesData.users = likesData.users.filter((id: string) => id !== userId);
+      likesData.count = likesData.users.length;
     }
 
-    await fs.writeFile(DATA_FILE, JSON.stringify(likes, null, 2));
+    // 寫回 Shopify metafields
+    await setMetafields(postId, [
+      {
+        namespace: NAMESPACE,
+        key: KEY,
+        value: JSON.stringify(likesData),
+        type: 'json'
+      }
+    ]);
 
     return NextResponse.json({
       postId,
-      count: likes[postId].count,
-      isLiked: likes[postId].users.includes(userId)
+      count: likesData.count,
+      isLiked: likesData.users.includes(userId)
     });
   } catch (error) {
     console.error('Error updating likes:', error);

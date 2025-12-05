@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
+import { getMetafields, setMetafields } from 'lib/shopify/admin';
 
-const DATA_FILE = path.join(process.cwd(), 'data', 'comments.json');
+const NAMESPACE = 'news_feed';
+const KEY = 'comments';
 
 interface Comment {
   id: string;
@@ -13,26 +13,9 @@ interface Comment {
   timestamp: string;
 }
 
-// 確保資料目錄和檔案存在
-async function ensureDataFile() {
-  try {
-    const dataDir = path.dirname(DATA_FILE);
-    await fs.mkdir(dataDir, { recursive: true });
-
-    try {
-      await fs.access(DATA_FILE);
-    } catch {
-      await fs.writeFile(DATA_FILE, JSON.stringify([]));
-    }
-  } catch (error) {
-    console.error('Error ensuring data file:', error);
-  }
-}
-
 // GET: 獲取某個貼文的 comments
 export async function GET(request: NextRequest) {
   try {
-    await ensureDataFile();
     const { searchParams } = new URL(request.url);
     const postId = searchParams.get('postId');
 
@@ -40,13 +23,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'postId is required' }, { status: 400 });
     }
 
-    const data = await fs.readFile(DATA_FILE, 'utf-8');
-    const allComments: Comment[] = JSON.parse(data);
-    const postComments = allComments.filter((c) => c.postId === postId);
+    // 從 Shopify Page metafields 讀取 comments 資料
+    const metafields = await getMetafields(postId, NAMESPACE);
+    const commentsMetafield = metafields.find((m) => m.key === KEY);
+
+    let comments: Comment[] = [];
+
+    if (commentsMetafield && commentsMetafield.value) {
+      try {
+        comments = JSON.parse(commentsMetafield.value);
+      } catch (error) {
+        console.error('Error parsing comments data:', error);
+      }
+    }
 
     return NextResponse.json({
       postId,
-      comments: postComments
+      comments
     });
   } catch (error) {
     console.error('Error reading comments:', error);
@@ -57,7 +50,6 @@ export async function GET(request: NextRequest) {
 // POST: 新增 comment
 export async function POST(request: NextRequest) {
   try {
-    await ensureDataFile();
     const body = await request.json();
     const { postId, userId, author, content } = body;
 
@@ -68,8 +60,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = await fs.readFile(DATA_FILE, 'utf-8');
-    const comments: Comment[] = JSON.parse(data);
+    // 從 Shopify Page metafields 讀取現有 comments 資料
+    const metafields = await getMetafields(postId, NAMESPACE);
+    const commentsMetafield = metafields.find((m) => m.key === KEY);
+
+    let comments: Comment[] = [];
+
+    if (commentsMetafield && commentsMetafield.value) {
+      try {
+        comments = JSON.parse(commentsMetafield.value);
+      } catch (error) {
+        console.error('Error parsing existing comments data:', error);
+      }
+    }
 
     const newComment: Comment = {
       id: Date.now().toString(),
@@ -81,7 +84,16 @@ export async function POST(request: NextRequest) {
     };
 
     comments.push(newComment);
-    await fs.writeFile(DATA_FILE, JSON.stringify(comments, null, 2));
+
+    // 寫回 Shopify metafields
+    await setMetafields(postId, [
+      {
+        namespace: NAMESPACE,
+        key: KEY,
+        value: JSON.stringify(comments),
+        type: 'json'
+      }
+    ]);
 
     return NextResponse.json({
       comment: newComment
@@ -95,20 +107,31 @@ export async function POST(request: NextRequest) {
 // DELETE: 刪除 comment
 export async function DELETE(request: NextRequest) {
   try {
-    await ensureDataFile();
     const { searchParams } = new URL(request.url);
     const commentId = searchParams.get('commentId');
     const userId = searchParams.get('userId');
+    const postId = searchParams.get('postId');
 
-    if (!commentId || !userId) {
+    if (!commentId || !userId || !postId) {
       return NextResponse.json(
-        { error: 'commentId and userId are required' },
+        { error: 'commentId, userId, and postId are required' },
         { status: 400 }
       );
     }
 
-    const data = await fs.readFile(DATA_FILE, 'utf-8');
-    let comments: Comment[] = JSON.parse(data);
+    // 從 Shopify Page metafields 讀取現有 comments 資料
+    const metafields = await getMetafields(postId, NAMESPACE);
+    const commentsMetafield = metafields.find((m) => m.key === KEY);
+
+    let comments: Comment[] = [];
+
+    if (commentsMetafield && commentsMetafield.value) {
+      try {
+        comments = JSON.parse(commentsMetafield.value);
+      } catch (error) {
+        console.error('Error parsing existing comments data:', error);
+      }
+    }
 
     const comment = comments.find((c) => c.id === commentId);
     if (!comment) {
@@ -120,7 +143,16 @@ export async function DELETE(request: NextRequest) {
     }
 
     comments = comments.filter((c) => c.id !== commentId);
-    await fs.writeFile(DATA_FILE, JSON.stringify(comments, null, 2));
+
+    // 寫回 Shopify metafields
+    await setMetafields(postId, [
+      {
+        namespace: NAMESPACE,
+        key: KEY,
+        value: JSON.stringify(comments),
+        type: 'json'
+      }
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -235,7 +235,7 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
     }));
 
     try {
-      await fetch(`/api/news-feed/comments?commentId=${commentId}&userId=${customer.id}`, {
+      await fetch(`/api/news-feed/comments?commentId=${commentId}&userId=${customer.id}&postId=${postId}`, {
         method: 'DELETE'
       });
     } catch (error) {
