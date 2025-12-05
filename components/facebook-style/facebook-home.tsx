@@ -21,8 +21,8 @@ export function FacebookHome({ wallContent, infoContent, sourceContent }: Facebo
       {/* Tab Content */}
       <div className="mx-auto max-w-7xl px-4 py-6">
         <div className="flex gap-6">
-          {/* Left Sidebar - Fixed width to match org123.xyz text */}
-          <aside className="hidden w-[180px] shrink-0 lg:block">
+          {/* Left Sidebar - 1/7 of screen width on tablet and above */}
+          <aside className="hidden shrink-0 md:block md:w-[calc(100%/7)]">
             <div className="rounded border border-gray-300 bg-white p-4 shadow-sm">
               <h3 className="mb-3 font-semibold text-[#3b5998]">About</h3>
               <div className="space-y-2 text-sm text-gray-700">

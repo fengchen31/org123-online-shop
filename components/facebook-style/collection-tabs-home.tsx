@@ -198,7 +198,7 @@ export function CollectionTabsHome({
       <div className="relative hidden bg-[#e9eaed] pt-3 sm:pt-4 md:block md:pt-6 lg:pt-5">
         <div className="mx-auto px-2 sm:px-4">
           {/* Right: Title and Tabs - with left margin to avoid avatar on desktop */}
-          <div className="ml-0 flex flex-col md:ml-[204px] lg:ml-[calc(20%+1.5rem)]">
+          <div className="ml-0 flex flex-col md:ml-[calc(100%/7+0.75rem)] lg:ml-[calc(100%/7+1.5rem)]">
             {/* Title */}
             <div className="flex items-center gap-2 pb-2">
               <h1 className="text-lg font-bold text-gray-900 sm:text-xl lg:text-2xl">{customerName}</h1>
@@ -231,7 +231,7 @@ export function CollectionTabsHome({
         <div className="mx-auto px-2 pb-6 sm:px-4">
           <div className="flex gap-3 sm:gap-4 lg:gap-6">
             {/* Left Column - Sidebar with Avatar */}
-            <div className="hidden w-[180px] shrink-0 pt-3 md:block sm:pt-4 md:pt-6 lg:w-1/5 lg:pt-5">
+            <div className="hidden shrink-0 pt-3 md:block md:w-[calc(100%/7)] sm:pt-4 md:pt-6 lg:pt-5">
               {/* Avatar - positioned with negative margin to overlap gray area, with equal spacing below */}
               <div className="relative -mt-[66px] mb-3 w-full sm:-mt-[78px] sm:mb-4 md:-mt-[88px] md:mb-6 lg:-mt-[94px] lg:mb-5">
                 <div className="relative z-20 overflow-hidden border border-gray-300 shadow-lg">
@@ -326,35 +326,20 @@ export function CollectionTabsHome({
                   <h3 className="text-xs font-bold text-gray-800">Information</h3>
                 </div>
                 <div className="px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    {/* Facebook Icon */}
-                    <a
-                      href="https://facebook.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="transition-opacity hover:opacity-80"
-                    >
-                      <Image
-                        src="/images/fb.jpg"
-                        alt="Facebook"
-                        width={28}
-                        height={28}
-                        className="h-7 w-7"
-                      />
-                    </a>
+                  <div className="flex flex-wrap items-start gap-1">
                     {/* Instagram Icon - 2009 vintage camera style */}
                     <a
-                      href="https://instagram.com"
+                      href="https://www.instagram.com/org123.xyz/"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="transition-opacity hover:opacity-80"
+                      className="block transition-opacity hover:opacity-80"
                     >
                       <Image
                         src="/images/ig.jpg"
                         alt="Instagram"
                         width={28}
                         height={28}
-                        className="h-7 w-7"
+                        className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8"
                       />
                     </a>
                     {/* YouTube Icon */}
@@ -362,29 +347,44 @@ export function CollectionTabsHome({
                       href="https://youtube.com"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="transition-opacity hover:opacity-80"
+                      className="block transition-opacity hover:opacity-80"
                     >
                       <Image
                         src="/images/youtube.jpg"
                         alt="YouTube"
                         width={28}
                         height={28}
-                        className="h-7 w-7"
+                        className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8"
                       />
                     </a>
                     {/* Meta Threads Icon */}
                     <a
-                      href="https://threads.net"
+                      href="https://www.threads.com/@nul1org"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="transition-opacity hover:opacity-80"
+                      className="block transition-opacity hover:opacity-80"
                     >
                       <Image
                         src="/images/thread.png"
                         alt="Threads"
-                        width={34}
-                        height={34}
-                        className="h-[34px] w-[34px]"
+                        width={28}
+                        height={28}
+                        className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8"
+                      />
+                    </a>
+                    {/* Apple Music Icon */}
+                    <a
+                      href="https://music.apple.com/tw/playlist/org123-xyz-nov2025/pl.u-RRbVVE1toby3v9?l=en-GB"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block transition-opacity hover:opacity-80"
+                    >
+                      <Image
+                        src="/images/Apple_Music_icon.svg"
+                        alt="Apple Music"
+                        width={28}
+                        height={28}
+                        className="h-6 w-6 md:h-7 md:w-7 lg:h-8 lg:w-8"
                       />
                     </a>
                   </div>
@@ -400,7 +400,7 @@ export function CollectionTabsHome({
                   <p className="text-xs text-gray-700">
                     6 of {fansPopulation.toLocaleString()} fans
                   </p>
-                  <div className="mt-3 grid grid-cols-3 gap-2">
+                  <div className="mt-3 grid grid-cols-2 gap-2 xl:grid-cols-3">
                     {(fansAvatars.length > 0 ? fansAvatars : [1, 2, 3, 4, 5, 6]).map((fan, i) => (
                       <a
                         key={typeof fan === 'object' ? fan.username : i}

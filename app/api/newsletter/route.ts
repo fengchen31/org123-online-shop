@@ -60,7 +60,7 @@ async function createShopifyDiscount(code: string): Promise<boolean> {
               endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
               customerGets: {
                 value: {
-                  percentage: 0.1 // 10% off
+                  percentage: 0.05 // 5% off
                 },
                 items: {
                   all: true
