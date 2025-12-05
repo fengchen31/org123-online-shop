@@ -25,6 +25,7 @@ interface Comment {
   postId: string;
   author: string;
   userId: string;
+  avatar?: string;
   content: string;
   timestamp: string;
 }
@@ -176,6 +177,7 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
       postId,
       author,
       userId: customer.id,
+      avatar: customer.avatar,
       content,
       timestamp: new Date().toISOString()
     };
@@ -194,7 +196,7 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
       const response = await fetch('/api/news-feed/comments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postId, userId: customer.id, author, content })
+        body: JSON.stringify({ postId, userId: customer.id, author, avatar: customer.avatar, content })
       });
 
       const data = await response.json();
@@ -401,10 +403,22 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
                   {state.comments.map((comment) => (
                     <div key={comment.id}>
                       <div className="flex gap-2">
-                        <div className="relative h-8 w-8 shrink-0 overflow-hidden border border-gray-300 bg-gray-200">
-                          <div className="flex h-full w-full items-center justify-center text-[10px] font-bold text-gray-600">
-                            {comment.author.charAt(0).toUpperCase()}
-                          </div>
+                        <div className="relative h-8 w-8 shrink-0 overflow-hidden border border-gray-300 bg-white">
+                          {comment.avatar ? (
+                            <Image
+                              src={comment.avatar}
+                              alt={comment.author}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <Image
+                              src="/images/avatars/org123xyz_head.svg"
+                              alt="Default avatar"
+                              fill
+                              className="object-contain p-0.5"
+                            />
+                          )}
                         </div>
                         <div className="flex-1">
                           <div className="text-xs">

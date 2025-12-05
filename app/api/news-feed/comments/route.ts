@@ -9,6 +9,7 @@ interface Comment {
   postId: string;
   author: string;
   userId: string;
+  avatar?: string;
   content: string;
   timestamp: string;
 }
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { postId, userId, author, content } = body;
+    const { postId, userId, author, avatar, content } = body;
 
     if (!postId || !userId || !author || !content) {
       return NextResponse.json(
@@ -79,9 +80,15 @@ export async function POST(request: NextRequest) {
       postId,
       userId,
       author,
+      avatar,
       content,
       timestamp: new Date().toISOString()
     };
+
+    console.log('=== Creating new comment ===');
+    console.log('Author:', author);
+    console.log('Avatar:', avatar);
+    console.log('New comment:', JSON.stringify(newComment, null, 2));
 
     comments.push(newComment);
 
