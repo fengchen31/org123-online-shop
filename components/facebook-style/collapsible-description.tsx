@@ -485,7 +485,7 @@ function mergeIntoFeaturesAndSizeChart(sections: DescriptionSection[]): Descript
     });
 
     result.push({
-      title: 'Features',
+      title: 'Description',
       content: featuresContent,
       htmlContent: featuresHtml
     });
