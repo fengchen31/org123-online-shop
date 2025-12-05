@@ -36,6 +36,7 @@ export function CollectionTabsHome({
   const [customerName, setCustomerName] = useState<string>('org123.xyz');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [customerAvatar, setCustomerAvatar] = useState<string>('');
+  const [currentCustomerId, setCurrentCustomerId] = useState<string>('');
 
   // Search states
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -66,6 +67,34 @@ export function CollectionTabsHome({
   const [fansCountry, setFansCountry] = useState<string>('');
 
   useEffect(() => {
+    const fetchRecentFans = async (excludeCustomerId?: string) => {
+      try {
+        const res = await fetch('/api/recent-fans');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.fans && data.fans.length > 0) {
+            // Filter out the current user if excludeCustomerId is provided
+            const filteredFans = excludeCustomerId
+              ? data.fans.filter((fan: any) => fan.customerId !== excludeCustomerId)
+              : data.fans;
+
+            // Transform recent fans data to match the expected format
+            const transformedFans = filteredFans.map((fan: any) => ({
+              username: fan.firstName && fan.lastName
+                ? `${fan.firstName} ${fan.lastName}`
+                : fan.email.split('@')[0],
+              avatarUrl: fan.avatar,
+              profileUrl: '#' // No profile URL for now
+            }));
+            setFansAvatars(transformedFans);
+            setFansPopulation(filteredFans.length);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching recent fans:', error);
+      }
+    };
+
     const fetchCustomer = async () => {
       try {
         const res = await fetch('/api/customer');
@@ -77,10 +106,34 @@ export function CollectionTabsHome({
               : data.customer.email;
             setCustomerName(name);
             setIsLoggedIn(true);
+
+            let customerId = '';
             // Use custom avatar if exists
             if (data.customer.avatar) {
               setCustomerAvatar(data.customer.avatar);
+              setCurrentCustomerId(data.customer.id);
+              customerId = data.customer.id;
+
+              // Record this user as a recent fan (only if they have a custom avatar)
+              try {
+                await fetch('/api/recent-fans', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    customerId: data.customer.id,
+                    email: data.customer.email,
+                    firstName: data.customer.firstName,
+                    lastName: data.customer.lastName,
+                    avatar: data.customer.avatar
+                  })
+                });
+              } catch (error) {
+                console.error('Error recording recent fan:', error);
+              }
             }
+
+            // Fetch recent fans, excluding current user
+            await fetchRecentFans(customerId || undefined);
           }
         }
       } catch (error) {
@@ -117,30 +170,9 @@ export function CollectionTabsHome({
       }
     };
 
-    const fetchCountryFans = async () => {
-      try {
-        const res = await fetch('/api/country-fans');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.avatars) {
-            setFansAvatars(data.avatars);
-          }
-          if (data.population) {
-            setFansPopulation(data.population);
-          }
-          if (data.countryName) {
-            setFansCountry(data.countryName);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching country fans:', error);
-      }
-    };
-
     fetchCustomer();
     fetchWishlistCount();
     fetchDiscountBanner();
-    fetchCountryFans();
 
     // Listen for wishlist updates
     const handleWishlistUpdate = (event: CustomEvent) => {
@@ -398,7 +430,7 @@ export function CollectionTabsHome({
                 </div>
                 <div className="p-3">
                   <p className="text-xs text-gray-700">
-                    6 of {fansPopulation.toLocaleString()} fans
+                    {fansAvatars.length > 0 ? `${fansAvatars.length} recent visitors` : 'No recent visitors'}
                   </p>
                   <div className="mt-3 grid grid-cols-2 gap-2 xl:grid-cols-3">
                     {(fansAvatars.length > 0 ? fansAvatars : [1, 2, 3, 4, 5, 6]).map((fan, i) => (
