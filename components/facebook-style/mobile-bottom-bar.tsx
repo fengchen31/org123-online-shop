@@ -75,20 +75,18 @@ export function MobileBottomBar({
       const diffX = touchCurrentX.current - touchStartX.current;
       const diffY = e.touches[0].clientY - touchStartY.current;
 
-      // Determine if this is a horizontal swipe
-      if (!isDragging && Math.abs(diffX) > 10) {
-        if (Math.abs(diffX) > Math.abs(diffY)) {
+      // Determine if this is a horizontal swipe (increased threshold to 30px)
+      if (!isDragging && Math.abs(diffX) > 30) {
+        if (Math.abs(diffX) > Math.abs(diffY) * 1.5) {
           setIsDragging(true);
         }
       }
 
-      // Only allow right swipe (positive diff) and prevent default when dragging horizontally
-      if (isDragging || (Math.abs(diffX) > Math.abs(diffY) && diffX > 0)) {
-        if (diffX > 0) {
-          setDragOffset(diffX);
-          e.preventDefault();
-          e.stopPropagation();
-        }
+      // Only prevent default when actively dragging
+      if (isDragging && diffX > 0) {
+        setDragOffset(diffX);
+        e.preventDefault();
+        e.stopPropagation();
       }
     }
   };
@@ -152,8 +150,8 @@ export function MobileBottomBar({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className={`fixed bottom-0 right-0 z-50 w-2/3 bg-white shadow-xl transition-transform duration-300 ${
-            isMenuOpen ? 'translate-x-0' : 'translate-x-full'
+          className={`fixed bottom-0 right-0 z-50 w-2/3 bg-white transition-all duration-300 ${
+            isMenuOpen ? 'translate-x-0 shadow-xl' : 'translate-x-full shadow-none'
           }`}
           style={{
             transform: isMenuOpen

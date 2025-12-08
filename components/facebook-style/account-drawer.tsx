@@ -302,8 +302,8 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
 
       {/* Drawer */}
       <div
-        className={`fixed right-0 top-0 z-50 h-full w-full bg-white shadow-2xl transition-transform duration-300 ease-in-out sm:w-[420px] md:w-[500px] ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+        className={`fixed right-0 top-0 z-50 h-full w-full bg-white transition-all duration-300 ease-in-out sm:w-[420px] md:w-[500px] ${
+          isOpen ? 'translate-x-0 shadow-2xl' : 'translate-x-full shadow-none'
         }`}
       >
         {/* Header */}
