@@ -333,25 +333,29 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
 
             <div>
               {post.content && (
-                <div className="px-4 py-3 text-sm text-gray-800">
+                <div className="px-4 py-3 text-sm text-gray-800 whitespace-pre-wrap">
                   {post.content}
                 </div>
               )}
 
-              <div
-                className={clsx(
-                  'relative h-[300px] w-full overflow-hidden sm:h-[400px] md:h-[500px]',
-                  post.linkTo && 'cursor-pointer transition-opacity hover:opacity-90'
-                )}
-                onClick={() => post.linkTo && onPostClick?.(post.linkTo)}
-              >
-                <ImageWithFallback
-                  src={post.imageUrl || '/images/default-fallback-image.png'}
-                  alt={post.content || 'Post image'}
-                  fill
-                  className="object-cover"
-                />
-              </div>
+              {post.imageUrl && (
+                <div
+                  className={clsx(
+                    'relative w-full bg-black',
+                    post.linkTo && 'cursor-pointer transition-opacity hover:opacity-90'
+                  )}
+                  onClick={() => post.linkTo && onPostClick?.(post.linkTo)}
+                >
+                  <ImageWithFallback
+                    src={post.imageUrl}
+                    alt={post.content || 'Post image'}
+                    width={1200}
+                    height={1200}
+                    className="w-full h-auto object-contain"
+                    style={{ maxHeight: '800px' }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Post actions - 2010 Facebook style */}

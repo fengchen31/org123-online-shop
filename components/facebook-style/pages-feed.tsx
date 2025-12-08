@@ -42,17 +42,50 @@ function extractFirstImageUrl(htmlBody: string): string | undefined {
   }
 }
 
+// 從 HTML 中提取純文字內容（客戶端和伺服器端使用相同邏輯）
+function extractTextFromHtml(htmlBody: string): string {
+  // 使用 regex 方法，確保客戶端和伺服器端結果一致
+  const text = htmlBody
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/h[1-6]>/gi, '\n\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n\s*\n\s*\n/g, '\n\n')
+    .trim();
+
+  return text;
+}
+
 export function PagesFeed({ pages }: PagesFeedProps) {
   // 將 pages 轉換為 NewsPost 格式
   const posts: NewsPost[] = useMemo(() => {
-    return pages.map((page) => ({
-      id: page.id,
-      author: 'org123.xyz',
-      authorAvatar: '/images/avatars/org123xyz_head.svg',
-      timestamp: formatRelativeTime(page.createdAt),
-      content: page.title + (page.bodySummary ? `\n\n${page.bodySummary}` : ''),
-      imageUrl: extractFirstImageUrl(page.body)
-    }));
+    // 按 createdAt 降序排序（最新的在最上面）
+    const sortedPages = [...pages].sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return sortedPages.map((page) => {
+      // 使用 extractTextFromHtml 從完整的 body 提取文字
+      const content = extractTextFromHtml(page.body);
+
+      return {
+        id: page.id,
+        author: 'org123.xyz',
+        authorAvatar: '/images/avatars/org123xyz_head.svg',
+        timestamp: formatRelativeTime(page.createdAt),
+        content, // 顯示完整內文（純文字）
+        imageUrl: extractFirstImageUrl(page.body)
+      };
+    });
   }, [pages]);
 
   return <NewsFeed posts={posts} />;
