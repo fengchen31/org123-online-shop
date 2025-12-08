@@ -345,6 +345,7 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
                     post.linkTo && 'cursor-pointer transition-opacity hover:opacity-90'
                   )}
                   onClick={() => post.linkTo && onPostClick?.(post.linkTo)}
+                  style={{ maxHeight: '800px' }}
                 >
                   <ImageWithFallback
                     src={post.imageUrl}
@@ -352,7 +353,6 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
                     width={1200}
                     height={1200}
                     className="w-full h-auto object-contain"
-                    style={{ maxHeight: '800px' }}
                   />
                 </div>
               )}

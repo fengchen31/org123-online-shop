@@ -342,13 +342,47 @@ export function CollectionTabsHome({
                 <div className="p-2">
                   <iframe
                     width="100%"
-                    height="120"
+                    height="150"
                     scrolling="no"
                     frameBorder="no"
                     allow="autoplay"
-                    src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/soundcloud/sets/new-exclusive&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false"
+                    src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%253Atracks%253A13977033&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"
                     className="w-full"
                   ></iframe>
+                  <div
+                    style={{
+                      fontSize: '10px',
+                      color: '#cccccc',
+                      lineBreak: 'anywhere',
+                      wordBreak: 'normal',
+                      overflow: 'hidden',
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                      fontFamily:
+                        'Interstate,Lucida Grande,Lucida Sans Unicode,Lucida Sans,Garuda,Verdana,Tahoma,sans-serif',
+                      fontWeight: 100
+                    }}
+                  >
+                    <a
+                      href="https://soundcloud.com/salem-official"
+                      title="SALEM official"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#cccccc', textDecoration: 'none' }}
+                    >
+                      SALEM official
+                    </a>
+                    {' · '}
+                    <a
+                      href="https://soundcloud.com/salem-official/03-frost"
+                      title="FROST"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#cccccc', textDecoration: 'none' }}
+                    >
+                      FROST
+                    </a>
+                  </div>
                 </div>
               </div>
 
