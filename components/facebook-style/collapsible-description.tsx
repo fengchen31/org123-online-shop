@@ -14,6 +14,18 @@ interface CollapsibleDescriptionProps {
   descriptionHtml?: string;
 }
 
+// Helper function to clean content lines: remove leading underscores and trim
+function cleanContentLines(content: string): string {
+  const lines = content.split('\n');
+  const cleanedLines = lines
+    .map(l => {
+      const trimmed = l.trim();
+      return trimmed.startsWith('_') ? trimmed.substring(1).trim() : trimmed;
+    })
+    .filter(l => l.length > 0);
+  return cleanedLines.join('\n');
+}
+
 // Parse HTML description into sections based on bold tags
 function parseDescriptionHtml(html: string): DescriptionSection[] {
   const sections: DescriptionSection[] = [];
@@ -159,14 +171,7 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
     // If we found content inside the bold element, we're done with this section
     if (content.trim()) {
       // Clean up content: remove leading underscores and trim lines
-      const lines = content.split('\n');
-      const cleanedLines = lines
-        .map(l => {
-          const trimmed = l.trim();
-          return trimmed.startsWith('_') ? trimmed.substring(1).trim() : trimmed;
-        })
-        .filter(l => l.length > 0);
-      content = cleanedLines.join('\n');
+      content = cleanContentLines(content);
 
       if (content.trim()) {
         sections.push({
@@ -262,10 +267,12 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
     }
 
     if (content.trim() || htmlContent) {
-      console.log(`Section "${title}" (normal):`, content.trim());
+      // Clean up content: remove leading underscores
+      const cleanedContent = content.trim() ? cleanContentLines(content) : content.trim();
+      console.log(`Section "${title}" (normal):`, cleanedContent);
       sections.push({
         title: title,
-        content: content.trim(),
+        content: cleanedContent,
         htmlContent: hasTable ? htmlContent : undefined
       });
     }
