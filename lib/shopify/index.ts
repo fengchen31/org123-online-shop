@@ -37,7 +37,7 @@ import {
 } from './queries/collection';
 import { getMenuQuery } from './queries/menu';
 import { getPageQuery, getPagesQuery } from './queries/page';
-import { getShopMetafieldsQuery, getMetaobjectQuery } from './queries/shop';
+import { getShopMetafieldsQuery, getMetaobjectQuery, getMusicEmbedQuery } from './queries/shop';
 import {
   getProductQuery,
   getProductByIdQuery,

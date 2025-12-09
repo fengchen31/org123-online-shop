@@ -110,7 +110,17 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
 export default async function HomePage() {
   // 獲取所有 Shopify pages 和 collections
-  const [pages, allCollections] = await Promise.all([getPages(), getCollections()]);
+  const [allPages, allCollections] = await Promise.all([getPages(), getCollections()]);
+
+  // 過濾掉政策頁面（這些頁面只用於 footer 連結，不顯示在 news feed）
+  const policyPageHandles = [
+    'contact-us',
+    'shipping',
+    'returns',
+    'privacy-policy',
+    'terms-of-service'
+  ];
+  const pages = allPages.filter((page) => !policyPageHandles.includes(page.handle));
 
   // 過濾掉 "All" collection
   const collections = allCollections.filter((c) => c.handle !== '');

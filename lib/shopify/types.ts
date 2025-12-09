@@ -436,3 +436,14 @@ export type ShopifyMetaobjectOperation = {
     handle: string;
   };
 };
+
+export type ShopifyMusicEmbedOperation = {
+  data: {
+    shop: {
+      metafield: {
+        value: string;
+        type: string;
+      } | null;
+    };
+  };
+};

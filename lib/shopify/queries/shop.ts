@@ -34,3 +34,14 @@ export const getMetaobjectQuery = /* GraphQL */ `
     }
   }
 `;
+
+export const getMusicEmbedQuery = /* GraphQL */ `
+  query getMusicEmbed {
+    shop {
+      metafield(namespace: "custom", key: "music_embed_url") {
+        value
+        type
+      }
+    }
+  }
+`;
