@@ -81,7 +81,8 @@ import {
   ShopMetafieldOperation,
   DiscountBanner,
   ShopifyMetaobjectOperation,
-  Metaobject
+  Metaobject,
+  ShopifyMusicEmbedOperation
 } from './types';
 
 const domain = process.env.SHOPIFY_STORE_DOMAIN
