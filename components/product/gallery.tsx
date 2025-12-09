@@ -18,11 +18,12 @@ export function Gallery({ images }: { images: { src: string; altText: string }[]
 
   return (
     <form>
-      <div className="relative aspect-square h-full max-h-[550px] w-full overflow-hidden">
+      <div className="relative w-full flex items-center justify-center bg-white dark:bg-black" style={{ minHeight: '550px' }}>
         {images[imageIndex] && (
           <Image
-            className="h-full w-full object-contain"
-            fill
+            className="w-full h-auto object-contain"
+            width={800}
+            height={800}
             sizes="(min-width: 1024px) 66vw, 100vw"
             alt={images[imageIndex]?.altText as string}
             src={images[imageIndex]?.src as string}

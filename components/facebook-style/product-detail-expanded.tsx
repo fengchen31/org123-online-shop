@@ -50,7 +50,7 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
                 src={images[selectedImageIndex]?.url || '/images/default-fallback-image.png'}
                 alt={product.title}
                 fill
-                className="object-cover transition-transform hover:scale-105"
+                className="object-contain transition-transform hover:scale-105"
                 priority
               />
             </div>
@@ -74,7 +74,7 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
                         src={image.url}
                         alt={`${product.title} - ${index + 1}`}
                         fill
-                        className="object-cover"
+                        className="object-contain"
                       />
                     </button>
                   ))}

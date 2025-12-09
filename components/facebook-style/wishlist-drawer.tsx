@@ -263,7 +263,7 @@ export function WishlistDrawer({ isOpen, onClose, onOpenCart }: WishlistDrawerPr
                               alt={variant.product.title}
                               fill
                               sizes="96px"
-                              className="object-cover"
+                              className="object-contain"
                             />
                           ) : (
                             <div className="flex h-full items-center justify-center text-xs text-gray-400">

@@ -108,7 +108,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                                 }
                                 fill
                                 sizes="96px"
-                                className="object-cover"
+                                className="object-contain"
                               />
                             </div>
                           </Link>
