@@ -49,6 +49,9 @@ export function CollectionTabsHome({
   // Discount banner
   const [discountMessage, setDiscountMessage] = useState<string>('Special Offer: 20% OFF on all items! Use code: SAVE20');
 
+  // Music embed URL
+  const [musicEmbedUrl, setMusicEmbedUrl] = useState<string | null>(null);
+
   // Cart from context
   const { cart } = useCart();
 
@@ -170,9 +173,45 @@ export function CollectionTabsHome({
       }
     };
 
+    const fetchMusicEmbedUrl = async () => {
+      try {
+        const res = await fetch('/api/music-embed');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.musicEmbedUrl) {
+            // Clean up SoundCloud URL parameters for minimal display
+            const cleanUrl = cleanSoundCloudUrl(data.musicEmbedUrl);
+            setMusicEmbedUrl(cleanUrl);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching music embed URL:', error);
+      }
+    };
+
+    // Helper function to clean SoundCloud URL parameters
+    const cleanSoundCloudUrl = (url: string): string => {
+      try {
+        const urlObj = new URL(url);
+        // Set clean parameters for minimal player display
+        urlObj.searchParams.set('auto_play', 'false');
+        urlObj.searchParams.set('hide_related', 'true');
+        urlObj.searchParams.set('show_comments', 'false');
+        urlObj.searchParams.set('show_user', 'true'); // Keep artist name
+        urlObj.searchParams.set('show_reposts', 'false');
+        urlObj.searchParams.set('show_teaser', 'false');
+        urlObj.searchParams.set('visual', 'true');
+        return urlObj.toString();
+      } catch (e) {
+        // If URL parsing fails, return original
+        return url;
+      }
+    };
+
     fetchCustomer();
     fetchWishlistCount();
     fetchDiscountBanner();
+    fetchMusicEmbedUrl();
 
     // Listen for wishlist updates
     const handleWishlistUpdate = (event: CustomEvent) => {
@@ -334,21 +373,22 @@ export function CollectionTabsHome({
                 </div>
               </div>
 
-              {/* SoundCloud Player Section */}
-              <div className="border-r border-t border-gray-300 bg-white">
-                <div className="border-b border-gray-300 bg-[#f7f7f7] px-3 py-2">
-                  <h3 className="text-xs font-bold text-gray-800">Music</h3>
-                </div>
-                <div className="p-2">
-                  <iframe
-                    width="100%"
-                    height="150"
-                    scrolling="no"
-                    frameBorder="no"
-                    allow="autoplay"
-                    src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%253Atracks%253A13977033&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"
-                    className="w-full"
-                  ></iframe>
+              {/* Music Player Section - Only show if URL is available */}
+              {musicEmbedUrl && (
+                <div className="border-r border-t border-gray-300 bg-white">
+                  <div className="border-b border-gray-300 bg-[#f7f7f7] px-3 py-2">
+                    <h3 className="text-xs font-bold text-gray-800">Music</h3>
+                  </div>
+                  <div className="p-2">
+                    <iframe
+                      width="100%"
+                      height="150"
+                      scrolling="no"
+                      frameBorder="no"
+                      allow="autoplay"
+                      src={musicEmbedUrl}
+                      className="w-full"
+                    ></iframe>
                   <div
                     style={{
                       fontSize: '10px',
@@ -383,8 +423,9 @@ export function CollectionTabsHome({
                       FROST
                     </a>
                   </div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Information Section */}
               <div className="border-b-0 border-r border-t border-gray-300 bg-white">

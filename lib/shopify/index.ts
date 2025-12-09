@@ -892,3 +892,24 @@ export async function getDiscountBanner(): Promise<DiscountBanner | null> {
     return null;
   }
 }
+
+// 獲取音樂嵌入 URL (從 Shopify Shop Metafield)
+export async function getMusicEmbedUrl(): Promise<string | null> {
+  try {
+    const res = await shopifyFetch<ShopifyMusicEmbedOperation>({
+      query: getMusicEmbedQuery
+    });
+
+    const metafield = res.body.data.shop.metafield;
+
+    if (!metafield || !metafield.value) {
+      console.log('No music embed URL found in shop metafield');
+      return null;
+    }
+
+    return metafield.value;
+  } catch (e) {
+    console.error('Error fetching music embed URL from shop metafield:', e);
+    return null;
+  }
+}
