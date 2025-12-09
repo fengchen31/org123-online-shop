@@ -359,15 +359,15 @@ export async function getCollectionProducts({
 }
 
 export async function getCollections(): Promise<Collection[]> {
-  'use cache';
-  cacheTag(TAGS.collections);
-  cacheLife('days');
+  // 'use cache';
+  // cacheTag(TAGS.collections);
+  // cacheLife('days');
 
   const res = await shopifyFetch<ShopifyCollectionsOperation>({
     query: getCollectionsQuery
   });
   const shopifyCollections = removeEdgesAndNodes(res.body?.data?.collections);
-  const collections = [
+  let collections = [
     {
       handle: '',
       title: 'All',
@@ -385,6 +385,22 @@ export async function getCollections(): Promise<Collection[]> {
       (collection) => !collection.handle.startsWith('hidden')
     )
   ];
+
+  // 調整 collection 順序：將 "foot" 移到 "lttt" 之後
+  console.log('=== getCollections - BEFORE reorder ===');
+  console.log('Handles:', collections.map(c => c.handle));
+
+  const footIndex = collections.findIndex((c) => c.handle.toLowerCase() === 'foot');
+  const ltttIndex = collections.findIndex((c) => c.handle.toLowerCase() === 'lttt');
+  console.log('footIndex:', footIndex, 'ltttIndex:', ltttIndex);
+
+  if (footIndex !== -1 && ltttIndex !== -1) {
+    const footCollection = collections.splice(footIndex, 1)[0];
+    const newLtttIndex = collections.findIndex((c) => c.handle.toLowerCase() === 'lttt');
+    collections.splice(newLtttIndex + 1, 0, footCollection!);
+    console.log('=== getCollections - AFTER reorder ===');
+    console.log('Handles:', collections.map(c => c.handle));
+  }
 
   return collections;
 }

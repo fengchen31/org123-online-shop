@@ -282,20 +282,27 @@ export function CollectionTabsHome({
 
             {/* Tabs - positioned at the bottom, aligned with bottom of gray area */}
             <div className="relative z-30 flex flex-nowrap gap-1 overflow-x-auto">
-              {collections.map((collection) => (
-                <button
-                  key={collection.handle}
-                  onClick={() => handleTabChange(collection.handle)}
-                  className={clsx(
-                    'whitespace-nowrap px-2 py-1 text-xs font-bold transition-all sm:px-2.5 sm:py-1 md:px-3 md:py-1.5 md:text-sm lg:px-4 lg:py-2 lg:text-sm',
-                    activeTab === collection.handle
-                      ? 'bg-white text-gray-900'
-                      : 'bg-[#d8dfea] text-[#3b5998]'
-                  )}
-                >
-                  {collection.title}
-                </button>
-              ))}
+              {collections.map((collection) => {
+                const isSale = collection.handle.toLowerCase() === 'sale';
+                return (
+                  <button
+                    key={collection.handle}
+                    onClick={() => handleTabChange(collection.handle)}
+                    className={clsx(
+                      'whitespace-nowrap px-2 py-1 text-xs font-bold transition-all sm:px-2.5 sm:py-1 md:px-3 md:py-1.5 md:text-sm lg:px-4 lg:py-2 lg:text-sm',
+                      activeTab === collection.handle
+                        ? isSale
+                          ? 'bg-white text-red-600'
+                          : 'bg-white text-gray-900'
+                        : isSale
+                          ? 'bg-[#d8dfea] text-red-600'
+                          : 'bg-[#d8dfea] text-[#3b5998]'
+                    )}
+                  >
+                    {collection.title}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

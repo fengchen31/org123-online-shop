@@ -68,29 +68,41 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
           className="object-contain"
           enableBlurEffect={true}
         />
+
+        {/* Sold Out Fog Effect */}
+        {!product.availableForSale && (
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px]"></div>
+        )}
       </div>
 
       {/* Product Info */}
-      <div className="p-3 sm:p-4">
+      <div className="grid h-[110px] grid-rows-[auto_minmax(2.5rem,auto)_1fr_auto] gap-1 p-3 sm:h-[120px] sm:p-4">
         {/* Collection Name (Tab Name) - Larger */}
-        <div className="mb-1 text-sm font-bold tracking-wide text-gray-900 sm:text-base">
+        <div className="text-sm font-bold tracking-wide text-gray-900 sm:text-base">
           {collectionName || 'Product'}
         </div>
 
-        {/* Product Name - Smaller */}
-        <h3 className="mb-2 line-clamp-2 text-xs leading-tight text-gray-900 sm:text-sm">
+        {/* Product Name - Smaller - Min height for 2 lines */}
+        <h3 className="line-clamp-2 text-xs leading-tight text-gray-900 sm:text-sm">
           {product.title}
         </h3>
 
-        {/* Price - Smaller, same as product name */}
-        <p className="text-xs font-bold text-gray-900 sm:text-sm">
-          {(() => {
-            const originalAmount = product.priceRange.maxVariantPrice.amount;
-            const originalCurrency = product.priceRange.maxVariantPrice.currencyCode;
-            const converted = convertPrice(originalAmount, originalCurrency);
-            return `${converted.currency === 'TWD' ? 'NT$' : '$'}${Math.floor(parseFloat(converted.amount)).toLocaleString()} ${converted.currency}`;
-          })()}
-        </p>
+        {/* Flexible spacer to push price to bottom */}
+        <div></div>
+
+        {/* Price or Sold Out */}
+        {product.availableForSale ? (
+          <p className="text-xs font-bold text-gray-900 sm:text-sm">
+            {(() => {
+              const originalAmount = product.priceRange.maxVariantPrice.amount;
+              const originalCurrency = product.priceRange.maxVariantPrice.currencyCode;
+              const converted = convertPrice(originalAmount, originalCurrency);
+              return `${converted.currency === 'TWD' ? 'NT$' : '$'}${Math.floor(parseFloat(converted.amount)).toLocaleString()} ${converted.currency}`;
+            })()}
+          </p>
+        ) : (
+          <p className="text-xs font-bold text-red-600 sm:text-sm">SOLD OUT</p>
+        )}
       </div>
     </div>
   );
