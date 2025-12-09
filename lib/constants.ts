@@ -6,10 +6,10 @@ export type SortFilterItem = {
 };
 
 export const defaultSort: SortFilterItem = {
-  title: 'Relevance',
-  slug: null,
-  sortKey: 'RELEVANCE',
-  reverse: false
+  title: 'Latest arrivals',
+  slug: 'latest-desc',
+  sortKey: 'CREATED_AT',
+  reverse: true
 };
 
 export const sorting: SortFilterItem[] = [
