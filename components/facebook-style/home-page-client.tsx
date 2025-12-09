@@ -2,11 +2,11 @@
 
 import { CollectionTabsHome } from './collection-tabs-home';
 import { PagesFeed } from './pages-feed';
-import type { Page, Collection } from 'lib/shopify/types';
+import type { Article, Collection } from 'lib/shopify/types';
 import { useState, useMemo } from 'react';
 
 interface HomePageClientProps {
-  pages: Page[];
+  articles: Article[];
   collections: Collection[];
   collectionProductsComponents: Record<string, React.ReactNode>;
   onOpenCart?: () => void;
@@ -15,7 +15,7 @@ interface HomePageClientProps {
 }
 
 export function HomePageClient({
-  pages,
+  articles,
   collections,
   collectionProductsComponents,
   onOpenCart,
@@ -80,7 +80,7 @@ export function HomePageClient({
   // 組合所有 tab 的內容：News Feed + collections
   const tabContents: Record<string, React.ReactNode> = useMemo(() => {
     const contents: Record<string, React.ReactNode> = {
-      'news-feed': <PagesFeed pages={pages} />
+      'news-feed': <PagesFeed articles={articles} />
     };
 
     // 加入所有 collection 的內容
@@ -89,7 +89,7 @@ export function HomePageClient({
     });
 
     return contents;
-  }, [pages, collectionProductsComponents]);
+  }, [articles, collectionProductsComponents]);
 
   return (
     <CollectionTabsHome

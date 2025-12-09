@@ -1,11 +1,11 @@
 'use client';
 
-import type { Page } from 'lib/shopify/types';
+import type { Article } from 'lib/shopify/types';
 import { NewsFeed, type NewsPost } from './news-feed';
 import { useMemo } from 'react';
 
 interface PagesFeedProps {
-  pages: Page[];
+  articles: Article[];
 }
 
 // 格式化日期為相對時間
@@ -65,28 +65,28 @@ function extractTextFromHtml(htmlBody: string): string {
   return text;
 }
 
-export function PagesFeed({ pages }: PagesFeedProps) {
-  // 將 pages 轉換為 NewsPost 格式
+export function PagesFeed({ articles }: PagesFeedProps) {
+  // 將 articles 轉換為 NewsPost 格式
   const posts: NewsPost[] = useMemo(() => {
-    // 按 createdAt 降序排序（最新的在最上面）
-    const sortedPages = [...pages].sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    // 按 publishedAt 降序排序（最新的在最上面）
+    const sortedArticles = [...articles].sort((a, b) => {
+      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
     });
 
-    return sortedPages.map((page) => {
-      // 使用 extractTextFromHtml 從完整的 body 提取文字
-      const content = extractTextFromHtml(page.body);
+    return sortedArticles.map((article) => {
+      // 使用 extractTextFromHtml 從 contentHtml 提取文字
+      const content = extractTextFromHtml(article.contentHtml);
 
       return {
-        id: page.id,
-        author: 'org123.xyz',
+        id: article.id,
+        author: article.author?.name || 'org123.xyz',
         authorAvatar: '/images/avatars/org123xyz_head.svg',
-        timestamp: formatRelativeTime(page.createdAt),
+        timestamp: formatRelativeTime(article.publishedAt),
         content, // 顯示完整內文（純文字）
-        imageUrl: extractFirstImageUrl(page.body)
+        imageUrl: article.image?.url || extractFirstImageUrl(article.contentHtml)
       };
     });
-  }, [pages]);
+  }, [articles]);
 
   return <NewsFeed posts={posts} />;
 }

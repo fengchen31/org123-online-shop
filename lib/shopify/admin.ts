@@ -139,6 +139,16 @@ export async function getMetafields(
             }
           }
         }
+        ... on Article {
+          metafields(namespace: $namespace, first: 10) {
+            edges {
+              node {
+                key
+                value
+              }
+            }
+          }
+        }
       }
     }
   `;

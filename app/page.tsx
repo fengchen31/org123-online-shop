@@ -1,6 +1,6 @@
 import { CollectionProductsWrapper } from 'components/facebook-style/collection-products-wrapper';
 import { HomePageClient } from 'components/facebook-style/home-page-client';
-import { getCollections, getPages, getCollection, getPage } from 'lib/shopify';
+import { getCollections, getBlogArticles, getCollection, getArticle } from 'lib/shopify';
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 
@@ -30,48 +30,50 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   }
 
   try {
-    // Check if it's a Shopify Page ID (format: gid://shopify/Page/xxx)
-    if (postId.startsWith('gid://shopify/Page/')) {
-      console.log('Detected Shopify Page ID');
-      const pages = await getPages();
-      const page = pages.find((p) => p.id === postId);
+    // Check if it's a Shopify Article ID (format: gid://shopify/Article/xxx)
+    if (postId.startsWith('gid://shopify/Article/')) {
+      console.log('Detected Shopify Article ID');
+      const articles = await getBlogArticles('news');
+      const article = articles.find((a) => a.id === postId);
 
-      if (page) {
-        console.log('Page found:', page.title);
+      if (article) {
+        console.log('Article found:', article.title);
 
-        // Extract first image URL from page body
-        const extractFirstImageUrl = (htmlBody: string): string | undefined => {
+        // Extract first image URL from article content or use featured image
+        const extractFirstImageUrl = (htmlContent: string): string | undefined => {
           try {
-            const imgMatch = htmlBody.match(/<img[^>]+src="([^">]+)"/);
+            const imgMatch = htmlContent.match(/<img[^>]+src="([^">]+)"/);
             return imgMatch ? imgMatch[1] : undefined;
           } catch (error) {
             return undefined;
           }
         };
 
-        const imageUrl = extractFirstImageUrl(page.body);
+        const imageUrl = article.image?.url || extractFirstImageUrl(article.contentHtml);
         console.log('Extracted image URL:', imageUrl);
 
         const metadata = {
-          title: page.title,
-          description: page.bodySummary || page.seo?.description || 'org123.xyz',
+          title: article.title,
+          description: article.excerpt || article.seo?.description || 'org123.xyz',
           openGraph: {
-            type: 'website' as const,
-            title: page.title,
-            description: page.bodySummary || page.seo?.description || 'org123.xyz',
+            type: 'article' as const,
+            title: article.title,
+            description: article.excerpt || article.seo?.description || 'org123.xyz',
+            publishedTime: article.publishedAt,
+            authors: article.author?.name ? [article.author.name] : undefined,
             images: imageUrl
               ? [
                   {
                     url: imageUrl,
                     width: 1200,
                     height: 630,
-                    alt: page.title
+                    alt: article.title
                   }
                 ]
               : undefined
           }
         };
-        console.log('Generated metadata for page:', metadata);
+        console.log('Generated metadata for article:', metadata);
         return metadata;
       }
     }
@@ -109,18 +111,11 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 }
 
 export default async function HomePage() {
-  // 獲取所有 Shopify pages 和 collections
-  const [allPages, allCollections] = await Promise.all([getPages(), getCollections()]);
-
-  // 過濾掉政策頁面（這些頁面只用於 footer 連結，不顯示在 news feed）
-  const policyPageHandles = [
-    'contact-us',
-    'shipping',
-    'returns',
-    'privacy-policy',
-    'terms-of-service'
-  ];
-  const pages = allPages.filter((page) => !policyPageHandles.includes(page.handle));
+  // 獲取所有 Shopify blog articles 和 collections
+  const [articles, allCollections] = await Promise.all([
+    getBlogArticles('news'), // 從 'news' blog 獲取文章
+    getCollections()
+  ]);
 
   // 過濾掉 "All" collection
   const collections = allCollections.filter((c) => c.handle !== '');
@@ -151,7 +146,7 @@ export default async function HomePage() {
 
   return (
     <HomePageClient
-      pages={pages}
+      articles={articles}
       collections={collections}
       collectionProductsComponents={collectionProductsComponents}
     />

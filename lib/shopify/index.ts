@@ -37,6 +37,7 @@ import {
 } from './queries/collection';
 import { getMenuQuery } from './queries/menu';
 import { getPageQuery, getPagesQuery } from './queries/page';
+import { getArticleQuery, getBlogArticlesQuery } from './queries/blog';
 import { getShopMetafieldsQuery, getMetaobjectQuery, getMusicEmbedQuery } from './queries/shop';
 import {
   getProductQuery,
@@ -46,6 +47,7 @@ import {
   getProductVariantByIdQuery
 } from './queries/product';
 import {
+  Article,
   Cart,
   Collection,
   Connection,
@@ -56,6 +58,9 @@ import {
   Page,
   Product,
   ShopifyAddToCartOperation,
+  ShopifyArticle,
+  ShopifyBlogArticlesOperation,
+  ShopifyBlogOperation,
   ShopifyCart,
   ShopifyCartOperation,
   ShopifyCollection,
@@ -444,6 +449,56 @@ export async function getPages(): Promise<Page[]> {
   });
 
   return removeEdgesAndNodes(res.body.data.pages);
+}
+
+export async function getArticle(
+  blogHandle: string,
+  articleHandle: string
+): Promise<Article | undefined> {
+  'use cache';
+  cacheTag('articles');
+  cacheLife('days');
+
+  const res = await shopifyFetch<ShopifyBlogOperation>({
+    query: getArticleQuery,
+    variables: { blogHandle, articleHandle }
+  });
+
+  return res.body.data.blog?.articleByHandle;
+}
+
+export async function getBlogArticles(
+  blogHandle: string = 'news',
+  first: number = 100
+): Promise<Article[]> {
+  'use cache';
+  cacheTag('articles');
+  cacheLife('days');
+
+  console.log(`=== getBlogArticles called ===`);
+  console.log(`Blog handle: ${blogHandle}`);
+
+  const res = await shopifyFetch<ShopifyBlogArticlesOperation>({
+    query: getBlogArticlesQuery,
+    variables: { blogHandle, first }
+  });
+
+  console.log(`Response data:`, JSON.stringify(res.body.data, null, 2));
+
+  if (!res.body.data.blog) {
+    console.log(`❌ No blog found for handle: ${blogHandle}`);
+    console.log(`Make sure you have created a blog with handle "${blogHandle}" in Shopify Admin`);
+    return [];
+  }
+
+  const articles = removeEdgesAndNodes(res.body.data.blog.articles);
+  console.log(`✅ Found ${articles.length} articles in blog "${blogHandle}"`);
+
+  if (articles.length > 0) {
+    console.log(`Article titles:`, articles.map(a => a.title));
+  }
+
+  return articles;
 }
 
 export async function getProduct(handle: string): Promise<Product | undefined> {
