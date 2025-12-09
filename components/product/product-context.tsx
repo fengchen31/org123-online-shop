@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { createContext, useContext, useMemo, useOptimistic } from 'react';
+import React, { createContext, useContext, useMemo, useOptimistic, useTransition } from 'react';
 
 type ProductState = {
   [key: string]: string;
@@ -19,6 +19,7 @@ const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
 export function ProductProvider({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const getInitialState = () => {
     const params: ProductState = {};
@@ -38,13 +39,17 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
 
   const updateOption = (name: string, value: string) => {
     const newState = { [name]: value };
-    setOptimisticState(newState);
+    startTransition(() => {
+      setOptimisticState(newState);
+    });
     return { ...state, ...newState };
   };
 
   const updateImage = (index: string) => {
     const newState = { image: index };
-    setOptimisticState(newState);
+    startTransition(() => {
+      setOptimisticState(newState);
+    });
     return { ...state, ...newState };
   };
 

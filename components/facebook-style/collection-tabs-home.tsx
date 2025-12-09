@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import type { Collection, Product } from 'lib/shopify/types';
 import Image from 'next/image';
 import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { CollectionProductsGrid } from './collection-products-grid';
 import { MobileBottomBar } from './mobile-bottom-bar';
 import { CartDrawer } from './cart-drawer';
@@ -29,10 +30,19 @@ export function CollectionTabsHome({
   onOpenWishlist,
   onOpenAccount
 }: CollectionTabsHomeProps) {
-  // 使用第一個 collection 作為預設
-  const [activeTab, setActiveTab] = useState<string>(
-    collections.length > 0 ? collections[0]!.handle : ''
-  );
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // 從URL讀取當前collection，如果沒有則使用第一個collection作為預設
+  const getInitialTab = () => {
+    const collectionParam = searchParams.get('collection');
+    if (collectionParam && collections.some(c => c.handle === collectionParam)) {
+      return collectionParam;
+    }
+    return collections.length > 0 ? collections[0]!.handle : '';
+  };
+
+  const [activeTab, setActiveTab] = useState<string>(getInitialTab);
   const [customerName, setCustomerName] = useState<string>('org123.xyz');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [customerAvatar, setCustomerAvatar] = useState<string>('');
@@ -51,6 +61,16 @@ export function CollectionTabsHome({
 
   // Music embed URL
   const [musicEmbedUrl, setMusicEmbedUrl] = useState<string | null>(null);
+
+  // 監聽URL變化並同步activeTab狀態
+  useEffect(() => {
+    const collectionParam = searchParams.get('collection');
+    if (collectionParam && collections.some(c => c.handle === collectionParam)) {
+      setActiveTab(collectionParam);
+    } else if (collections.length > 0) {
+      setActiveTab(collections[0]!.handle);
+    }
+  }, [searchParams, collections]);
 
   // Cart from context
   const { cart } = useCart();
@@ -228,6 +248,11 @@ export function CollectionTabsHome({
   const handleTabChange = (handle: string) => {
     setActiveTab(handle);
     onTabChange?.(handle);
+
+    // 使用push來支持瀏覽器歷史記錄
+    const newParams = new URLSearchParams(window.location.search);
+    newParams.set('collection', handle);
+    router.push(`?${newParams.toString()}`, { scroll: false });
   };
 
   // Handle search

@@ -38,12 +38,12 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
           </svg>
         </button>
 
-        <div className="grid gap-8 md:grid-cols-2">
+        <div className="grid gap-8 bg-white md:grid-cols-2">
           {/* Left side - Images */}
-          <div className="p-8">
+          <div className="bg-white p-8">
             {/* Main image */}
             <div
-              className="relative aspect-square w-full cursor-pointer overflow-hidden bg-gray-100"
+              className="relative aspect-square w-full cursor-pointer overflow-hidden bg-white"
               onClick={() => setShowFullscreen(true)}
             >
               <ImageWithFallback
@@ -52,6 +52,7 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
                 fill
                 className="object-contain transition-transform hover:scale-105"
                 priority
+                enableBlurEffect={true}
               />
             </div>
 
@@ -64,7 +65,7 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
                     <button
                       key={index}
                       onClick={() => setSelectedImageIndex(index)}
-                      className={`relative aspect-square overflow-hidden bg-gray-100 transition-all ${
+                      className={`relative aspect-square overflow-hidden bg-white transition-all ${
                         selectedImageIndex === index
                           ? 'border-2 border-[#3b5998] shadow-md'
                           : 'border border-gray-300 hover:border-gray-400'

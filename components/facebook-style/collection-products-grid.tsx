@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ProductCard } from './product-card';
 import { ProductDetailInGrid } from './product-detail-in-grid';
 import { ProductFilter } from './product-filter';
@@ -31,9 +32,27 @@ export function CollectionProductsGrid({
   activeCategory,
   onCategoryChange
 }: CollectionProductsGridProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [expandedProduct, setExpandedProduct] = useState<Product | null>(null);
   const [startRect, setStartRect] = useState<DOMRect | null>(null);
   const [currentSort, setCurrentSort] = useState<SortFilterItem>(defaultSort);
+
+  // 從URL讀取展開的商品並設置初始狀態
+  useEffect(() => {
+    const productHandle = searchParams.get('product');
+    if (productHandle && products?.length) {
+      const product = products.find(p => p.handle === productHandle);
+      if (product) {
+        setExpandedProduct(product);
+      }
+    } else {
+      // 當URL中沒有product參數時，關閉商品詳情
+      setExpandedProduct(null);
+      setStartRect(null);
+    }
+  }, [searchParams, products]);
 
   if (!products?.length) {
     return (
@@ -49,11 +68,21 @@ export function CollectionProductsGrid({
   const handleExpand = (product: Product, rect: DOMRect) => {
     setStartRect(rect);
     setExpandedProduct(product);
+
+    // 使用push來支持瀏覽器歷史記錄
+    const newParams = new URLSearchParams(window.location.search);
+    newParams.set('product', product.handle);
+    router.push(`?${newParams.toString()}`, { scroll: false });
   };
 
   const handleClose = () => {
     setExpandedProduct(null);
     setStartRect(null);
+
+    // 使用push來支持瀏覽器歷史記錄
+    const newParams = new URLSearchParams(window.location.search);
+    newParams.delete('product');
+    router.push(`?${newParams.toString()}`, { scroll: false });
   };
 
   const handleSortChange = (sortOption: SortFilterItem) => {

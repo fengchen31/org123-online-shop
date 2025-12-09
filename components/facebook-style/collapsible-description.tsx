@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 interface DescriptionSection {
   title: string;
@@ -350,17 +351,45 @@ function parseSizeChart(content: string): { size: string; measurements: string[]
   return sizes.length > 0 ? sizes : null;
 }
 
-function CollapsibleSection({ title, content, htmlContent, defaultOpen = false, isFirst = false }: DescriptionSection & { defaultOpen?: boolean; isFirst?: boolean }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+function CollapsibleSection({ title, content, htmlContent, defaultOpen = false, isFirst = false, sectionId }: DescriptionSection & { defaultOpen?: boolean; isFirst?: boolean; sectionId: string }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Read initial state from URL or use defaultOpen
+  const getInitialOpenState = () => {
+    const urlParam = searchParams.get(`tab_${sectionId}`);
+    if (urlParam !== null) {
+      return urlParam === 'open';
+    }
+    return defaultOpen;
+  };
+
+  const [isOpen, setIsOpen] = useState(getInitialOpenState);
 
   // Check if this is a size chart
   const isSizeChart = title.toLowerCase().includes('size') && title.toLowerCase().includes('chart');
   const sizeData = !htmlContent && isSizeChart ? parseSizeChart(content) : null;
 
+  const handleToggle = () => {
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
+
+    // Update URL params to persist state
+    const newParams = new URLSearchParams(window.location.search);
+    if (newIsOpen) {
+      newParams.set(`tab_${sectionId}`, 'open');
+    } else {
+      newParams.delete(`tab_${sectionId}`);
+    }
+
+    // Update URL without scroll and without navigation
+    router.replace(`?${newParams.toString()}`, { scroll: false });
+  };
+
   return (
     <div className={`border-b border-gray-200 ${isFirst ? 'mt-4' : ''}`}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className="flex w-full items-center justify-between py-3 text-left sm:py-4"
       >
         <h3 className="text-sm font-semibold text-gray-900 sm:text-base">
@@ -393,14 +422,14 @@ function CollapsibleSection({ title, content, htmlContent, defaultOpen = false, 
               <table className="w-full border-collapse text-xs sm:text-sm">
                 <thead>
                   <tr className="border-b border-gray-300 bg-gray-50">
-                    <th className="px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">Size</th>
+                    <th className="w-16 px-2 py-2 text-left font-semibold text-gray-900 sm:w-20 sm:px-3">Size</th>
                     <th className="px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">Measurements</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sizeData.map((row, i) => (
                     <tr key={i} className="border-b border-gray-200 last:border-b-0">
-                      <td className="px-2 py-2 font-medium text-gray-900 sm:px-3">{row.size}</td>
+                      <td className="px-2 py-2 font-medium text-gray-900 sm:px-3">{getSizeAcronym(row.size)}</td>
                       <td className="px-2 py-2 text-gray-700 sm:px-3">
                         {row.measurements.map((m, j) => (
                           <div key={j}>{m}</div>
@@ -425,6 +454,27 @@ function CollapsibleSection({ title, content, htmlContent, defaultOpen = false, 
       )}
     </div>
   );
+}
+
+// Convert size names to acronyms
+function getSizeAcronym(value: string): string {
+  const lowerValue = value.toLowerCase().trim();
+  const sizeMap: Record<string, string> = {
+    'small': 'S',
+    'medium': 'M',
+    'large': 'L',
+    'x-large': 'XL',
+    'extra large': 'XL',
+    'xlarge': 'XL',
+    'xx-large': 'XXL',
+    '2x-large': 'XXL',
+    'xxlarge': 'XXL',
+    'xxx-large': 'XXXL',
+    '3x-large': 'XXXL',
+    'xxxlarge': 'XXXL'
+  };
+
+  return sizeMap[lowerValue] || value;
 }
 
 // Check if a title represents a size option
@@ -507,13 +557,13 @@ function mergeIntoFeaturesAndSizeChart(sections: DescriptionSection[]): Descript
     } else if (sizeChartSections.length >= 1 && sizeChartSections[0] && isSizeTitle(sizeChartSections[0].title)) {
       // Create a table from size sections
       let tableHtml = '<table class="w-full border-collapse"><thead><tr class="border-b border-gray-300 bg-gray-50">';
-      tableHtml += '<th class="px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">Size</th>';
+      tableHtml += '<th class="w-16 sm:w-20 px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">Size</th>';
       tableHtml += '<th class="px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">Measurements</th>';
       tableHtml += '</tr></thead><tbody>';
 
       sizeChartSections.forEach(section => {
         tableHtml += '<tr class="border-b border-gray-200 last:border-b-0">';
-        tableHtml += `<td class="px-2 py-2 font-medium text-gray-900 sm:px-3">${section.title}</td>`;
+        tableHtml += `<td class="px-2 py-2 font-medium text-gray-900 sm:px-3">${getSizeAcronym(section.title)}</td>`;
         tableHtml += `<td class="px-2 py-2 text-gray-700 sm:px-3">${section.content.split('\n').join('<br>')}</td>`;
         tableHtml += '</tr>';
       });
@@ -560,6 +610,7 @@ export function CollapsibleDescription({ description, descriptionHtml }: Collaps
           htmlContent={section.htmlContent}
           defaultOpen={index === 0}
           isFirst={index === 0}
+          sectionId={section.title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')}
         />
       ))}
     </div>

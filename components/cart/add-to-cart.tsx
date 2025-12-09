@@ -21,7 +21,7 @@ function SubmitButton({
 
   if (!availableForSale) {
     return (
-      <button disabled className={clsx(buttonClasses, disabledClasses)}>
+      <button disabled className="flex w-full cursor-not-allowed items-center justify-center border bg-red-600 py-2 text-sm font-semibold text-white opacity-90">
         Out Of Stock
       </button>
     );

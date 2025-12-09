@@ -10,6 +10,27 @@ type Combination = {
   [key: string]: string | boolean;
 };
 
+// Convert size names to acronyms
+function getSizeAcronym(value: string): string {
+  const lowerValue = value.toLowerCase().trim();
+  const sizeMap: Record<string, string> = {
+    'small': 'S',
+    'medium': 'M',
+    'large': 'L',
+    'x-large': 'XL',
+    'extra large': 'XL',
+    'xlarge': 'XL',
+    'xx-large': 'XXL',
+    '2x-large': 'XXL',
+    'xxlarge': 'XXL',
+    'xxx-large': 'XXXL',
+    '3x-large': 'XXXL',
+    'xxxlarge': 'XXXL'
+  };
+
+  return sizeMap[lowerValue] || value;
+}
+
 export function FacebookVariantSelector({
   options,
   variants
@@ -72,21 +93,27 @@ export function FacebookVariantSelector({
                   }}
                   type="button"
                   key={value}
-                  aria-disabled={!isAvailableForSale}
-                  disabled={!isAvailableForSale}
                   title={`${option.name} ${value}${!isAvailableForSale ? ' (Out of Stock)' : ''}`}
                   className={clsx(
-                    'border px-3 py-1 text-sm transition-colors',
+                    'relative border px-3 py-1 text-sm transition-colors',
                     {
                       'border-[#3b5998] bg-[#eceff5] font-semibold text-[#3b5998]': isActive,
                       'border-gray-300 bg-white text-gray-700 hover:border-[#3b5998] hover:bg-gray-50':
                         !isActive && isAvailableForSale,
-                      'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400':
+                      'border-gray-200 bg-gray-100 text-gray-400 hover:border-gray-300':
                         !isAvailableForSale
                     }
                   )}
                 >
-                  {value}
+                  {option.name.toLowerCase() === 'size' ? getSizeAcronym(value) : value}
+                  {/* Diagonal line for sold out variants - from bottom-left to top-right */}
+                  {!isAvailableForSale && (
+                    <span className="pointer-events-none absolute bottom-0 left-0 h-full w-full">
+                      <svg className="h-full w-full" preserveAspectRatio="none">
+                        <line x1="0" y1="100%" x2="100%" y2="0" stroke="rgb(156, 163, 175)" strokeWidth="1.5" />
+                      </svg>
+                    </span>
+                  )}
                 </button>
               );
             })}

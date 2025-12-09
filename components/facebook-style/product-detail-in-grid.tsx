@@ -54,14 +54,14 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
           </svg>
         </button>
 
-        <div className="grid gap-3 sm:gap-4 md:grid-cols-2 md:gap-6 lg:gap-8">
+        <div className="grid gap-3 bg-white sm:gap-4 md:grid-cols-2 md:gap-6 lg:gap-8">
           {/* Left side - Images */}
           <div
-            className={`p-3 sm:p-4 md:p-6 lg:p-8 ${isAnimating ? 'animate-image-expand' : ''}`}
+            className={`bg-white p-3 sm:p-4 md:p-6 lg:p-8 ${isAnimating ? 'animate-image-expand' : ''}`}
           >
             {/* Main image */}
             <div
-              className="relative aspect-square w-full cursor-pointer overflow-hidden bg-gray-100"
+              className="relative aspect-square w-full cursor-pointer overflow-hidden bg-white"
               onClick={() => setShowFullscreen(true)}
             >
               <ImageWithFallback
@@ -82,7 +82,7 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
                     <button
                       key={index}
                       onClick={() => setSelectedImageIndex(index)}
-                      className={`relative aspect-square overflow-hidden bg-gray-100 transition-all ${
+                      className={`relative aspect-square overflow-hidden bg-white transition-all ${
                         selectedImageIndex === index
                           ? 'border-2 border-[#3b5998] shadow-md'
                           : 'border border-gray-300 hover:border-gray-400'

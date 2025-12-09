@@ -59,7 +59,7 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
       onMouseLeave={() => setIsHovering(false)}
     >
       {/* Product Image */}
-      <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
+      <div className="relative aspect-square w-full overflow-hidden bg-white">
         <ImageWithFallback
           src={images[currentImageIndex]?.url || '/images/default-fallback-image.png'}
           alt={product.title}

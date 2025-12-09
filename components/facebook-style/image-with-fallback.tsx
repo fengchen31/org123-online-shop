@@ -38,6 +38,11 @@ export function ImageWithFallback({
         </div>
       )}
 
+      {/* Loading background when blur effect is enabled */}
+      {isLoading && !hasError && enableBlurEffect && (
+        <div className="absolute inset-0 bg-white"></div>
+      )}
+
       {/* Error Fallback */}
       {hasError ? (
         <div className="flex h-full w-full items-center justify-center bg-gray-100">
@@ -59,21 +64,27 @@ export function ImageWithFallback({
           </div>
         </div>
       ) : (
-        <Image
-          src={src}
-          alt={alt}
-          fill={fill}
-          width={width}
-          height={height}
-          sizes={sizes}
-          className={`${className} ${enableBlurEffect && isLoading ? 'scale-110 blur-lg' : 'scale-100 blur-0'} transition-all duration-700 ease-out`}
-          priority={priority}
-          onLoad={() => setIsLoading(false)}
-          onError={() => {
-            setIsLoading(false);
-            setHasError(true);
-          }}
-        />
+        <>
+          <Image
+            src={src}
+            alt={alt}
+            fill={fill}
+            width={width}
+            height={height}
+            sizes={sizes}
+            className={`${className} transition-all duration-700 ease-out`}
+            priority={priority}
+            onLoad={() => setIsLoading(false)}
+            onError={() => {
+              setIsLoading(false);
+              setHasError(true);
+            }}
+          />
+          {/* Fog overlay on top of image while loading */}
+          {isLoading && enableBlurEffect && (
+            <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[2px] transition-opacity duration-700"></div>
+          )}
+        </>
       )}
     </div>
   );
