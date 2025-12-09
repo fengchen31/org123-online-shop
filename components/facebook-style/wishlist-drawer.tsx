@@ -144,6 +144,7 @@ export function WishlistDrawer({ isOpen, onClose, onOpenCart }: WishlistDrawerPr
             },
             variants: [],
             images: [],
+            collections: [],
             seo: { title: variant.product.title, description: '' },
             tags: [],
             updatedAt: ''

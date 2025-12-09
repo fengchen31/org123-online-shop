@@ -19,6 +19,41 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { convertPrice } = useCurrency();
 
+  // Determine which collection name to display
+  const displayCollectionName = (() => {
+    // Debug logging
+    if (collectionName?.toLowerCase() === 'view all' || collectionName?.toLowerCase() === 'view-all') {
+      console.log('=== ProductCard Debug ===');
+      console.log('Product title:', product.title);
+      console.log('collectionName prop:', collectionName);
+      console.log('product.collections:', product.collections);
+    }
+
+    // If collectionName is "View All" or similar, use product's first non-hidden collection
+    if (
+      !collectionName ||
+      collectionName.toLowerCase() === 'view all' ||
+      collectionName.toLowerCase() === 'view-all' ||
+      collectionName.toLowerCase() === 'all'
+    ) {
+      // Find first collection that is not hidden or view-all
+      const validCollection = product.collections?.find(
+        (col) =>
+          !col.handle.startsWith('hidden-') &&
+          col.handle !== 'view-all' &&
+          col.handle !== 'all'
+      );
+
+      if (collectionName?.toLowerCase() === 'view all' || collectionName?.toLowerCase() === 'view-all') {
+        console.log('validCollection found:', validCollection);
+        console.log('Returning:', validCollection?.title || collectionName || 'Product');
+      }
+
+      return validCollection?.title || collectionName || 'Product';
+    }
+    return collectionName;
+  })();
+
   const images = product.images.length > 0 ? product.images : [product.featuredImage];
 
   useEffect(() => {
@@ -79,7 +114,7 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
       <div className="grid h-[110px] grid-rows-[auto_minmax(2.5rem,auto)_1fr_auto] gap-1 p-3 sm:h-[120px] sm:p-4">
         {/* Collection Name (Tab Name) - Larger */}
         <div className="text-sm font-bold tracking-wide text-gray-900 sm:text-base">
-          {collectionName || 'Product'}
+          {displayCollectionName}
         </div>
 
         {/* Product Name - Smaller - Min height for 2 lines */}
