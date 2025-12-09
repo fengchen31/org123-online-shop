@@ -46,6 +46,7 @@ export function HomePageClient({
       'nul1-org',
       'nul1org',
       'lttt',
+      'foot',
       'sabukaru',
       'kenford',
       'throwback2000',
