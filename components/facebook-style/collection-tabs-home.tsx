@@ -260,8 +260,13 @@ export function CollectionTabsHome({
     <div className="min-h-screen bg-white md:bg-[#e9eaed] md:pt-0">
       {/* Mobile Discount Marquee - Below header, only show on mobile */}
       <div className="overflow-hidden bg-[#f7f7f7] md:hidden">
-        <div className="animate-marquee whitespace-nowrap py-1.5 text-xs text-gray-700">
-          {discountMessage}
+        <div className="animate-marquee">
+          <span className="marquee-content py-1.5 text-xs text-gray-700">
+            {discountMessage}
+          </span>
+          <span className="marquee-content py-1.5 text-xs text-gray-700">
+            {discountMessage}
+          </span>
         </div>
       </div>
 
@@ -340,8 +345,13 @@ export function CollectionTabsHome({
 
               {/* Discount Marquee */}
               <div className="mb-4 overflow-hidden border border-gray-300 bg-white p-2">
-                <div className="animate-marquee whitespace-nowrap text-xs text-gray-700">
-                  {discountMessage}
+                <div className="animate-marquee">
+                  <span className="marquee-content text-xs text-gray-700">
+                    {discountMessage}
+                  </span>
+                  <span className="marquee-content text-xs text-gray-700">
+                    {discountMessage}
+                  </span>
                 </div>
               </div>
 
