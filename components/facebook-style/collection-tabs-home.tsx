@@ -451,7 +451,7 @@ export function CollectionTabsHome({
                     </a>
                     {/* YouTube Icon */}
                     <a
-                      href="https://youtube.com"
+                      href="https://www.youtube.com/@user-ud8be9nz3b"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block transition-opacity hover:opacity-80"
