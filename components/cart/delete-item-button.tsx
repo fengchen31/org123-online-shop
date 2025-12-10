@@ -15,11 +15,13 @@ function RemoveButton() {
       type="submit"
       aria-label="Remove cart item"
       disabled={pending}
-      className="border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 transition-colors hover:bg-red-50 hover:text-red-600 hover:border-red-300 disabled:cursor-not-allowed disabled:opacity-50"
+      className="flex h-6 w-6 items-center justify-center border border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
     >
-      <span className="inline-flex h-[1rem] min-w-[2.5rem] items-center justify-center">
-        {pending ? <LoadingDots className="bg-gray-700" /> : 'Remove'}
-      </span>
+      {pending ? (
+        <LoadingDots className="bg-gray-700" />
+      ) : (
+        <XMarkIcon className="h-3.5 w-3.5 stroke-2" />
+      )}
     </button>
   );
 }

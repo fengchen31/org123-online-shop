@@ -81,9 +81,6 @@ export function FacebookVariantSelector({
     <div className="space-y-3">
       {options.map((option) => (
         <div key={option.id}>
-          <label className="mb-1 block text-xs font-bold uppercase text-gray-600">
-            {option.name}:
-          </label>
           <div className="flex flex-wrap gap-2">
             {option.values.map((value) => {
               const optionNameLowerCase = option.name.toLowerCase();
