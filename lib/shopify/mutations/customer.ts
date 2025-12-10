@@ -47,6 +47,29 @@ export const customerRecoverMutation = /* GraphQL */ `
   }
 `;
 
+// 使用 reset URL 完成密碼重設
+export const customerResetByUrlMutation = /* GraphQL */ `
+  mutation customerResetByUrl($password: String!, $resetUrl: String!) {
+    customerResetByUrl(password: $password, resetUrl: $resetUrl) {
+      customer {
+        id
+        email
+        firstName
+        lastName
+      }
+      customerAccessToken {
+        accessToken
+        expiresAt
+      }
+      customerUserErrors {
+        code
+        field
+        message
+      }
+    }
+  }
+`;
+
 // 更新願望清單 Mutation
 // Note: This mutation requires Admin API or Customer Account API access
 // Storefront API does not support updating customer metafields

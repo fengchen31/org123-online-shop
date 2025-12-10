@@ -23,6 +23,7 @@ import {
   customerAccessTokenCreateMutation,
   customerCreateMutation,
   customerRecoverMutation,
+  customerResetByUrlMutation,
   updateCustomerWishlistMutation,
   updateCustomerCartMutation,
   adminUpdateCustomerCartMutation,
@@ -1170,6 +1171,52 @@ export async function customerRecover(email: string): Promise<{ success: boolean
     return { success: true };
   } catch (e) {
     console.error('Error recovering customer password:', e);
+    return {
+      success: false,
+      error: '密碼重設時發生錯誤'
+    };
+  }
+}
+
+// 使用 reset URL 完成密碼重設
+export async function customerResetByUrl(
+  resetUrl: string,
+  password: string
+): Promise<{ success: boolean; error?: string; accessToken?: string }> {
+  try {
+    const res = await shopifyFetch<{
+      data: {
+        customerResetByUrl: {
+          customer: { id: string; email: string; firstName: string; lastName: string } | null;
+          customerAccessToken: { accessToken: string; expiresAt: string } | null;
+          customerUserErrors: Array<{ code: string; field: string[]; message: string }>;
+        };
+      };
+    }>({
+      query: customerResetByUrlMutation,
+      variables: {
+        resetUrl,
+        password
+      },
+      cache: 'no-store'
+    });
+
+    if (res.body.data.customerResetByUrl.customerUserErrors.length > 0) {
+      const error = res.body.data.customerResetByUrl.customerUserErrors[0];
+      return {
+        success: false,
+        error: error?.message || '密碼重設失敗'
+      };
+    }
+
+    const accessToken = res.body.data.customerResetByUrl.customerAccessToken?.accessToken;
+
+    return {
+      success: true,
+      accessToken
+    };
+  } catch (e) {
+    console.error('Error resetting customer password:', e);
     return {
       success: false,
       error: '密碼重設時發生錯誤'
