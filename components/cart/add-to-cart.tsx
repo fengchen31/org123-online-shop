@@ -52,7 +52,7 @@ function SubmitButton({
       })}
     >
       <span className="inline-flex h-[1.25rem] items-center justify-center">
-        {pending ? <LoadingDots className="bg-white" /> : 'Add To Cart'}
+        {pending ? <LoadingDots className="text-white" /> : 'Add To Cart'}
       </span>
     </button>
   );

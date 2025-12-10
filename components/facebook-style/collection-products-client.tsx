@@ -1,16 +1,23 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { CollectionProductsGrid } from './collection-products-grid';
 import { type CategoryType } from './category-filter';
 import { CollectionHeader } from './collection-header';
+import { LoadingDots } from '../loading-dots';
 import type { Product } from 'lib/shopify/types';
 import type { SortFilterItem } from 'lib/constants';
 import { defaultSort } from 'lib/constants';
 import { HIDDEN_PRODUCT_TAG } from 'lib/constants';
 
+interface PageInfo {
+  hasNextPage: boolean;
+  endCursor: string | null;
+}
+
 interface CollectionProductsClientProps {
   initialProducts: Product[];
+  initialPageInfo: PageInfo;
   collectionHandle: string;
   collectionTitle: string;
   collectionDescription: string;
@@ -18,15 +25,19 @@ interface CollectionProductsClientProps {
 
 export function CollectionProductsClient({
   initialProducts,
+  initialPageInfo,
   collectionHandle,
   collectionTitle,
   collectionDescription
 }: CollectionProductsClientProps) {
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [pageInfo, setPageInfo] = useState<PageInfo>(initialPageInfo);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentSort, setCurrentSort] = useState<SortFilterItem>(defaultSort);
   const [activeCategory, setActiveCategory] = useState<CategoryType>('all');
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   // 從商品中動態生成 categories
   const categories = useMemo(() => {
@@ -85,29 +96,83 @@ export function CollectionProductsClient({
     }, 50);
   };
 
-  const fetchProducts = async (sortOption: SortFilterItem, category: CategoryType) => {
-    setIsLoading(true);
+  const fetchProducts = async (sortOption: SortFilterItem, category: CategoryType, cursor?: string) => {
+    const loadingMore = !!cursor;
+
+    if (loadingMore) {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+    }
 
     try {
       const params = new URLSearchParams({
         collection: collectionHandle,
         sortKey: sortOption.sortKey,
-        reverse: sortOption.reverse.toString()
+        reverse: sortOption.reverse.toString(),
+        first: '50'
       });
 
       if (category !== 'all') {
         params.append('category', category);
       }
 
+      if (cursor) {
+        params.append('after', cursor);
+      }
+
       const response = await fetch(`/api/collection-products?${params.toString()}`);
       const data = await response.json();
-      setProducts(data.products);
+
+      if (loadingMore) {
+        // Append new products to existing ones
+        setProducts(prev => [...prev, ...data.products]);
+      } else {
+        // Replace products
+        setProducts(data.products);
+      }
+
+      setPageInfo(data.pageInfo);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
-      setIsLoading(false);
+      if (loadingMore) {
+        setIsLoadingMore(false);
+      } else {
+        setIsLoading(false);
+      }
     }
   };
+
+  // Load more products when scrolling to bottom
+  const loadMore = useCallback(() => {
+    if (!isLoadingMore && !isLoading && pageInfo.hasNextPage && pageInfo.endCursor) {
+      fetchProducts(currentSort, activeCategory, pageInfo.endCursor);
+    }
+  }, [isLoadingMore, isLoading, pageInfo, currentSort, activeCategory]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [loadMore]);
 
   // Filter products based on category (client-side filtering as fallback)
   const filteredProducts = useMemo(() => {
@@ -130,8 +195,8 @@ export function CollectionProductsClient({
       />
 
       {isLoading && (
-        <div className="mb-4 border border-blue-200 bg-blue-50 px-4 py-2 text-xs text-blue-700">
-          Loading products...
+        <div className="mb-4 flex items-center justify-center border border-blue-200 bg-blue-50 px-4 py-2 text-xs text-blue-700">
+          <LoadingDots />
         </div>
       )}
 
@@ -148,6 +213,15 @@ export function CollectionProductsClient({
           activeCategory={activeCategory}
           onCategoryChange={handleCategoryChange}
         />
+      </div>
+
+      {/* Infinite scroll trigger */}
+      <div ref={observerTarget} className="h-20 w-full">
+        {isLoadingMore && (
+          <div className="flex items-center justify-center py-8">
+            <LoadingDots className="text-gray-500" />
+          </div>
+        )}
       </div>
     </>
   );

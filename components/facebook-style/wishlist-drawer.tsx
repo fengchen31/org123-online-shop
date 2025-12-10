@@ -245,7 +245,7 @@ export function WishlistDrawer({ isOpen, onClose, onOpenCart }: WishlistDrawerPr
         <div className="h-[calc(100%-64px)] overflow-y-auto p-3 sm:h-[calc(100%-80px)] sm:p-4 md:p-6">
           {isLoading ? (
             <div className="flex h-full items-center justify-center">
-              <div className="text-gray-500">Loading...</div>
+              <LoadingDots className="text-gray-500" />
             </div>
           ) : variants.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center space-y-4">
@@ -322,7 +322,7 @@ export function WishlistDrawer({ isOpen, onClose, onOpenCart }: WishlistDrawerPr
                           >
                             <span className="inline-flex h-[1rem] items-center justify-center">
                               {isAddingToCart || isPending ? (
-                                <LoadingDots className="bg-white" />
+                                <LoadingDots className="text-white" />
                               ) : !variant.availableForSale ? (
                                 'Out of Stock'
                               ) : (
@@ -336,7 +336,7 @@ export function WishlistDrawer({ isOpen, onClose, onOpenCart }: WishlistDrawerPr
                             className="border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             <span className="inline-flex h-[1rem] items-center justify-center">
-                              {isRemoving ? <LoadingDots className="bg-gray-700" /> : 'Remove'}
+                              {isRemoving ? <LoadingDots className="text-gray-700" /> : 'Remove'}
                             </span>
                           </button>
                         </div>

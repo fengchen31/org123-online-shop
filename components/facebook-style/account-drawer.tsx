@@ -428,7 +428,7 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         <div className="flex h-[calc(100%-56px)] flex-col sm:h-[calc(100%-64px)]">
           {isLoading ? (
             <div className="flex h-full items-center justify-center p-3 sm:p-4 md:p-6">
-              <div className="text-gray-500">Loading...</div>
+              <LoadingDots className="text-gray-500" />
             </div>
           ) : viewMode === 'account' && customer ? (
             /* Logged In View */
@@ -444,7 +444,7 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                 >
                   {isUploadingAvatar ? (
                     <div className="flex h-full w-full items-center justify-center bg-gray-200">
-                      <div className="text-xs text-gray-600">Uploading...</div>
+                      <LoadingDots className="text-gray-600" />
                     </div>
                   ) : customer.avatar ? (
                     <Image
@@ -707,7 +707,7 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                   className="w-full bg-[#3b5998] px-4 py-3 font-semibold text-white transition-colors hover:bg-[#344e86] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <span className="inline-flex h-[1.25rem] items-center justify-center">
-                    {isLoginLoading ? <LoadingDots className="bg-white" /> : 'Sign in'}
+                    {isLoginLoading ? <LoadingDots className="text-white" /> : 'Sign in'}
                   </span>
                 </button>
               </form>
@@ -849,7 +849,7 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                   className="w-full bg-[#3b5998] px-4 py-3 font-semibold text-white transition-colors hover:bg-[#344e86] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <span className="inline-flex h-[1.25rem] items-center justify-center">
-                    {isRegisterLoading ? <LoadingDots className="bg-white" /> : 'Sign up'}
+                    {isRegisterLoading ? <LoadingDots className="text-white" /> : 'Sign up'}
                   </span>
                 </button>
               </form>
@@ -932,7 +932,7 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                     className="w-full bg-[#3b5998] px-4 py-3 font-semibold text-white transition-colors hover:bg-[#344e86] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <span className="inline-flex h-[1.25rem] items-center justify-center">
-                      {isForgotPasswordLoading ? <LoadingDots className="bg-white" /> : 'Send reset instructions'}
+                      {isForgotPasswordLoading ? <LoadingDots className="text-white" /> : 'Send reset instructions'}
                     </span>
                   </button>
                 </form>

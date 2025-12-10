@@ -117,8 +117,8 @@ export default async function HomePage() {
     getCollections()
   ]);
 
-  // 過濾掉 "All" collection
-  const collections = allCollections.filter((c) => c.handle !== '');
+  // 不需要過濾，使用所有 collections
+  const collections = allCollections;
 
   // 為 collection tabs 準備 server-rendered 內容
   const collectionProductsComponents: Record<string, React.ReactNode> = {};

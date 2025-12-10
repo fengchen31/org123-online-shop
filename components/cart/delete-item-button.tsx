@@ -18,7 +18,7 @@ function RemoveButton() {
       className="flex h-6 w-6 items-center justify-center border border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
     >
       {pending ? (
-        <LoadingDots className="bg-gray-700" />
+        <LoadingDots className="text-gray-700" />
       ) : (
         <XMarkIcon className="h-3.5 w-3.5 stroke-2" />
       )}

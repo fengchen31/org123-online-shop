@@ -147,7 +147,7 @@ export function AddToWishlist({ product }: { product: Product }) {
     >
       <span className="inline-flex h-[1.25rem] items-center justify-center">
         {isPending ? (
-          <LoadingDots className={isInWishlist ? 'bg-white' : 'bg-gray-700'} />
+          <LoadingDots className={isInWishlist ? 'text-white' : 'text-gray-700'} />
         ) : isInWishlist ? (
           <>
             In Wishlist

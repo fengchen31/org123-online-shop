@@ -14,6 +14,7 @@ import { useCart } from 'components/cart/cart-context';
 import { NewsletterSuccessModal } from 'components/newsletter-success-modal';
 import { clearLocalCartAndSync } from 'components/cart/actions';
 import { restoreCartFromCustomer } from 'components/cart/sync-cart-action';
+import LoadingDots from 'components/loading-dots';
 import {
   restoreWishlistFromCustomer,
   clearLocalWishlist,
@@ -68,6 +69,9 @@ export function CollectionTabsHome({
 
   // Music embed URL
   const [musicEmbedUrl, setMusicEmbedUrl] = useState<string | null>(null);
+
+  // Newsletter subscription state
+  const [isSubscribing, setIsSubscribing] = useState(false);
 
   // 監聽URL變化並同步activeTab狀態
   useEffect(() => {
@@ -891,11 +895,8 @@ export function CollectionTabsHome({
                       const form = e.target as HTMLFormElement;
                       const emailInput = form.elements.namedItem('email') as HTMLInputElement;
                       const email = emailInput.value;
-                      const button = form.elements.namedItem('submit') as HTMLButtonElement;
 
-                      // Disable button
-                      button.disabled = true;
-                      button.textContent = 'Subscribing...';
+                      setIsSubscribing(true);
 
                       try {
                         const response = await fetch('/api/newsletter', {
@@ -923,8 +924,7 @@ export function CollectionTabsHome({
                         console.error('Newsletter subscription error:', error);
                         alert('An error occurred. Please try again.');
                       } finally {
-                        button.disabled = false;
-                        button.textContent = 'Subscribe';
+                        setIsSubscribing(false);
                       }
                     }}
                   >
@@ -933,15 +933,19 @@ export function CollectionTabsHome({
                       name="email"
                       placeholder="Enter your email"
                       required
-                      className="w-full border border-gray-300 px-3 py-2 text-xs text-gray-700 placeholder-gray-400 outline-none focus:border-gray-300"
+                      disabled={isSubscribing}
+                      className="w-full border border-gray-300 px-3 py-2 text-xs text-gray-700 placeholder-gray-400 outline-none focus:border-gray-300 disabled:opacity-50"
                       style={{ boxShadow: 'none' }}
                     />
                     <button
                       type="submit"
                       name="submit"
-                      className="mt-2 w-full bg-[#3b5998] px-3 py-2 text-xs font-bold text-white transition-opacity hover:opacity-90"
+                      disabled={isSubscribing}
+                      className="mt-2 w-full bg-[#3b5998] px-3 py-2 text-xs font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Subscribe
+                      <span className="inline-flex h-[1rem] items-center justify-center">
+                        {isSubscribing ? <LoadingDots className="text-white" /> : 'Subscribe'}
+                      </span>
                     </button>
                   </form>
                 </div>

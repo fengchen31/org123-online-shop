@@ -9,18 +9,20 @@ interface CollectionProductsWrapperProps {
 export async function CollectionProductsWrapper({
   collectionHandle
 }: CollectionProductsWrapperProps) {
-  const [products, collection] = await Promise.all([
+  const [productsData, collection] = await Promise.all([
     getCollectionProducts({
       collection: collectionHandle,
       sortKey: defaultSort.sortKey,
-      reverse: defaultSort.reverse
+      reverse: defaultSort.reverse,
+      first: 50
     }),
     getCollection(collectionHandle)
   ]);
 
   return (
     <CollectionProductsClient
-      initialProducts={products}
+      initialProducts={productsData.products}
+      initialPageInfo={productsData.pageInfo}
       collectionHandle={collectionHandle}
       collectionTitle={collection?.title || ''}
       collectionDescription={collection?.description || ''}

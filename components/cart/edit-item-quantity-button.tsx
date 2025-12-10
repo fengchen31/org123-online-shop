@@ -22,7 +22,7 @@ function SubmitButton({ type }: { type: 'plus' | 'minus' }) {
     >
       <span className="inline-flex h-3 w-3 items-center justify-center">
         {pending ? (
-          <LoadingDots className="bg-gray-700" />
+          <LoadingDots className="text-gray-700" />
         ) : type === 'plus' ? (
           <PlusIcon className="h-3 w-3 text-gray-700" />
         ) : (

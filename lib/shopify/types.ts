@@ -2,10 +2,17 @@ export type Maybe<T> = T | null;
 
 export type Connection<T> = {
   edges: Array<Edge<T>>;
+  pageInfo?: PageInfo;
+};
+
+export type PageInfo = {
+  hasNextPage: boolean;
+  endCursor: string | null;
 };
 
 export type Edge<T> = {
   node: T;
+  cursor?: string;
 };
 
 export type Cart = Omit<ShopifyCart, 'lines'> & {
@@ -262,6 +269,8 @@ export type ShopifyCollectionProductsOperation = {
     handle: string;
     reverse?: boolean;
     sortKey?: string;
+    first?: number;
+    after?: string;
   };
 };
 

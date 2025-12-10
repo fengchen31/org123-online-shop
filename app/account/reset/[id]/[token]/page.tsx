@@ -214,7 +214,7 @@ export default function PasswordResetPage({ params }: PageProps) {
               className="w-full bg-[#3b5998] px-4 py-3 font-semibold text-white transition-colors hover:bg-[#344e86] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <span className="inline-flex h-[1.25rem] items-center justify-center">
-                {isLoading ? <LoadingDots className="bg-white" /> : 'Reset Password'}
+                {isLoading ? <LoadingDots className="text-white" /> : 'Reset Password'}
               </span>
             </button>
           </form>

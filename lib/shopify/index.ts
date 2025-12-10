@@ -417,12 +417,16 @@ export async function getCollection(
 export async function getCollectionProducts({
   collection,
   reverse,
-  sortKey
+  sortKey,
+  first = 100,
+  after
 }: {
   collection: string;
   reverse?: boolean;
   sortKey?: string;
-}): Promise<Product[]> {
+  first?: number;
+  after?: string;
+}): Promise<{ products: Product[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } }> {
   'use cache';
   cacheTag(TAGS.collections, TAGS.products);
   cacheLife('days');
@@ -432,18 +436,26 @@ export async function getCollectionProducts({
     variables: {
       handle: collection,
       reverse,
-      sortKey: sortKey === 'CREATED_AT' ? 'CREATED' : sortKey
+      sortKey: sortKey === 'CREATED_AT' ? 'CREATED' : sortKey,
+      first,
+      after
     }
   });
 
   if (!res.body.data.collection) {
     console.log(`No collection found for \`${collection}\``);
-    return [];
+    return { products: [], pageInfo: { hasNextPage: false, endCursor: null } };
   }
 
-  return reshapeProducts(
-    removeEdgesAndNodes(res.body.data.collection.products)
-  );
+  const productsData = res.body.data.collection.products;
+
+  return {
+    products: reshapeProducts(removeEdgesAndNodes(productsData)),
+    pageInfo: {
+      hasNextPage: productsData.pageInfo?.hasNextPage || false,
+      endCursor: productsData.pageInfo?.endCursor || null
+    }
+  };
 }
 
 export async function getCollections(): Promise<Collection[]> {
@@ -455,39 +467,26 @@ export async function getCollections(): Promise<Collection[]> {
     query: getCollectionsQuery
   });
   const shopifyCollections = removeEdgesAndNodes(res.body?.data?.collections);
-  let collections = [
-    {
-      handle: '',
-      title: 'All',
-      description: 'All products',
-      seo: {
-        title: 'All',
-        description: 'All products'
-      },
-      path: '/search',
-      updatedAt: new Date().toISOString()
-    },
-    // Filter out the `hidden` collections.
-    // Collections that start with `hidden-*` need to be hidden on the search page.
-    ...reshapeCollections(shopifyCollections).filter(
-      (collection) => !collection.handle.startsWith('hidden')
-    )
-  ];
+
+  const reshapedCollections = reshapeCollections(shopifyCollections);
+
+  const filteredCollections = reshapedCollections.filter(
+    (collection) => !collection.handle.startsWith('hidden')
+  );
+
+  // Filter out the `hidden` collections.
+  // Collections that start with `hidden-*` need to be hidden on the search page.
+  let collections = [...filteredCollections];
 
   // 調整 collection 順序：將 "foot" 移到 "lttt" 之後
-  console.log('=== getCollections - BEFORE reorder ===');
-  console.log('Handles:', collections.map(c => c.handle));
 
   const footIndex = collections.findIndex((c) => c.handle.toLowerCase() === 'foot');
   const ltttIndex = collections.findIndex((c) => c.handle.toLowerCase() === 'lttt');
-  console.log('footIndex:', footIndex, 'ltttIndex:', ltttIndex);
 
   if (footIndex !== -1 && ltttIndex !== -1) {
     const footCollection = collections.splice(footIndex, 1)[0];
     const newLtttIndex = collections.findIndex((c) => c.handle.toLowerCase() === 'lttt');
     collections.splice(newLtttIndex + 1, 0, footCollection!);
-    console.log('=== getCollections - AFTER reorder ===');
-    console.log('Handles:', collections.map(c => c.handle));
   }
 
   return collections;

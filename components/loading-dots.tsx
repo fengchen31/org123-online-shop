@@ -1,15 +1,11 @@
-import clsx from 'clsx';
-
-const dots = 'mx-[1px] inline-block h-1 w-1 animate-blink rounded-md';
-
-const LoadingDots = ({ className }: { className: string }) => {
+export default function LoadingDots({ className = '' }: { className?: string }) {
   return (
-    <span className="mx-2 inline-flex items-center">
-      <span className={clsx(dots, className)} />
-      <span className={clsx(dots, 'animation-delay-[200ms]', className)} />
-      <span className={clsx(dots, 'animation-delay-[400ms]', className)} />
+    <span className={`inline-flex items-center space-x-1 ${className}`}>
+      <span className="animate-bounce [animation-delay:-0.3s]">·</span>
+      <span className="animate-bounce [animation-delay:-0.15s]">·</span>
+      <span className="animate-bounce">·</span>
     </span>
   );
-};
+}
 
-export default LoadingDots;
+export { LoadingDots };
