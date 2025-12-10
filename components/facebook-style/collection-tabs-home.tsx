@@ -118,10 +118,21 @@ export function CollectionTabsHome({
             }));
             setFansAvatars(transformedFans);
             setFansPopulation(filteredFans.length);
+          } else {
+            // No fans data, show empty array (will display placeholders)
+            setFansAvatars([]);
+            setFansPopulation(0);
           }
+        } else {
+          // API call failed, show empty array
+          setFansAvatars([]);
+          setFansPopulation(0);
         }
       } catch (error) {
         console.error('Error fetching recent fans:', error);
+        // On error, show empty array
+        setFansAvatars([]);
+        setFansPopulation(0);
       }
     };
 
@@ -235,10 +246,27 @@ export function CollectionTabsHome({
       }
     };
 
+    // Fetch initial data
+    const initializeData = async () => {
+      // Fetch customer info first to determine if user is logged in
+      try {
+        const res = await fetch('/api/customer');
+        const customerId = res.ok ? (await res.json()).customer?.id : null;
+
+        // Fetch recent fans (always show, but exclude current user if logged in)
+        await fetchRecentFans(customerId || undefined);
+      } catch (error) {
+        console.error('Error initializing data:', error);
+        // Still fetch fans even if customer fetch fails
+        await fetchRecentFans();
+      }
+    };
+
     fetchCustomer();
     fetchWishlistCount();
     fetchDiscountBanner();
     fetchMusicEmbedUrl();
+    initializeData();
 
     // Initial sync on page load if user is logged in
     const performInitialSync = async () => {
