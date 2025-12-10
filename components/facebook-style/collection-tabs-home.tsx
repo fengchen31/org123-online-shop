@@ -12,6 +12,13 @@ import { WishlistDrawer } from './wishlist-drawer';
 import { AccountDrawer } from './account-drawer';
 import { useCart } from 'components/cart/cart-context';
 import { NewsletterSuccessModal } from 'components/newsletter-success-modal';
+import { clearLocalCartAndSync } from 'components/cart/actions';
+import { restoreCartFromCustomer } from 'components/cart/sync-cart-action';
+import {
+  restoreWishlistFromCustomer,
+  clearLocalWishlist,
+  syncWishlistFromServer
+} from 'components/wishlist/sync-wishlist-action';
 
 interface CollectionTabsHomeProps {
   collections: Collection[];
@@ -33,13 +40,13 @@ export function CollectionTabsHome({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // 從URL讀取當前collection，如果沒有則使用第一個collection作為預設
+  // 從URL讀取當前collection，如果沒有則預設使用 news-feed
   const getInitialTab = () => {
     const collectionParam = searchParams.get('collection');
     if (collectionParam && collections.some(c => c.handle === collectionParam)) {
       return collectionParam;
     }
-    return collections.length > 0 ? collections[0]!.handle : '';
+    return 'news-feed';
   };
 
   const [activeTab, setActiveTab] = useState<string>(getInitialTab);
@@ -67,8 +74,8 @@ export function CollectionTabsHome({
     const collectionParam = searchParams.get('collection');
     if (collectionParam && collections.some(c => c.handle === collectionParam)) {
       setActiveTab(collectionParam);
-    } else if (collections.length > 0) {
-      setActiveTab(collections[0]!.handle);
+    } else {
+      setActiveTab('news-feed');
     }
   }, [searchParams, collections]);
 
@@ -233,15 +240,220 @@ export function CollectionTabsHome({
     fetchDiscountBanner();
     fetchMusicEmbedUrl();
 
+    // Initial sync on page load if user is logged in
+    const performInitialSync = async () => {
+      try {
+        console.log('=== performInitialSync called ===');
+
+        // Check if user is logged in by calling /api/customer
+        console.log('Checking login status via /api/customer...');
+        const customerResponse = await fetch('/api/customer');
+        const isLoggedIn = customerResponse.ok;
+        console.log('Is logged in:', isLoggedIn);
+
+        if (isLoggedIn) {
+          console.log('=== Initial page load sync for logged-in user ===');
+
+          // Sync cart and wishlist from server using API endpoints
+          console.log('Calling sync APIs...');
+          const [cartResponse, wishlistResult] = await Promise.all([
+            fetch('/api/customer/sync-cart'),
+            syncWishlistFromServer()
+          ]);
+
+          console.log('Cart response status:', cartResponse.status);
+          const cartResult = cartResponse.ok ? await cartResponse.json() : { success: false, error: await cartResponse.text() };
+
+          console.log('Initial cart sync result:', cartResult);
+          console.log('Initial wishlist sync result:', wishlistResult);
+
+          // Dispatch events to update UI
+          if (wishlistResult.success) {
+            window.dispatchEvent(
+              new CustomEvent('wishlistUpdate', {
+                detail: { count: wishlistResult.count || 0 }
+              })
+            );
+          }
+
+          // Refresh page data to reflect synced cart and wishlist
+          if (cartResponse.ok || wishlistResult.success) {
+            console.log('✅ Initial sync completed, refreshing UI...');
+            router.refresh();
+          } else {
+            console.error('❌ Initial sync failed:', { cart: cartResult, wishlist: wishlistResult });
+          }
+        } else {
+          console.log('User not logged in, skipping initial sync');
+        }
+      } catch (error) {
+        console.error('❌ Fatal error in performInitialSync:', error);
+      }
+    };
+
+    performInitialSync();
+
     // Listen for wishlist updates
     const handleWishlistUpdate = (event: CustomEvent) => {
       setWishlistCount(event.detail.count);
     };
 
+    // Listen for auth status changes (login/logout)
+    const handleAuthStatusChange = async (event: CustomEvent) => {
+      const { isLoggedIn: newLoginStatus } = event.detail;
+      console.log('=== Auth status changed ===', { newLoginStatus });
+
+      if (newLoginStatus) {
+        // User logged in - clear local data first, then restore from customer metafield
+        console.log('User logged in, clearing local cart and wishlist...');
+        try {
+          // Clear local cart and wishlist first
+          await clearLocalCartAndSync();
+          await clearLocalWishlist();
+          console.log('✅ Local cart and wishlist cleared');
+
+          console.log('Restoring cart and wishlist from account...');
+
+          // Restore cart from account
+          const cartResult = await restoreCartFromCustomer();
+          console.log('Cart restore result:', cartResult);
+
+          // Restore wishlist from account
+          const wishlistResult = await restoreWishlistFromCustomer();
+          console.log('Wishlist restore result:', wishlistResult);
+
+          if (cartResult.success || wishlistResult.success) {
+            console.log('✅ Account data restored successfully');
+            if (cartResult.success) {
+              console.log('  Cart items restored:', cartResult.itemsRestored);
+            }
+            if (wishlistResult.success) {
+              console.log('  Wishlist items restored:', wishlistResult.itemsRestored);
+
+              // Dispatch wishlistUpdate event to update UI components
+              window.dispatchEvent(
+                new CustomEvent('wishlistUpdate', {
+                  detail: { count: wishlistResult.itemsRestored || 0 }
+                })
+              );
+            }
+            console.log('Refreshing page data to show updated cart and wishlist...');
+
+            // Refresh page data without full reload
+            router.refresh();
+          } else {
+            console.error('❌ Account data restore failed');
+            if (!cartResult.success) console.error('  Cart:', cartResult.error);
+            if (!wishlistResult.success) console.error('  Wishlist:', wishlistResult.error);
+          }
+
+          // Fetch customer info to update avatar and name
+          console.log('Fetching customer info to update UI...');
+          try {
+            const res = await fetch('/api/customer');
+            if (res.ok) {
+              const data = await res.json();
+              if (data.customer) {
+                const name = data.customer.firstName
+                  ? `${data.customer.firstName} ${data.customer.lastName || ''}`.trim()
+                  : data.customer.email;
+                setCustomerName(name);
+                setIsLoggedIn(true);
+
+                if (data.customer.avatar) {
+                  setCustomerAvatar(data.customer.avatar);
+                  setCurrentCustomerId(data.customer.id);
+                }
+                console.log('✅ Customer info updated:', { name, hasAvatar: !!data.customer.avatar });
+              }
+            }
+          } catch (error) {
+            console.error('Error fetching customer info:', error);
+          }
+        } catch (error) {
+          console.error('❌ Failed to restore account data:', error);
+        }
+      } else {
+        // User logged out - clear cart, wishlist and all account data
+        console.log('User logged out, clearing local cart and wishlist...');
+        await clearLocalCartAndSync();
+        await clearLocalWishlist();
+
+        // Reset customer info to defaults
+        setCustomerName('org123.xyz');
+        setIsLoggedIn(false);
+        setCustomerAvatar('');
+        setCurrentCustomerId('');
+
+        // Dispatch wishlistUpdate event to clear the counter
+        window.dispatchEvent(
+          new CustomEvent('wishlistUpdate', {
+            detail: { count: 0 }
+          })
+        );
+
+        console.log('Refreshing page data to clear account data...');
+
+        // Refresh page data without full reload
+        router.refresh();
+      }
+    };
+
+    // Handle page visibility change for cross-device sync
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        console.log('=== Page became visible, checking for cross-device updates ===');
+
+        try {
+          // Check if user is logged in by calling /api/customer
+          const customerResponse = await fetch('/api/customer');
+          const isLoggedIn = customerResponse.ok;
+
+          if (isLoggedIn) {
+            console.log('User is logged in, syncing cart and wishlist from server...');
+
+            // Sync cart and wishlist from server using API endpoints
+            const [cartResponse, wishlistResult] = await Promise.all([
+              fetch('/api/customer/sync-cart'),
+              syncWishlistFromServer()
+            ]);
+
+            const cartResult = cartResponse.ok ? await cartResponse.json() : { success: false };
+
+            console.log('Cart sync result:', cartResult);
+            console.log('Wishlist sync result:', wishlistResult);
+
+            // Dispatch events to update UI
+            if (wishlistResult.success) {
+              window.dispatchEvent(
+                new CustomEvent('wishlistUpdate', {
+                  detail: { count: wishlistResult.count || 0 }
+                })
+              );
+            }
+
+            // Refresh page data to reflect synced cart and wishlist
+            if (cartResponse.ok || wishlistResult.success) {
+              console.log('✅ Cross-device sync completed, refreshing UI...');
+              router.refresh();
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error during cross-device sync:', error);
+        }
+      }
+    };
+
+    console.log('🔧 Setting up event listeners in collection-tabs-home');
     window.addEventListener('wishlistUpdate', handleWishlistUpdate as EventListener);
+    window.addEventListener('authStatusChange', handleAuthStatusChange as EventListener);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    console.log('✅ Event listeners registered');
 
     return () => {
       window.removeEventListener('wishlistUpdate', handleWishlistUpdate as EventListener);
+      window.removeEventListener('authStatusChange', handleAuthStatusChange as EventListener);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
@@ -250,7 +462,8 @@ export function CollectionTabsHome({
     onTabChange?.(handle);
 
     // 使用push來支持瀏覽器歷史記錄
-    const newParams = new URLSearchParams(window.location.search);
+    // 清除所有參數，只保留 collection
+    const newParams = new URLSearchParams();
     newParams.set('collection', handle);
     router.push(`?${newParams.toString()}`, { scroll: false });
   };

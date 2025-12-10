@@ -93,7 +93,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                     return (
                       <div
-                        key={i}
+                        key={item.id || item.merchandise.id}
                         className="overflow-hidden border border-gray-200 bg-white"
                       >
                         <div className="flex gap-2 p-2 sm:gap-3 sm:p-3 md:gap-4 md:p-4">

@@ -93,26 +93,28 @@ export function CollectionProductsGrid({
   return (
     <>
       {/* Filters Section - Responsive: one row when wide, two rows when narrow */}
-      <div className="mb-3 sm:mb-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          {/* Category Filter */}
-          {categories && activeCategory !== undefined && onCategoryChange && (
-            <div className="flex-shrink min-w-0">
-              <CategoryFilter
-                categories={categories}
-                activeCategory={activeCategory}
-                onCategoryChange={onCategoryChange}
-              />
-            </div>
-          )}
+      {!expandedProduct && (
+        <div className="mb-3 sm:mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {/* Category Filter */}
+            {categories && activeCategory !== undefined && onCategoryChange && (
+              <div className="flex-shrink min-w-0">
+                <CategoryFilter
+                  categories={categories}
+                  activeCategory={activeCategory}
+                  onCategoryChange={onCategoryChange}
+                />
+              </div>
+            )}
 
-          {/* Currency Toggle and Sort Filter */}
-          <div className="flex items-center gap-2">
-            <CurrencyToggle />
-            <ProductFilter onSortChange={handleSortChange} currentSort={currentSort} />
+            {/* Currency Toggle and Sort Filter */}
+            <div className="flex items-center gap-2">
+              <CurrencyToggle />
+              <ProductFilter onSortChange={handleSortChange} currentSort={currentSort} />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {expandedProduct ? (

@@ -94,6 +94,28 @@ button {
   animation: shimmer 2s infinite;
 }
 
+/* Loading dots blink animation */
+@keyframes blink {
+  0%, 80%, 100% {
+    opacity: 0.2;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+.animate-blink {
+  animation: blink 1.4s infinite;
+}
+
+.animation-delay-\[200ms\] {
+  animation-delay: 200ms;
+}
+
+.animation-delay-\[400ms\] {
+  animation-delay: 400ms;
+}
+
 /* Size chart table styling */
 .size-chart-table table {
   @apply w-full border-collapse text-xs sm:text-sm;

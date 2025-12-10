@@ -17,10 +17,26 @@ export function FacebookHeaderClient({ menu }: FacebookHeaderClientProps) {
   const [isWishlistDrawerOpen, setIsWishlistDrawerOpen] = useState(false);
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const { cart } = useCart();
   const quantityRef = useRef(cart?.totalQuantity);
 
   useEffect(() => {
+    // Check if user is logged in
+    const fetchCustomer = async () => {
+      try {
+        const res = await fetch('/api/customer');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.customer) {
+            setIsLoggedIn(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching customer:', error);
+      }
+    };
+
     // Initial fetch
     const fetchWishlistCount = async () => {
       try {
@@ -34,6 +50,7 @@ export function FacebookHeaderClient({ menu }: FacebookHeaderClientProps) {
       }
     };
 
+    fetchCustomer();
     fetchWishlistCount();
 
     // Listen for wishlist updates
@@ -41,26 +58,35 @@ export function FacebookHeaderClient({ menu }: FacebookHeaderClientProps) {
       setWishlistCount(event.detail.count);
     };
 
+    // Listen for auth status changes (login/logout)
+    const handleAuthStatusChange = (event: CustomEvent) => {
+      const { isLoggedIn: newLoginStatus } = event.detail;
+      setIsLoggedIn(newLoginStatus);
+
+      if (newLoginStatus) {
+        // User logged in - fetch wishlist count
+        fetchWishlistCount();
+      } else {
+        // User logged out - clear wishlist count
+        setWishlistCount(0);
+      }
+    };
+
     window.addEventListener('wishlistUpdate', handleWishlistUpdate as EventListener);
+    window.addEventListener('authStatusChange', handleAuthStatusChange as EventListener);
 
     return () => {
       window.removeEventListener('wishlistUpdate', handleWishlistUpdate as EventListener);
+      window.removeEventListener('authStatusChange', handleAuthStatusChange as EventListener);
     };
   }, []);
 
-  // Auto-open cart when items are added
+  // Track cart quantity changes without auto-opening drawer
   useEffect(() => {
-    if (
-      cart?.totalQuantity &&
-      cart?.totalQuantity !== quantityRef.current &&
-      cart?.totalQuantity > 0
-    ) {
-      if (!isCartDrawerOpen) {
-        setIsCartDrawerOpen(true);
-      }
-      quantityRef.current = cart?.totalQuantity;
+    if (cart?.totalQuantity !== undefined) {
+      quantityRef.current = cart.totalQuantity;
     }
-  }, [isCartDrawerOpen, cart?.totalQuantity, quantityRef]);
+  }, [cart?.totalQuantity]);
 
   return (
     <>
@@ -108,32 +134,34 @@ export function FacebookHeaderClient({ menu }: FacebookHeaderClientProps) {
 
             {/* Right: Wishlist, User, Cart */}
             <div className="flex items-end gap-2 pr-2 sm:gap-3 sm:pr-4">
-              {/* Wishlist */}
-              <button
-                onClick={() => setIsWishlistDrawerOpen(true)}
-                className="relative flex h-7 w-7 items-center justify-center text-white transition-opacity hover:opacity-80 sm:h-8 sm:w-8"
-                aria-label="Wishlist"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                  className="h-5 w-5 sm:h-6 sm:w-6"
+              {/* Wishlist - Only show when logged in */}
+              {isLoggedIn && (
+                <button
+                  onClick={() => setIsWishlistDrawerOpen(true)}
+                  className="relative flex h-7 w-7 items-center justify-center text-white transition-opacity hover:opacity-80 sm:h-8 sm:w-8"
+                  aria-label="Wishlist"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                  />
-                </svg>
-                {wishlistCount > 0 && (
-                  <div className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:w-5 sm:text-[10px]">
-                    {wishlistCount}
-                  </div>
-                )}
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className="h-5 w-5 sm:h-6 sm:w-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+                    />
+                  </svg>
+                  {wishlistCount > 0 && (
+                    <div className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[9px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:w-5 sm:text-[10px]">
+                      {wishlistCount}
+                    </div>
+                  )}
+                </button>
+              )}
 
               {/* User Account */}
               <button

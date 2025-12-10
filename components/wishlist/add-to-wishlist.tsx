@@ -2,6 +2,7 @@
 
 import { HeartIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
+import LoadingDots from 'components/loading-dots';
 import { useProduct } from 'components/product/product-context';
 import { Product, ProductVariant } from 'lib/shopify/types';
 import { useEffect, useState, useTransition } from 'react';
@@ -11,6 +12,7 @@ export function AddToWishlist({ product }: { product: Product }) {
   const { state } = useProduct();
   const [isPending, startTransition] = useTransition();
   const [isInWishlist, setIsInWishlist] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const variant = variants.find((variant: ProductVariant) =>
     variant.selectedOptions.every(
@@ -20,34 +22,61 @@ export function AddToWishlist({ product }: { product: Product }) {
   const defaultVariantId = variants.length === 1 ? variants[0]?.id : undefined;
   const selectedVariantId = variant?.id || defaultVariantId;
 
-  // Check if current variant is in wishlist
+  // Check if user is logged in and if current variant is in wishlist
   useEffect(() => {
-    const checkWishlist = async () => {
-      if (!selectedVariantId) return;
-
+    const checkLoginAndWishlist = async () => {
+      // Check if user is logged in
       try {
-        const res = await fetch('/api/wishlist');
-        if (res.ok) {
-          const data = await res.json();
-          setIsInWishlist(
-            data.wishlist?.some((item: any) => item.variantId === selectedVariantId) || false
-          );
+        const customerRes = await fetch('/api/customer');
+        if (customerRes.ok) {
+          const customerData = await customerRes.json();
+          if (customerData.customer) {
+            setIsLoggedIn(true);
+
+            // Only check wishlist if user is logged in and variant is selected
+            if (selectedVariantId) {
+              try {
+                const wishlistRes = await fetch('/api/wishlist');
+                if (wishlistRes.ok) {
+                  const wishlistData = await wishlistRes.json();
+                  setIsInWishlist(
+                    wishlistData.wishlist?.some((item: any) => item.variantId === selectedVariantId) || false
+                  );
+                }
+              } catch (error) {
+                console.error('Error checking wishlist:', error);
+              }
+            }
+          } else {
+            setIsLoggedIn(false);
+          }
+        } else {
+          setIsLoggedIn(false);
         }
       } catch (error) {
-        console.error('Error checking wishlist:', error);
+        console.error('Error checking customer:', error);
+        setIsLoggedIn(false);
       }
     };
-    checkWishlist();
+
+    checkLoginAndWishlist();
 
     // Listen for wishlist updates from other components
     const handleWishlistUpdate = () => {
-      checkWishlist();
+      checkLoginAndWishlist();
+    };
+
+    // Listen for auth status changes (login/logout)
+    const handleAuthStatusChange = () => {
+      checkLoginAndWishlist();
     };
 
     window.addEventListener('wishlistUpdate', handleWishlistUpdate);
+    window.addEventListener('authStatusChange', handleAuthStatusChange);
 
     return () => {
       window.removeEventListener('wishlistUpdate', handleWishlistUpdate);
+      window.removeEventListener('authStatusChange', handleAuthStatusChange);
     };
   }, [selectedVariantId]);
 
@@ -91,6 +120,11 @@ export function AddToWishlist({ product }: { product: Product }) {
     'flex w-full items-center justify-center gap-2 border py-2 text-sm font-semibold transition-colors';
   const disabledClasses = 'cursor-not-allowed opacity-60';
 
+  // Don't show wishlist button if user is not logged in
+  if (!isLoggedIn) {
+    return null;
+  }
+
   if (!selectedVariantId) {
     return (
       <button disabled className={clsx(buttonClasses, 'border-gray-300 bg-gray-100 text-gray-500', disabledClasses)}>
@@ -105,21 +139,25 @@ export function AddToWishlist({ product }: { product: Product }) {
       onClick={handleWishlistToggle}
       disabled={isPending}
       className={clsx(buttonClasses, {
-        'border-red-500 bg-red-500 text-white hover:bg-red-600': isInWishlist,
-        'border-gray-300 bg-white text-gray-700 hover:border-red-500 hover:text-red-500': !isInWishlist,
+        'border-red-500 bg-red-500 text-white hover:bg-red-600': isInWishlist && !isPending,
+        'border-gray-300 bg-white text-gray-700 hover:border-red-500 hover:text-red-500': !isInWishlist && !isPending,
         [disabledClasses]: isPending
       })}
       aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
     >
-      {isInWishlist ? (
-        <>
-          In Wishlist
-        </>
-      ) : (
-        <>
-          Add To Wishlist
-        </>
-      )}
+      <span className="inline-flex h-[1.25rem] items-center justify-center">
+        {isPending ? (
+          <LoadingDots className={isInWishlist ? 'bg-white' : 'bg-gray-700'} />
+        ) : isInWishlist ? (
+          <>
+            In Wishlist
+          </>
+        ) : (
+          <>
+            Add To Wishlist
+          </>
+        )}
+      </span>
     </button>
   );
 }

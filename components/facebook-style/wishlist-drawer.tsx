@@ -2,6 +2,7 @@
 
 import { addItem } from 'components/cart/actions';
 import { useCart } from 'components/cart/cart-context';
+import LoadingDots from 'components/loading-dots';
 import type { WishlistVariant } from 'lib/shopify/types';
 import { ImageWithFallback } from './image-with-fallback';
 import Link from 'next/link';
@@ -25,6 +26,19 @@ export function WishlistDrawer({ isOpen, onClose, onOpenCart }: WishlistDrawerPr
     if (isOpen) {
       fetchWishlist();
     }
+
+    // Listen for wishlist updates (e.g., when user logs in)
+    const handleWishlistUpdate = () => {
+      if (isOpen) {
+        fetchWishlist();
+      }
+    };
+
+    window.addEventListener('wishlistUpdate', handleWishlistUpdate);
+
+    return () => {
+      window.removeEventListener('wishlistUpdate', handleWishlistUpdate);
+    };
   }, [isOpen]);
 
   const fetchWishlist = async () => {
@@ -177,9 +191,8 @@ export function WishlistDrawer({ isOpen, onClose, onOpenCart }: WishlistDrawerPr
           })
         );
 
-        // Close wishlist drawer and open cart drawer
+        // Close wishlist drawer without opening cart drawer
         onClose();
-        onOpenCart();
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -307,18 +320,24 @@ export function WishlistDrawer({ isOpen, onClose, onOpenCart }: WishlistDrawerPr
                             disabled={!variant.availableForSale || isAddingToCart || isPending}
                             className="bg-[#3b5998] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#344e86] disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            {isAddingToCart || isPending
-                              ? 'Adding...'
-                              : !variant.availableForSale
-                                ? 'Out of Stock'
-                                : 'Add to Cart'}
+                            <span className="inline-flex h-[1rem] items-center justify-center">
+                              {isAddingToCart || isPending ? (
+                                <LoadingDots className="bg-white" />
+                              ) : !variant.availableForSale ? (
+                                'Out of Stock'
+                              ) : (
+                                'Add to Cart'
+                              )}
+                            </span>
                           </button>
                           <button
                             onClick={() => handleRemove(variant.id)}
                             disabled={isRemoving}
                             className="border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            {isRemoving ? 'Removing...' : 'Remove'}
+                            <span className="inline-flex h-[1rem] items-center justify-center">
+                              {isRemoving ? <LoadingDots className="bg-gray-700" /> : 'Remove'}
+                            </span>
                           </button>
                         </div>
                       </div>

@@ -6,7 +6,9 @@ import { addItem } from 'components/cart/actions';
 import { useProduct } from 'components/product/product-context';
 import { Product, ProductVariant } from 'lib/shopify/types';
 import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { useCart } from './cart-context';
+import LoadingDots from 'components/loading-dots';
 
 function SubmitButton({
   availableForSale,
@@ -15,6 +17,7 @@ function SubmitButton({
   availableForSale: boolean;
   selectedVariantId: string | undefined;
 }) {
+  const { pending } = useFormStatus();
   const buttonClasses =
     'flex w-full items-center justify-center border bg-[#3b5998] py-2 text-sm font-semibold text-white transition-colors';
   const disabledClasses = 'cursor-not-allowed opacity-60 hover:opacity-60';
@@ -42,11 +45,15 @@ function SubmitButton({
   return (
     <button
       aria-label="Add to cart"
+      disabled={pending}
       className={clsx(buttonClasses, {
-        'hover:bg-[#324a7f]': true
+        'hover:bg-[#324a7f]': !pending,
+        [disabledClasses]: pending
       })}
     >
-      Add To Cart
+      <span className="inline-flex h-[1.25rem] items-center justify-center">
+        {pending ? <LoadingDots className="bg-white" /> : 'Add To Cart'}
+      </span>
     </button>
   );
 }
@@ -73,7 +80,7 @@ export function AddToCart({ product }: { product: Product }) {
     <form
       action={async () => {
         addCartItem(finalVariant, product);
-        addItemAction();
+        await addItemAction();
       }}
     >
       <SubmitButton

@@ -69,6 +69,17 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
     };
 
     fetchCustomer();
+
+    // Listen for auth status changes
+    const handleAuthStatusChange = () => {
+      fetchCustomer();
+    };
+
+    window.addEventListener('authStatusChange', handleAuthStatusChange as EventListener);
+
+    return () => {
+      window.removeEventListener('authStatusChange', handleAuthStatusChange as EventListener);
+    };
   }, []);
 
   useEffect(() => {

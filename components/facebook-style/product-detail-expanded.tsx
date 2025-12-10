@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
 import type { Product } from 'lib/shopify/types';
 import { ProductProvider } from 'components/product/product-context';
@@ -22,6 +22,36 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
   const [showFullscreen, setShowFullscreen] = useState(false);
   const images = product.images.length > 0 ? product.images : [product.featuredImage];
   const { convertPrice } = useCurrency();
+
+  // Touch swipe handling
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const swipeDistance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50;
+
+    if (Math.abs(swipeDistance) > minSwipeDistance) {
+      if (swipeDistance > 0) {
+        // Swiped left - show next image
+        setSelectedImageIndex((prev) => (prev + 1 < images.length ? prev + 1 : 0));
+      } else {
+        // Swiped right - show previous image
+        setSelectedImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+      }
+    }
+
+    touchStartX.current = 0;
+    touchEndX.current = 0;
+  };
 
   return (
     <ProductProvider>
@@ -45,6 +75,9 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
             <div
               className="relative aspect-square w-full cursor-pointer overflow-hidden bg-white"
               onClick={() => setShowFullscreen(true)}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
               <ImageWithFallback
                 src={images[selectedImageIndex]?.url || '/images/default-fallback-image.png'}
@@ -81,14 +114,16 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
                   ))}
                 </div>
 
-                {/* Mobile: Dot indicators */}
-                <div className="mt-4 flex items-center justify-center gap-2 lg:hidden">
+                {/* Mobile: Bar buttons */}
+                <div className="mt-4 flex items-center gap-1 lg:hidden">
                   {images.map((image, index) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImageIndex(index)}
-                      className={`h-1.5 w-1.5 rounded-full transition-all ${
-                        selectedImageIndex === index ? 'bg-[#3b5998] scale-150' : 'bg-gray-400'
+                      className={`flex-1 py-1 transition-colors ${
+                        selectedImageIndex === index
+                          ? 'bg-[#3b5998]'
+                          : 'bg-gray-300 hover:bg-gray-400 active:bg-gray-500'
                       }`}
                       aria-label={`Select image ${index + 1}`}
                     />

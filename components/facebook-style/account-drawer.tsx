@@ -1,10 +1,15 @@
 'use client';
 
 import type { Customer, Order } from 'lib/shopify/types';
+import LoadingDots from 'components/loading-dots';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
+import { clearLocalCartAndSync } from 'components/cart/actions';
+import { clearLocalWishlist } from 'components/wishlist/sync-wishlist-action';
+import { restoreCartFromCustomer } from 'components/cart/sync-cart-action';
+import { restoreWishlistFromCustomer } from 'components/wishlist/sync-wishlist-action';
 
 // Available login avatars
 const LOGIN_AVATARS = [
@@ -20,7 +25,7 @@ interface AccountDrawerProps {
   onClose: () => void;
 }
 
-type ViewMode = 'account' | 'login' | 'register';
+type ViewMode = 'account' | 'login' | 'register' | 'forgot-password';
 
 export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   const router = useRouter();
@@ -47,6 +52,12 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   });
   const [registerError, setRegisterError] = useState('');
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
+
+  // Forgot password state
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [forgotPasswordError, setForgotPasswordError] = useState('');
+  const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
+  const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState(false);
 
   // Avatar upload state
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -115,7 +126,14 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
       setOrders([]);
       setIsOrdersExpanded(false);
       setViewMode('login');
-      router.refresh();
+
+      // Dispatch event to notify all components that user logged out
+      console.log('📢 Dispatching authStatusChange event (logout)');
+      window.dispatchEvent(new CustomEvent('authStatusChange', { detail: { isLoggedIn: false } }));
+      console.log('✅ authStatusChange event dispatched');
+
+      // Don't call router.refresh() here - let collection-tabs-home handle it after cart clearing
+      // router.refresh();
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -139,10 +157,43 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         throw new Error(data.error || 'Login failed');
       }
 
-      // Login successful
+      // Login successful - clear local cart and wishlist, then restore from account
+      console.log('🔐 Login successful, clearing local data and restoring from account...');
+
+      // Clear local cart and wishlist
+      await clearLocalCartAndSync();
+      await clearLocalWishlist();
+      console.log('✅ Local cart and wishlist cleared');
+
+      // Restore cart and wishlist from account
+      const [cartResult, wishlistResult] = await Promise.all([
+        restoreCartFromCustomer(),
+        restoreWishlistFromCustomer()
+      ]);
+
+      console.log('Cart restore result:', cartResult);
+      console.log('Wishlist restore result:', wishlistResult);
+
+      // Update UI
       await fetchCustomer();
       setLoginEmail('');
       setLoginPassword('');
+
+      // Dispatch events to update UI
+      if (wishlistResult.success) {
+        window.dispatchEvent(
+          new CustomEvent('wishlistUpdate', {
+            detail: { count: wishlistResult.itemsRestored || 0 }
+          })
+        );
+      }
+
+      // Dispatch event to notify all components that user logged in
+      console.log('📢 Dispatching authStatusChange event (login)');
+      window.dispatchEvent(new CustomEvent('authStatusChange', { detail: { isLoggedIn: true } }));
+      console.log('✅ authStatusChange event dispatched');
+
+      // Refresh page to show synced cart
       router.refresh();
     } catch (err) {
       setLoginError(err instanceof Error ? err.message : 'An error occurred during login');
@@ -187,7 +238,15 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         throw new Error(data.error || 'Registration failed');
       }
 
-      // Registration successful, fetch customer data
+      // Registration successful - clear local cart and wishlist (new account should start fresh)
+      console.log('📝 Registration successful, clearing local data...');
+
+      // Clear local cart and wishlist
+      await clearLocalCartAndSync();
+      await clearLocalWishlist();
+      console.log('✅ Local cart and wishlist cleared for new account');
+
+      // Update UI
       await fetchCustomer();
       setRegisterData({
         firstName: '',
@@ -196,11 +255,48 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         password: '',
         confirmPassword: ''
       });
+
+      // Dispatch event to notify all components that user registered and logged in
+      console.log('📢 Dispatching authStatusChange event (register)');
+      window.dispatchEvent(new CustomEvent('authStatusChange', { detail: { isLoggedIn: true } }));
+      window.dispatchEvent(new CustomEvent('wishlistUpdate', { detail: { count: 0 } }));
+      console.log('✅ authStatusChange event dispatched');
+
+      // Refresh page
       router.refresh();
     } catch (err) {
       setRegisterError(err instanceof Error ? err.message : 'An error occurred during registration');
     } finally {
       setIsRegisterLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsForgotPasswordLoading(true);
+    setForgotPasswordError('');
+    setForgotPasswordSuccess(false);
+
+    try {
+      const res = await fetch('/api/auth/recover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotPasswordEmail })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Password reset request failed');
+      }
+
+      // Success
+      setForgotPasswordSuccess(true);
+      setForgotPasswordEmail('');
+    } catch (err) {
+      setForgotPasswordError(err instanceof Error ? err.message : 'An error occurred during password reset');
+    } finally {
+      setIsForgotPasswordLoading(false);
     }
   };
 
@@ -309,7 +405,7 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4">
           <h2 className="text-lg font-bold text-gray-900 sm:text-xl">
-            {viewMode === 'login' ? 'Sign In' : viewMode === 'register' ? 'Sign Up' : 'Account'}
+            {viewMode === 'login' ? 'Sign In' : viewMode === 'register' ? 'Sign Up' : viewMode === 'forgot-password' ? 'Reset Password' : 'Account'}
           </h2>
           <button
             onClick={onClose}
@@ -561,7 +657,7 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     required
-                    className="w-full border border-gray-300 px-4 py-2 focus:border-[#3b5998] focus:outline-none focus:ring-2 focus:ring-[#3b5998]/20"
+                    className="w-full border border-gray-300 px-4 py-2 focus:outline-none focus:ring-0 focus:border-gray-300"
                     placeholder="your@email.com"
                     disabled={isLoginLoading}
                   />
@@ -569,16 +665,30 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
 
                 {/* Password */}
                 <div>
-                  <label htmlFor="login-password" className="mb-1 block text-sm font-medium text-gray-700">
-                    Password
-                  </label>
+                  <div className="mb-1 flex items-center justify-between">
+                    <label htmlFor="login-password" className="block text-sm font-medium text-gray-700">
+                      Password
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setViewMode('forgot-password');
+                        setLoginError('');
+                        setForgotPasswordError('');
+                        setForgotPasswordSuccess(false);
+                      }}
+                      className="text-xs font-medium text-[#3b5998] hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
                   <input
                     type="password"
                     id="login-password"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required
-                    className="w-full border border-gray-300 px-4 py-2 focus:border-[#3b5998] focus:outline-none focus:ring-2 focus:ring-[#3b5998]/20"
+                    className="w-full border border-gray-300 px-4 py-2 focus:outline-none focus:ring-0 focus:border-gray-300"
                     placeholder="••••••••"
                     disabled={isLoginLoading}
                   />
@@ -590,7 +700,9 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                   disabled={isLoginLoading}
                   className="w-full bg-[#3b5998] px-4 py-3 font-semibold text-white transition-colors hover:bg-[#344e86] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isLoginLoading ? 'Signing in...' : 'Sign in'}
+                  <span className="inline-flex h-[1.25rem] items-center justify-center">
+                    {isLoginLoading ? <LoadingDots className="bg-white" /> : 'Sign in'}
+                  </span>
                 </button>
               </form>
 
@@ -618,7 +730,7 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
               </div>
               </div>
             </div>
-          ) : (
+          ) : viewMode === 'register' ? (
             /* Register View */
             <div className="overflow-y-auto p-3 sm:p-4 md:p-6">
               <div className="space-y-6">
@@ -730,7 +842,9 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                   disabled={isRegisterLoading}
                   className="w-full bg-[#3b5998] px-4 py-3 font-semibold text-white transition-colors hover:bg-[#344e86] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isRegisterLoading ? 'Signing up...' : 'Sign up'}
+                  <span className="inline-flex h-[1.25rem] items-center justify-center">
+                    {isRegisterLoading ? <LoadingDots className="bg-white" /> : 'Sign up'}
+                  </span>
                 </button>
               </form>
 
@@ -758,7 +872,93 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
               </div>
               </div>
             </div>
-          )}
+          ) : viewMode === 'forgot-password' ? (
+            /* Forgot Password View */
+            <div className="overflow-y-auto p-3 sm:p-4 md:p-6">
+              <div className="space-y-6">
+              <div>
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">Reset your password</h3>
+                <p className="text-sm text-gray-600">
+                  Enter your email address and we'll send you instructions to reset your password.
+                </p>
+              </div>
+
+              {forgotPasswordError && (
+                <div className="bg-red-50 p-4">
+                  <p className="text-sm text-red-800">{forgotPasswordError}</p>
+                </div>
+              )}
+
+              {forgotPasswordSuccess && (
+                <div className="bg-green-50 p-4">
+                  <p className="text-sm font-medium text-green-800">
+                    Password reset email sent!
+                  </p>
+                  <p className="mt-1 text-sm text-green-700">
+                    Please check your email for instructions to reset your password.
+                  </p>
+                </div>
+              )}
+
+              {!forgotPasswordSuccess && (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  {/* Email */}
+                  <div>
+                    <label htmlFor="forgot-password-email" className="mb-1 block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      id="forgot-password-email"
+                      value={forgotPasswordEmail}
+                      onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                      required
+                      className="w-full border border-gray-300 px-4 py-2 focus:border-[#3b5998] focus:outline-none focus:ring-2 focus:ring-[#3b5998]/20"
+                      placeholder="your@email.com"
+                      disabled={isForgotPasswordLoading}
+                    />
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={isForgotPasswordLoading}
+                    className="w-full bg-[#3b5998] px-4 py-3 font-semibold text-white transition-colors hover:bg-[#344e86] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <span className="inline-flex h-[1.25rem] items-center justify-center">
+                      {isForgotPasswordLoading ? <LoadingDots className="bg-white" /> : 'Send reset instructions'}
+                    </span>
+                  </button>
+                </form>
+              )}
+
+              {/* Divider */}
+              <div className="flex items-center">
+                <div className="flex-1 border-t border-gray-300"></div>
+                <span className="px-4 text-sm text-gray-500">or</span>
+                <div className="flex-1 border-t border-gray-300"></div>
+              </div>
+
+              {/* Back to Login */}
+              <div className="text-center">
+                <p className="text-sm text-gray-600">
+                  Remember your password?{' '}
+                  <button
+                    onClick={() => {
+                      setViewMode('login');
+                      setForgotPasswordError('');
+                      setForgotPasswordSuccess(false);
+                      setForgotPasswordEmail('');
+                    }}
+                    className="font-semibold text-[#3b5998] hover:underline"
+                  >
+                    Sign in
+                  </button>
+                </p>
+              </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </>

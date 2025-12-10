@@ -70,3 +70,41 @@ export const getCustomerWishlistQuery = /* GraphQL */ `
     }
   }
 `;
+
+export const getCustomerCartQuery = /* GraphQL */ `
+  query getCustomerCart($customerAccessToken: String!) {
+    customer(customerAccessToken: $customerAccessToken) {
+      metafield(namespace: "custom", key: "cart") {
+        value
+      }
+    }
+  }
+`;
+
+export const adminGetCustomerCartQuery = /* GraphQL */ `
+  query adminGetCustomerCart($customerId: ID!) {
+    customer(id: $customerId) {
+      id
+      metafield(namespace: "custom", key: "cart") {
+        id
+        namespace
+        key
+        value
+      }
+    }
+  }
+`;
+
+export const adminGetCustomerWishlistQuery = /* GraphQL */ `
+  query adminGetCustomerWishlist($customerId: ID!) {
+    customer(id: $customerId) {
+      id
+      metafield(namespace: "custom", key: "wishlist") {
+        id
+        namespace
+        key
+        value
+      }
+    }
+  }
+`;

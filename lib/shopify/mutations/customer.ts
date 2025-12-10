@@ -96,3 +96,85 @@ export const updateCustomerAvatarMutation = /* GraphQL */ `
     }
   }
 `;
+
+// 更新購物車 Mutation (Storefront API - 不支援寫入 metafields)
+export const updateCustomerCartMutation = /* GraphQL */ `
+  mutation updateCustomerCart($customerAccessToken: String!, $cart: String!) {
+    customerUpdate(
+      customerAccessToken: $customerAccessToken
+      customer: {
+        metafields: [
+          {
+            namespace: "custom"
+            key: "cart"
+            value: $cart
+            type: "json"
+          }
+        ]
+      }
+    ) {
+      customer {
+        id
+        metafield(namespace: "custom", key: "cart") {
+          value
+        }
+      }
+      customerUserErrors {
+        field
+        message
+      }
+    }
+  }
+`;
+
+// Admin API: 使用 customer ID 和 metafieldsSet mutation 更新購物車
+export const adminUpdateCustomerCartMutation = /* GraphQL */ `
+  mutation adminUpdateCustomerCart($customerId: ID!, $cart: String!) {
+    metafieldsSet(metafields: [
+      {
+        ownerId: $customerId
+        namespace: "custom"
+        key: "cart"
+        value: $cart
+        type: "json"
+      }
+    ]) {
+      metafields {
+        id
+        namespace
+        key
+        value
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`;
+
+// Admin API: 更新願望清單
+export const adminUpdateCustomerWishlistMutation = /* GraphQL */ `
+  mutation adminUpdateCustomerWishlist($customerId: ID!, $wishlist: String!) {
+    metafieldsSet(metafields: [
+      {
+        ownerId: $customerId
+        namespace: "custom"
+        key: "wishlist"
+        value: $wishlist
+        type: "json"
+      }
+    ]) {
+      metafields {
+        id
+        namespace
+        key
+        value
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+`;

@@ -1,13 +1,50 @@
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
-
-// Wishlist is now stored in cookies as a simple solution
-// since Shopify Storefront API doesn't support updating customer metafields
+import { getCustomer, adminUpdateCustomerWishlist } from 'lib/shopify';
 
 interface WishlistItem {
   variantId: string;
   productId: string;
   productHandle: string;
+}
+
+// Helper function to sync wishlist to customer metafield
+async function syncWishlistToCustomer(wishlistItems: WishlistItem[]) {
+  try {
+    console.log('=== syncWishlistToCustomer called ===');
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('customerAccessToken')?.value;
+
+    if (!accessToken) {
+      console.log('No customerAccessToken found, skipping wishlist sync');
+      return;
+    }
+
+    console.log('AccessToken found, fetching customer ID...');
+
+    // Get customer info to obtain customer ID
+    const customer = await getCustomer(accessToken);
+    if (!customer || !customer.id) {
+      console.error('❌ Failed to get customer ID');
+      return;
+    }
+
+    console.log('Customer ID:', customer.id);
+
+    // Extract variant IDs for metafield storage
+    const variantIds = wishlistItems.map(item => item.variantId);
+
+    console.log('Syncing wishlist items to customer metafield via Admin API:', variantIds);
+    const success = await adminUpdateCustomerWishlist(customer.id, variantIds);
+
+    if (success) {
+      console.log('✅ Wishlist synced to customer metafield successfully');
+    } else {
+      console.error('❌ Failed to sync wishlist to customer metafield');
+    }
+  } catch (e) {
+    console.error('Error in syncWishlistToCustomer:', e);
+  }
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -44,6 +81,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     } else {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
+
+    // Sync wishlist to customer metafield if logged in
+    await syncWishlistToCustomer(newWishlist);
 
     // Create response and set cookie
     const response = NextResponse.json({ wishlist: newWishlist });

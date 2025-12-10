@@ -79,7 +79,7 @@ export function PagesFeed({ articles }: PagesFeedProps) {
 
       return {
         id: article.id,
-        author: article.author?.name || 'org123.xyz',
+        author: 'org123.xyz',
         authorAvatar: '/images/avatars/org123xyz_head.svg',
         timestamp: formatRelativeTime(article.publishedAt),
         content, // 顯示完整內文（純文字）

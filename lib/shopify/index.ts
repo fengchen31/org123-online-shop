@@ -8,7 +8,8 @@ import { ensureStartsWith } from 'lib/utils';
 import {
   revalidateTag,
   cacheTag,
-  cacheLife
+  cacheLife,
+  unstable_noStore
 } from 'next/cache';
 import { cookies, headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
@@ -22,13 +23,19 @@ import {
   customerAccessTokenCreateMutation,
   customerCreateMutation,
   customerRecoverMutation,
-  updateCustomerWishlistMutation
+  updateCustomerWishlistMutation,
+  updateCustomerCartMutation,
+  adminUpdateCustomerCartMutation,
+  adminUpdateCustomerWishlistMutation
 } from './mutations/customer';
 import { getCartQuery } from './queries/cart';
 import {
   getCustomerQuery,
   getCustomerOrdersQuery,
-  getCustomerWishlistQuery
+  getCustomerWishlistQuery,
+  getCustomerCartQuery,
+  adminGetCustomerCartQuery,
+  adminGetCustomerWishlistQuery
 } from './queries/customer';
 import {
   getCollectionProductsQuery,
@@ -96,6 +103,16 @@ const domain = process.env.SHOPIFY_STORE_DOMAIN
 const endpoint = `${domain}${SHOPIFY_GRAPHQL_API_ENDPOINT}`;
 const key = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN!;
 
+// Admin API configuration
+const adminEndpoint = `${domain}/admin/api/2024-01/graphql.json`;
+const adminKey = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
+
+// Check if Admin API token is configured
+if (!adminKey) {
+  console.warn('⚠️ SHOPIFY_ADMIN_ACCESS_TOKEN is not configured in environment variables');
+  console.warn('Cart and wishlist sync features will not work without Admin API access');
+}
+
 type ExtractVariables<T> = T extends { variables: object }
   ? T['variables']
   : never;
@@ -134,6 +151,67 @@ export async function shopifyFetch<T>({
       body
     };
   } catch (e) {
+    if (isShopifyError(e)) {
+      throw {
+        cause: e.cause?.toString() || 'unknown',
+        status: e.status || 500,
+        message: e.message,
+        query
+      };
+    }
+
+    throw {
+      error: e,
+      query
+    };
+  }
+}
+
+// Shopify Admin API fetch function
+export async function shopifyAdminFetch<T>({
+  query,
+  variables
+}: {
+  query: string;
+  variables?: any;
+}): Promise<{ status: number; body: T } | never> {
+  try {
+    // Check if Admin API token is configured
+    if (!adminKey) {
+      throw new Error('SHOPIFY_ADMIN_ACCESS_TOKEN is not configured. Please add it to your .env file.');
+    }
+
+    console.log('=== Admin API call ===');
+    console.log('Endpoint:', adminEndpoint);
+    console.log('Query:', query);
+    console.log('Variables:', variables);
+
+    const result = await fetch(adminEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': adminKey
+      },
+      body: JSON.stringify({
+        query,
+        ...(variables && { variables })
+      })
+    });
+
+    const body = await result.json();
+    console.log('Admin API response:', JSON.stringify(body, null, 2));
+
+    if (body.errors) {
+      console.error('Admin API errors:', body.errors);
+      throw body.errors[0];
+    }
+
+    return {
+      status: result.status,
+      body
+    };
+  } catch (e) {
+    console.error('Admin API error:', e);
     if (isShopifyError(e)) {
       throw {
         cause: e.cause?.toString() || 'unknown',
@@ -297,6 +375,7 @@ export async function updateCart(
 }
 
 export async function getCart(): Promise<Cart | undefined> {
+  unstable_noStore();
   const cartId = (await cookies()).get('cartId')?.value;
 
   if (!cartId) {
@@ -751,6 +830,187 @@ export async function updateCustomerWishlist(
   } catch (e) {
     console.error('Error updating customer wishlist:', e);
     return false;
+  }
+}
+
+// 獲取客戶購物車
+export async function getCustomerCart(accessToken: string): Promise<Array<{merchandiseId: string, quantity: number}>> {
+  try {
+    console.log('=== getCustomerCart called ===');
+    const res = await shopifyCustomerFetch<any>({
+      accessToken,
+      query: getCustomerCartQuery
+    });
+
+    console.log('Customer cart GraphQL response:', JSON.stringify(res.body, null, 2));
+
+    const cartData = res.body.data.customer.metafield;
+    if (!cartData || !cartData.value) {
+      console.log('No cart metafield found for customer');
+      return [];
+    }
+
+    const parsedCart = JSON.parse(cartData.value);
+    console.log('Parsed cart from metafield:', parsedCart);
+    return parsedCart;
+  } catch (e) {
+    console.error('Error fetching customer cart:', e);
+    return [];
+  }
+}
+
+// 更新客戶購物車（使用 Storefront API - 已棄用，不支援寫入 metafields）
+export async function updateCustomerCart(
+  accessToken: string,
+  cartItems: Array<{merchandiseId: string, quantity: number}>
+): Promise<boolean> {
+  try {
+    console.log('=== updateCustomerCart called (Storefront API - deprecated) ===');
+    console.log('Cart items to save:', cartItems);
+
+    const res = await shopifyCustomerFetch<any>({
+      accessToken,
+      query: updateCustomerCartMutation,
+      variables: {
+        cart: JSON.stringify(cartItems)
+      }
+    });
+
+    console.log('Update cart GraphQL response:', JSON.stringify(res.body, null, 2));
+
+    const hasErrors = res.body.data.customerUpdate.customerUserErrors.length > 0;
+    if (hasErrors) {
+      console.error('Customer cart update errors:', res.body.data.customerUpdate.customerUserErrors);
+    } else {
+      console.log('✅ Customer cart updated successfully');
+    }
+
+    return !hasErrors;
+  } catch (e) {
+    console.error('Error updating customer cart:', e);
+    return false;
+  }
+}
+
+// 使用 Admin API 更新客戶 Wishlist
+export async function adminUpdateCustomerWishlist(
+  customerId: string,
+  wishlistItems: string[]
+): Promise<boolean> {
+  try {
+    console.log('=== adminUpdateCustomerWishlist called ===');
+    console.log('Customer ID:', customerId);
+    console.log('Wishlist items to save:', wishlistItems);
+
+    const response = await shopifyAdminFetch<any>({
+      query: adminUpdateCustomerWishlistMutation,
+      variables: {
+        customerId,
+        wishlist: JSON.stringify(wishlistItems)
+      }
+    });
+
+    if (response.body.data?.metafieldsSet?.userErrors?.length > 0) {
+      console.error('❌ Admin API errors:', response.body.data.metafieldsSet.userErrors);
+      return false;
+    }
+
+    console.log('✅ Wishlist synced to customer metafield via Admin API');
+    return true;
+  } catch (e) {
+    console.error('Error updating customer wishlist via Admin API:', e);
+    return false;
+  }
+}
+
+// 使用 Admin API 更新客戶購物車（新版本）
+export async function adminUpdateCustomerCart(
+  customerId: string,
+  cartItems: Array<{merchandiseId: string, quantity: number}>
+): Promise<boolean> {
+  try {
+    console.log('=== adminUpdateCustomerCart called ===');
+    console.log('Customer ID:', customerId);
+    console.log('Cart items to save:', cartItems);
+
+    const response = await shopifyAdminFetch<any>({
+      query: adminUpdateCustomerCartMutation,
+      variables: {
+        customerId,
+        cart: JSON.stringify(cartItems)
+      }
+    });
+
+    if (response.body.data?.metafieldsSet?.userErrors?.length > 0) {
+      console.error('❌ Admin API errors:', response.body.data.metafieldsSet.userErrors);
+      return false;
+    }
+
+    console.log('✅ Cart synced to customer metafield via Admin API');
+    return true;
+  } catch (e) {
+    console.error('Error updating customer cart via Admin API:', e);
+    return false;
+  }
+}
+
+// 使用 Admin API 獲取客戶購物車
+export async function adminGetCustomerCart(customerId: string): Promise<Array<{merchandiseId: string, quantity: number}>> {
+  try {
+    console.log('=== adminGetCustomerCart called ===');
+    console.log('Customer ID:', customerId);
+
+    const response = await shopifyAdminFetch<any>({
+      query: adminGetCustomerCartQuery,
+      variables: {
+        customerId
+      }
+    });
+
+    console.log('Admin API get cart response:', JSON.stringify(response.body, null, 2));
+
+    const cartData = response.body.data?.customer?.metafield;
+    if (!cartData || !cartData.value) {
+      console.log('No cart metafield found for customer via Admin API');
+      return [];
+    }
+
+    const parsedCart = JSON.parse(cartData.value);
+    console.log('✅ Parsed cart from metafield via Admin API:', parsedCart);
+    return parsedCart;
+  } catch (e) {
+    console.error('Error fetching customer cart via Admin API:', e);
+    return [];
+  }
+}
+
+// 使用 Admin API 獲取客戶 Wishlist
+export async function adminGetCustomerWishlist(customerId: string): Promise<string[]> {
+  try {
+    console.log('=== adminGetCustomerWishlist called ===');
+    console.log('Customer ID:', customerId);
+
+    const response = await shopifyAdminFetch<any>({
+      query: adminGetCustomerWishlistQuery,
+      variables: {
+        customerId
+      }
+    });
+
+    console.log('Admin API get wishlist response:', JSON.stringify(response.body, null, 2));
+
+    const wishlistData = response.body.data?.customer?.metafield;
+    if (!wishlistData || !wishlistData.value) {
+      console.log('No wishlist metafield found for customer via Admin API');
+      return [];
+    }
+
+    const parsedWishlist = JSON.parse(wishlistData.value);
+    console.log('✅ Parsed wishlist from metafield via Admin API:', parsedWishlist);
+    return parsedWishlist;
+  } catch (e) {
+    console.error('Error fetching customer wishlist via Admin API:', e);
+    return [];
   }
 }
 
