@@ -450,8 +450,6 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
                                 minute: '2-digit'
                               }).replace(',', ' at')}
                             </span>
-                            <span className="text-gray-400">·</span>
-                            <button className="text-[#365899] hover:underline">Like</button>
                             {comment.userId === customer.id && (
                               <>
                                 <span className="text-gray-400">·</span>
