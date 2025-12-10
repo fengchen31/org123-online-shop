@@ -10,6 +10,45 @@ type Combination = {
   [key: string]: string | boolean;
 };
 
+// 將尺寸名稱轉換為縮寫
+function getSizeAbbreviation(value: string): string {
+  const lowerValue = value.toLowerCase().trim();
+
+  // 尺寸縮寫對應表
+  const sizeMap: Record<string, string> = {
+    'extra extra small': 'XXS',
+    'xx-small': 'XXS',
+    'xxs': 'XXS',
+    'extra small': 'XS',
+    'x-small': 'XS',
+    'xs': 'XS',
+    'small': 'S',
+    's': 'S',
+    'medium': 'M',
+    'm': 'M',
+    'large': 'L',
+    'l': 'L',
+    'extra large': 'XL',
+    'x-large': 'XL',
+    'xl': 'XL',
+    'extra extra large': 'XXL',
+    'xx-large': 'XXL',
+    'xxl': 'XXL',
+    '2xl': '2XL',
+    '3xl': '3XL',
+    '4xl': '4XL',
+    '5xl': '5XL',
+    'one size': 'OS',
+    'one-size': 'OS',
+    'onesize': 'OS',
+    'free size': 'FREE',
+    'free': 'FREE'
+  };
+
+  // 如果找到對應的縮寫，返回縮寫；否則返回原值
+  return sizeMap[lowerValue] || value;
+}
+
 export function VariantSelector({
   options,
   variants
@@ -82,7 +121,7 @@ export function VariantSelector({
                   }
                 )}
               >
-                {value}
+                {getSizeAbbreviation(value)}
               </button>
             );
           })}

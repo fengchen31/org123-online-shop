@@ -14,18 +14,39 @@ type Combination = {
 function getSizeAcronym(value: string): string {
   const lowerValue = value.toLowerCase().trim();
   const sizeMap: Record<string, string> = {
+    'extra extra small': 'XXS',
+    'xx-small': 'XXS',
+    'xxs': 'XXS',
+    'extra small': 'XS',
+    'x-small': 'XS',
+    'xs': 'XS',
     'small': 'S',
+    's': 'S',
     'medium': 'M',
+    'm': 'M',
     'large': 'L',
-    'x-large': 'XL',
+    'l': 'L',
     'extra large': 'XL',
+    'x-large': 'XL',
+    'xl': 'XL',
     'xlarge': 'XL',
+    'extra extra large': 'XXL',
     'xx-large': 'XXL',
-    '2x-large': 'XXL',
+    'xxl': 'XXL',
     'xxlarge': 'XXL',
-    'xxx-large': 'XXXL',
-    '3x-large': 'XXXL',
-    'xxxlarge': 'XXXL'
+    '2xl': '2XL',
+    '2x-large': '2XL',
+    '3xl': '3XL',
+    '3x-large': '3XL',
+    'xxx-large': '3XL',
+    'xxxlarge': '3XL',
+    '4xl': '4XL',
+    '5xl': '5XL',
+    'one size': 'OS',
+    'one-size': 'OS',
+    'onesize': 'OS',
+    'free size': 'FREE',
+    'free': 'FREE'
   };
 
   return sizeMap[lowerValue] || value;
@@ -105,7 +126,7 @@ export function FacebookVariantSelector({
                     }
                   )}
                 >
-                  {option.name.toLowerCase() === 'size' ? getSizeAcronym(value) : value}
+                  {getSizeAcronym(value)}
                   {/* Diagonal line for sold out variants - from bottom-left to top-right */}
                   {!isAvailableForSale && (
                     <span className="pointer-events-none absolute bottom-0 left-0 h-full w-full">
