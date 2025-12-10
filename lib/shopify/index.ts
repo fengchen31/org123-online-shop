@@ -1197,7 +1197,7 @@ export async function customerResetByUrl(
       const error = res.body.data.customerResetByUrl.customerUserErrors[0];
       return {
         success: false,
-        error: error?.message || '密碼重設失敗'
+        error: error?.message || 'Failed to reset password'
       };
     }
 
@@ -1211,7 +1211,7 @@ export async function customerResetByUrl(
     console.error('Error resetting customer password:', e);
     return {
       success: false,
-      error: '密碼重設時發生錯誤'
+      error: 'An error occurred while resetting password'
     };
   }
 }

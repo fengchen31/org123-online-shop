@@ -16,6 +16,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const result = await customerResetByUrl(resetUrl, password);
 
     if (!result.success) {
+      console.error('Password reset failed:', result.error);
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
