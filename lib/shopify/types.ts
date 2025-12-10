@@ -414,6 +414,32 @@ export type ShopifyUpdateCustomerWishlistOperation = {
   };
 };
 
+export type ShopifyCustomerResetByUrlOperation = {
+  data: {
+    customerResetByUrl: {
+      customer: {
+        id: string;
+        email: string;
+        firstName: string;
+        lastName: string;
+      } | null;
+      customerAccessToken: {
+        accessToken: string;
+        expiresAt: string;
+      } | null;
+      customerUserErrors: Array<{
+        code: string;
+        field: string[];
+        message: string;
+      }>;
+    };
+  };
+  variables: {
+    resetUrl: string;
+    password: string;
+  };
+};
+
 export type WishlistVariant = {
   id: string;
   title: string;

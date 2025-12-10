@@ -78,6 +78,7 @@ import {
   ShopifyCreateCartOperation,
   ShopifyCustomerOperation,
   ShopifyCustomerOrdersOperation,
+  ShopifyCustomerResetByUrlOperation,
   ShopifyCustomerWishlistOperation,
   ShopifyMenuOperation,
   ShopifyPageOperation,
@@ -1184,21 +1185,12 @@ export async function customerResetByUrl(
   password: string
 ): Promise<{ success: boolean; error?: string; accessToken?: string }> {
   try {
-    const res = await shopifyFetch<{
-      data: {
-        customerResetByUrl: {
-          customer: { id: string; email: string; firstName: string; lastName: string } | null;
-          customerAccessToken: { accessToken: string; expiresAt: string } | null;
-          customerUserErrors: Array<{ code: string; field: string[]; message: string }>;
-        };
-      };
-    }>({
+    const res = await shopifyFetch<ShopifyCustomerResetByUrlOperation>({
       query: customerResetByUrlMutation,
       variables: {
         resetUrl,
         password
-      },
-      cache: 'no-store'
+      }
     });
 
     if (res.body.data.customerResetByUrl.customerUserErrors.length > 0) {
