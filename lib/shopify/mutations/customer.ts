@@ -49,7 +49,7 @@ export const customerRecoverMutation = /* GraphQL */ `
 
 // 使用 reset URL 完成密碼重設
 export const customerResetByUrlMutation = /* GraphQL */ `
-  mutation customerResetByUrl($password: String!, $resetUrl: String!) {
+  mutation customerResetByUrl($password: String!, $resetUrl: URL!) {
     customerResetByUrl(password: $password, resetUrl: $resetUrl) {
       customer {
         id
