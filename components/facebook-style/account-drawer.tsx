@@ -336,6 +336,12 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
 
         // Refresh customer data to get new avatar
         await fetchCustomer();
+
+        // Dispatch event to update avatar in other components (sidebar, header, etc.)
+        window.dispatchEvent(new CustomEvent('avatarUpdate', {
+          detail: { avatar: base64 }
+        }));
+
         router.refresh();
       } catch (err) {
         setAvatarError(err instanceof Error ? err.message : 'Failed to upload avatar');

@@ -363,6 +363,25 @@ export function CollectionTabsHome({
                 if (data.customer.avatar) {
                   setCustomerAvatar(data.customer.avatar);
                   setCurrentCustomerId(data.customer.id);
+
+                  // Record as recent fan and refresh fan list
+                  try {
+                    await fetch('/api/recent-fans', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        customerId: data.customer.id,
+                        email: data.customer.email,
+                        firstName: data.customer.firstName,
+                        lastName: data.customer.lastName,
+                        avatar: data.customer.avatar
+                      })
+                    });
+                    // Refresh fan list
+                    await fetchRecentFans(data.customer.id);
+                  } catch (error) {
+                    console.error('Error updating recent fans on login:', error);
+                  }
                 }
                 console.log('✅ Customer info updated:', { name, hasAvatar: !!data.customer.avatar });
               }
@@ -396,6 +415,43 @@ export function CollectionTabsHome({
 
         // Refresh page data without full reload
         router.refresh();
+      }
+    };
+
+    // Handle avatar update event
+    const handleAvatarUpdate = async (event: CustomEvent) => {
+      const { avatar } = event.detail;
+      console.log('=== Avatar updated ===');
+
+      try {
+        // Update avatar in sidebar
+        setCustomerAvatar(avatar);
+
+        // Fetch customer info to get updated data
+        const res = await fetch('/api/customer');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.customer && data.customer.avatar) {
+            // Record as recent fan with new avatar
+            await fetch('/api/recent-fans', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                customerId: data.customer.id,
+                email: data.customer.email,
+                firstName: data.customer.firstName,
+                lastName: data.customer.lastName,
+                avatar: data.customer.avatar
+              })
+            });
+
+            // Refresh fan list
+            await fetchRecentFans(data.customer.id);
+            console.log('✅ Recent fans updated after avatar change');
+          }
+        }
+      } catch (error) {
+        console.error('Error handling avatar update:', error);
       }
     };
 
@@ -447,12 +503,14 @@ export function CollectionTabsHome({
     console.log('🔧 Setting up event listeners in collection-tabs-home');
     window.addEventListener('wishlistUpdate', handleWishlistUpdate as EventListener);
     window.addEventListener('authStatusChange', handleAuthStatusChange as EventListener);
+    window.addEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     console.log('✅ Event listeners registered');
 
     return () => {
       window.removeEventListener('wishlistUpdate', handleWishlistUpdate as EventListener);
       window.removeEventListener('authStatusChange', handleAuthStatusChange as EventListener);
+      window.removeEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
@@ -763,24 +821,29 @@ export function CollectionTabsHome({
                     {fansAvatars.length > 0 ? `${fansAvatars.length} recent visitors` : 'No recent visitors'}
                   </p>
                   <div className="mt-3 grid grid-cols-2 gap-2 xl:grid-cols-3">
-                    {(fansAvatars.length > 0 ? fansAvatars : [1, 2, 3, 4, 5, 6]).map((fan, i) => (
-                      <a
-                        key={typeof fan === 'object' ? fan.username : i}
-                        href={typeof fan === 'object' ? fan.profileUrl : '#'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="relative aspect-square overflow-hidden border border-gray-300 bg-white transition-transform hover:scale-105"
-                        title={typeof fan === 'object' ? `@${fan.username}` : undefined}
-                      >
-                        <Image
-                          src={typeof fan === 'object' ? fan.avatarUrl : '/images/avatars/org123xyz_head.svg'}
-                          alt={typeof fan === 'object' ? `@${fan.username}` : `Fan ${i}`}
-                          fill
-                          className="object-cover"
-                          unoptimized
-                        />
-                      </a>
-                    ))}
+                    {(fansAvatars.length > 0 ? fansAvatars : [1, 2, 3, 4, 5, 6]).map((fan, i) => {
+                      const isDefaultAvatar = typeof fan !== 'object' || !fan.avatarUrl || fan.avatarUrl === '/images/avatars/org123xyz_head.svg';
+                      const avatarSrc = typeof fan === 'object' && fan.avatarUrl ? fan.avatarUrl : '/images/avatars/org123xyz_head.svg';
+
+                      return (
+                        <a
+                          key={typeof fan === 'object' ? fan.username : i}
+                          href={typeof fan === 'object' ? fan.profileUrl : '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative aspect-square overflow-hidden border border-gray-300 bg-white transition-transform hover:scale-105"
+                          title={typeof fan === 'object' ? `@${fan.username}` : undefined}
+                        >
+                          <Image
+                            src={avatarSrc}
+                            alt={typeof fan === 'object' ? `@${fan.username}` : `Fan ${i}`}
+                            fill
+                            className={isDefaultAvatar ? "object-contain p-1" : "object-cover"}
+                            unoptimized
+                          />
+                        </a>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
