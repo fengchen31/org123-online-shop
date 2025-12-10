@@ -1,15 +1,15 @@
 export type SortFilterItem = {
   title: string;
   slug: string | null;
-  sortKey: 'RELEVANCE' | 'BEST_SELLING' | 'CREATED_AT' | 'PRICE';
+  sortKey: 'RELEVANCE' | 'BEST_SELLING' | 'CREATED_AT' | 'PRICE' | 'COLLECTION_DEFAULT';
   reverse: boolean;
 };
 
 export const defaultSort: SortFilterItem = {
-  title: 'Latest arrivals',
-  slug: 'latest-desc',
-  sortKey: 'CREATED_AT',
-  reverse: true
+  title: 'Default',
+  slug: null,
+  sortKey: 'COLLECTION_DEFAULT',
+  reverse: false
 };
 
 export const sorting: SortFilterItem[] = [

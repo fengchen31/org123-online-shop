@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   try {
     const { products: allProducts, pageInfo } = await getCollectionProducts({
       collection,
-      sortKey: sortKey || undefined,
+      sortKey: sortKey && sortKey !== 'COLLECTION_DEFAULT' ? sortKey : undefined,
       reverse,
       first,
       after: after || undefined
