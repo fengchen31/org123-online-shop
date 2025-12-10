@@ -28,11 +28,15 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
   const touchEndX = useRef<number>(0);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
+    if (e.touches[0]) {
+      touchStartX.current = e.touches[0].clientX;
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.touches[0].clientX;
+    if (e.touches[0]) {
+      touchEndX.current = e.touches[0].clientX;
+    }
   };
 
   const handleTouchEnd = () => {

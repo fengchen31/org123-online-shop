@@ -322,13 +322,13 @@ export function CollectionTabsHome({
     performInitialSync();
 
     // Listen for wishlist updates
-    const handleWishlistUpdate = (event: CustomEvent) => {
-      setWishlistCount(event.detail.count);
+    const handleWishlistUpdate = (event: Event) => {
+      setWishlistCount((event as CustomEvent).detail.count);
     };
 
     // Listen for auth status changes (login/logout)
-    const handleAuthStatusChange = async (event: CustomEvent) => {
-      const { isLoggedIn: newLoginStatus } = event.detail;
+    const handleAuthStatusChange = async (event: Event) => {
+      const { isLoggedIn: newLoginStatus } = (event as CustomEvent).detail;
       console.log('=== Auth status changed ===', { newLoginStatus });
 
       if (newLoginStatus) {
@@ -447,8 +447,8 @@ export function CollectionTabsHome({
     };
 
     // Handle avatar update event
-    const handleAvatarUpdate = async (event: CustomEvent) => {
-      const { avatar } = event.detail;
+    const handleAvatarUpdate = async (event: Event) => {
+      const { avatar } = (event as CustomEvent).detail;
       console.log('=== Avatar updated ===');
 
       try {
@@ -529,16 +529,16 @@ export function CollectionTabsHome({
     };
 
     console.log('🔧 Setting up event listeners in collection-tabs-home');
-    window.addEventListener('wishlistUpdate', handleWishlistUpdate as EventListener);
-    window.addEventListener('authStatusChange', handleAuthStatusChange as EventListener);
-    window.addEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
+    window.addEventListener('wishlistUpdate', handleWishlistUpdate);
+    window.addEventListener('authStatusChange', handleAuthStatusChange);
+    window.addEventListener('avatarUpdate', handleAvatarUpdate);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     console.log('✅ Event listeners registered');
 
     return () => {
-      window.removeEventListener('wishlistUpdate', handleWishlistUpdate as EventListener);
-      window.removeEventListener('authStatusChange', handleAuthStatusChange as EventListener);
-      window.removeEventListener('avatarUpdate', handleAvatarUpdate as EventListener);
+      window.removeEventListener('wishlistUpdate', handleWishlistUpdate);
+      window.removeEventListener('authStatusChange', handleAuthStatusChange);
+      window.removeEventListener('avatarUpdate', handleAvatarUpdate);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
