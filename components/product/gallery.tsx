@@ -20,12 +20,16 @@ export function Gallery({ images }: { images: { src: string; altText: string }[]
   const [isDragging, setIsDragging] = useState(false);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    setIsDragging(true);
+    if (e.touches[0]) {
+      touchStartX.current = e.touches[0].clientX;
+      setIsDragging(true);
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    touchEndX.current = e.touches[0].clientX;
+    if (e.touches[0]) {
+      touchEndX.current = e.touches[0].clientX;
+    }
   };
 
   const handleTouchEnd = () => {
