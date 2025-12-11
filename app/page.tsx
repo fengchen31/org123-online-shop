@@ -114,15 +114,41 @@ export default async function HomePage() {
       <Suspense
         key={collection.handle}
         fallback={
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="aspect-square rounded bg-gray-200"></div>
-                <div className="mt-2 h-4 rounded bg-gray-200"></div>
-                <div className="mt-2 h-3 rounded bg-gray-200"></div>
+          <>
+            {/* Collection Description Skeleton */}
+            <div className="mb-3 sm:mb-4">
+              <div className="h-4 w-full animate-pulse bg-gray-200"></div>
+            </div>
+
+            {/* Filters Skeleton */}
+            <div className="mb-3 sm:mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                {/* Category Filter Skeleton */}
+                <div className="flex min-w-0 flex-shrink gap-2">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="h-8 w-16 animate-pulse bg-gray-200"></div>
+                  ))}
+                </div>
+
+                {/* Currency Toggle and Sort Filter Skeleton */}
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-24 animate-pulse bg-gray-200"></div>
+                  <div className="h-8 w-28 animate-pulse bg-gray-200"></div>
+                </div>
               </div>
-            ))}
-          </div>
+            </div>
+
+            {/* Products Grid Skeleton */}
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="aspect-square bg-gray-200"></div>
+                  <div className="mt-2 h-4 bg-gray-200"></div>
+                  <div className="mt-2 h-3 bg-gray-200"></div>
+                </div>
+              ))}
+            </div>
+          </>
         }
       >
         <CollectionProductsWrapper collectionHandle={collection.handle} />
