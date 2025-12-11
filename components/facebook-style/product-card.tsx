@@ -107,7 +107,7 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
         {/* Sale Badge */}
         {product.compareAtPriceRange &&
           parseFloat(product.compareAtPriceRange.maxVariantPrice.amount) > parseFloat(product.priceRange.maxVariantPrice.amount) && (
-          <div className="absolute left-3 top-3 bg-white px-2 py-1 text-xs font-bold text-red-600 sm:text-sm">
+          <div className="absolute left-2 top-2 bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white sm:text-xs">
             Sale
           </div>
         )}
@@ -155,14 +155,14 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
 
               return (
                 <div className="flex flex-col gap-0.5">
-                  <p className="text-xs text-gray-500 line-through sm:text-sm">
+                  <p className="text-xs font-bold text-gray-900 line-through sm:text-sm">
                     {currencySymbol}{Math.floor(parseFloat(compareAtConverted.amount)).toLocaleString()} {compareAtConverted.currency}
                   </p>
                   <div className="flex items-baseline gap-1.5">
-                    <p className="text-xs font-bold text-red-600 sm:text-sm">
+                    <p className="text-xs font-bold text-gray-900 sm:text-sm">
                       {currencySymbol}{Math.floor(parseFloat(currentConverted.amount)).toLocaleString()} {currentConverted.currency}
                     </p>
-                    <span className="text-xs font-bold text-red-600">({discount}%)</span>
+                    <span className="text-xs font-bold text-red-600 sm:text-sm">({discount}%)</span>
                   </div>
                 </div>
               );
