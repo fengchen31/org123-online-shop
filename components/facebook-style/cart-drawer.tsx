@@ -11,6 +11,7 @@ import { ImageWithFallback } from './image-with-fallback';
 import Link from 'next/link';
 import { useFormStatus } from 'react-dom';
 import { useCart } from '../cart/cart-context';
+import { useState, useEffect } from 'react';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -23,6 +24,38 @@ type MerchandiseSearchParams = {
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { cart, updateCartItem } = useCart();
+  const [isTaiwan, setIsTaiwan] = useState(false);
+  const [isNoticeExpanded, setIsNoticeExpanded] = useState(false);
+
+  // Prevent body scroll when drawer is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  // Check if user is in Taiwan
+  useEffect(() => {
+    const checkCountry = async () => {
+      try {
+        const response = await fetch('/api/country-fans');
+        if (response.ok) {
+          const data = await response.json();
+          setIsTaiwan(data.country === 'TW');
+        }
+      } catch (error) {
+        console.error('Error checking country:', error);
+      }
+    };
+
+    checkCountry();
+  }, []);
 
   return (
     <>
@@ -200,6 +233,49 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   />
                 </div>
               </div>
+
+              {/* Taiwan Store-to-Store Notice */}
+              {isTaiwan && (
+                <div className="mb-2 border border-gray-300 bg-white sm:mb-3">
+                  {/* Header - Clickable */}
+                  <button
+                    type="button"
+                    onClick={() => setIsNoticeExpanded(!isNoticeExpanded)}
+                    className="flex w-full items-center justify-between px-2 py-1.5 text-left transition-colors hover:bg-gray-50"
+                  >
+                    <span className="text-[11px] font-bold text-gray-900 sm:text-xs">
+                      台灣本地店到店說明 / Taiwan Store-to-Store Pickup
+                    </span>
+                    <svg
+                      className={`h-3.5 w-3.5 flex-shrink-0 text-gray-600 transition-transform ${
+                        isNoticeExpanded ? 'rotate-180' : ''
+                      }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                    </svg>
+                  </button>
+
+                  {/* Content - Collapsible */}
+                  <div
+                    className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                      isNoticeExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    <div className="border-t border-gray-300 px-2 py-1.5 text-[11px] leading-snug text-gray-700 sm:text-xs">
+                      <p className="mb-1">
+                        欲選擇店到店寄送(只限台灣本地)，請於結帳頁面輸入門市地址後，下方將會顯示推薦門市
+                      </p>
+                      <p className="text-gray-600">
+                        If you choose store-to-store pickup(only in Taiwan), please enter the store address on the checkout page. Recommended nearby stores will be shown below.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <form action={redirectToCheckout}>
                 <CheckoutButton />
