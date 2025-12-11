@@ -28,11 +28,11 @@ export function CategoryFilter({
     <>
       {/* Mobile: Dropdown */}
       <div className="relative inline-block md:hidden">
-        <div className="flex items-center gap-1.5 border border-gray-300 bg-[#f7f7f7] px-2 py-0.5 sm:gap-2 sm:px-3 sm:py-1">
-          <span className="text-[10px] text-gray-600 sm:text-xs">Category:</span>
+        <div className="flex items-center gap-1.5 border border-gray-300 bg-[#f7f7f7] px-2 py-[3px] leading-none sm:gap-2 sm:px-3 sm:py-1">
+          <span className="text-[10px] leading-none text-gray-600 sm:text-xs">Category:</span>
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="text-[10px] font-semibold text-[#3b5998] hover:underline sm:text-xs"
+            className="text-[10px] font-semibold leading-none text-[#3b5998] hover:underline sm:text-xs"
           >
             {activeCategoryLabel}
           </button>
@@ -68,7 +68,7 @@ export function CategoryFilter({
             key={category.id}
             onClick={() => onCategoryChange(category.id)}
             className={clsx(
-              'border border-gray-300 px-2 py-0.5 text-[10px] font-medium transition-all sm:px-3 sm:py-1 sm:text-xs',
+              'border border-gray-300 px-2 py-[3px] text-[10px] font-semibold leading-none transition-all sm:px-3 sm:py-1 sm:text-xs',
               activeCategory === category.id
                 ? 'bg-[#3b5998] text-white shadow-md'
                 : 'bg-[#f7f7f7] text-gray-800 hover:bg-gray-200'

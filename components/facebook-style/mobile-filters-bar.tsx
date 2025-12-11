@@ -39,7 +39,7 @@ export function MobileFiltersBar({
               key={category.id}
               onClick={() => onCategoryChange(category.id)}
               className={clsx(
-                'shrink-0 border px-2 py-1 text-[10px] font-medium transition-all',
+                'flex h-[26px] shrink-0 items-center border px-2 text-[10px] font-medium transition-all',
                 activeCategory === category.id
                   ? 'border-white bg-white text-[#3b5998]'
                   : 'border-white/40 bg-transparent text-white hover:bg-white/10'
@@ -53,11 +53,11 @@ export function MobileFiltersBar({
         {/* Right: Currency Toggle and Sort Filter */}
         <div className="flex shrink-0 items-center gap-1">
           {/* Currency Toggle */}
-          <div className="flex items-center gap-0.5 border border-white/40 bg-transparent">
+          <div className="flex h-[26px] items-center gap-0.5 border border-white/40 bg-transparent">
             <button
               onClick={() => setCurrency('TWD')}
               className={clsx(
-                'px-1.5 py-1 text-[9px] font-semibold transition-all',
+                'h-full px-1.5 text-[9px] font-semibold transition-all',
                 currency === 'TWD'
                   ? 'bg-white text-[#3b5998]'
                   : 'text-white hover:bg-white/10'
@@ -68,7 +68,7 @@ export function MobileFiltersBar({
             <button
               onClick={() => setCurrency('USD')}
               className={clsx(
-                'px-1.5 py-1 text-[9px] font-semibold transition-all',
+                'h-full px-1.5 text-[9px] font-semibold transition-all',
                 currency === 'USD'
                   ? 'bg-white text-[#3b5998]'
                   : 'text-white hover:bg-white/10'
@@ -82,7 +82,7 @@ export function MobileFiltersBar({
           <div className="relative">
             <button
               onClick={() => setIsSortOpen(!isSortOpen)}
-              className="flex items-center gap-1 border border-white/40 bg-transparent px-2 py-1 text-[10px] font-medium text-white transition-all hover:bg-white/10"
+              className="flex h-[26px] items-center gap-1 border border-white/40 bg-transparent px-2 text-[10px] font-medium text-white transition-all hover:bg-white/10"
             >
               <span>Sort</span>
               <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">

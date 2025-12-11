@@ -15,11 +15,11 @@ export function ProductFilter({ onSortChange, currentSort }: ProductFilterProps)
 
   return (
     <div className="relative inline-block">
-      <div className="flex items-center gap-1.5 border border-gray-300 bg-[#f7f7f7] px-2 py-0.5 sm:gap-2 sm:px-3 sm:py-1">
-        <span className="text-[10px] text-gray-600 sm:text-xs">Sort by:</span>
+      <div className="flex items-center gap-1.5 border border-gray-300 bg-[#f7f7f7] px-2 py-[3px] leading-none sm:gap-2 sm:px-3 sm:py-1">
+        <span className="text-[10px] leading-none text-gray-600 sm:text-xs">Sort by:</span>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="text-[10px] font-semibold text-[#3b5998] hover:underline sm:text-xs"
+          className="text-[10px] font-semibold leading-none text-[#3b5998] hover:underline sm:text-xs"
         >
           {currentSort.title}
         </button>

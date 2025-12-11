@@ -98,7 +98,7 @@ export function CollectionProductsGrid({
           <div className="flex flex-wrap items-center justify-between gap-2">
             {/* Category Filter */}
             {categories && activeCategory !== undefined && onCategoryChange && (
-              <div className="flex-shrink min-w-0">
+              <div className="flex min-w-0 flex-shrink items-center">
                 <CategoryFilter
                   categories={categories}
                   activeCategory={activeCategory}
