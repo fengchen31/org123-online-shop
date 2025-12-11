@@ -145,10 +145,12 @@ export default async function HomePage() {
   });
 
   return (
-    <HomePageClient
-      articles={articles}
-      collections={collections}
-      collectionProductsComponents={collectionProductsComponents}
-    />
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <HomePageClient
+        articles={articles}
+        collections={collections}
+        collectionProductsComponents={collectionProductsComponents}
+      />
+    </Suspense>
   );
 }

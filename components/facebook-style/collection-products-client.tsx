@@ -31,6 +31,7 @@ export function CollectionProductsClient({
   collectionDescription
 }: CollectionProductsClientProps) {
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [allProducts, setAllProducts] = useState<Product[]>(initialProducts); // 保存所有商品用於生成 categories
   const [pageInfo, setPageInfo] = useState<PageInfo>(initialPageInfo);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -39,11 +40,11 @@ export function CollectionProductsClient({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // 從商品中動態生成 categories
+  // 從所有商品中動態生成 categories (不受過濾影響)
   const categories = useMemo(() => {
     const allTags = new Set<string>();
 
-    products.forEach((product) => {
+    allProducts.forEach((product) => {
       if (product.tags) {
         product.tags.forEach((tag) => {
           if (tag && tag.trim() !== '' && tag !== HIDDEN_PRODUCT_TAG) {
@@ -62,7 +63,7 @@ export function CollectionProductsClient({
       }));
 
     return [{ id: 'all', label: 'All', icon: '' }, ...tagCategories];
-  }, [products]);
+  }, [allProducts]);
 
   const handleSortChange = async (sortOption: SortFilterItem) => {
     // 開始過渡動畫
@@ -81,19 +82,9 @@ export function CollectionProductsClient({
   };
 
   const handleCategoryChange = async (category: CategoryType) => {
-    // 開始過渡動畫
-    setIsTransitioning(true);
-
-    // 短暫延遲讓淡出動畫完成
-    await new Promise(resolve => setTimeout(resolve, 150));
-
+    // 只需要更新 category 狀態，filteredProducts 會自動重新計算
+    // 不需要重新獲取數據，避免閃爍
     setActiveCategory(category);
-    await fetchProducts(currentSort, category);
-
-    // 淡入動畫
-    setTimeout(() => {
-      setIsTransitioning(false);
-    }, 50);
   };
 
   const fetchProducts = async (sortOption: SortFilterItem, category: CategoryType, cursor?: string) => {
@@ -113,9 +104,10 @@ export function CollectionProductsClient({
         first: '50'
       });
 
-      if (category !== 'all') {
-        params.append('category', category);
-      }
+      // 不傳 category 參數，始終獲取所有商品
+      // if (category !== 'all') {
+      //   params.append('category', category);
+      // }
 
       if (cursor) {
         params.append('after', cursor);
@@ -126,9 +118,12 @@ export function CollectionProductsClient({
 
       if (loadingMore) {
         // Append new products to existing ones
-        setProducts(prev => [...prev, ...data.products]);
+        const newAllProducts = [...allProducts, ...data.products];
+        setAllProducts(newAllProducts);
+        setProducts(newAllProducts);
       } else {
-        // Replace products
+        // Replace products - 保存所有商品
+        setAllProducts(data.products);
         setProducts(data.products);
       }
 
