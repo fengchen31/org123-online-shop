@@ -176,7 +176,7 @@ export function MobileBottomBar({
 
           {/* Collections List - Auto height with max height */}
           <div className="max-h-[calc(70vh-60px)] overflow-y-auto">
-            {collections.map((collection) => (
+            {collections.filter((c) => c.handle !== 'vintage').map((collection) => (
               <button
                 key={collection.handle}
                 onClick={() => handleTabChangeAndClose(collection.handle)}

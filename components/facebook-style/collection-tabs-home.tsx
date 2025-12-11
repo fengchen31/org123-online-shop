@@ -610,7 +610,7 @@ export function CollectionTabsHome({
 
             {/* Tabs - positioned at the bottom, aligned with bottom of gray area */}
             <div className="relative z-30 flex flex-nowrap gap-1 overflow-x-auto">
-              {collections.map((collection) => {
+              {collections.filter((c) => c.handle !== 'vintage').map((collection) => {
                 const isSale = collection.handle.toLowerCase() === 'sale';
                 return (
                   <button
