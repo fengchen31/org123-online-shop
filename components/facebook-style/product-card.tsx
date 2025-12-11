@@ -104,6 +104,14 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
           enableBlurEffect={true}
         />
 
+        {/* Sale Badge */}
+        {product.compareAtPriceRange &&
+          parseFloat(product.compareAtPriceRange.maxVariantPrice.amount) > parseFloat(product.priceRange.maxVariantPrice.amount) && (
+          <div className="absolute left-3 top-3 bg-white px-2 py-1 text-xs font-bold text-red-600 sm:text-sm">
+            Sale
+          </div>
+        )}
+
         {/* Sold Out Fog Effect */}
         {!product.availableForSale && (
           <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px]"></div>
@@ -111,7 +119,7 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
       </div>
 
       {/* Product Info */}
-      <div className="grid h-[110px] grid-rows-[auto_minmax(2.5rem,auto)_1fr_auto] gap-1 p-3 sm:h-[120px] sm:p-4">
+      <div className="grid min-h-[110px] grid-rows-[auto_minmax(2.5rem,auto)_1fr_auto] gap-1 p-3 sm:min-h-[120px] sm:p-4">
         {/* Collection Name (Tab Name) - Larger */}
         <div className="text-sm font-bold tracking-wide text-gray-900 sm:text-base">
           {displayCollectionName}
@@ -127,16 +135,55 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
 
         {/* Price or Sold Out */}
         {product.availableForSale ? (
-          <p className="text-xs font-bold text-gray-900 sm:text-sm">
-            {(() => {
-              const originalAmount = product.priceRange.maxVariantPrice.amount;
-              const originalCurrency = product.priceRange.maxVariantPrice.currencyCode;
-              const converted = convertPrice(originalAmount, originalCurrency);
-              return `${converted.currency === 'TWD' ? 'NT$' : '$'}${Math.floor(parseFloat(converted.amount)).toLocaleString()} ${converted.currency}`;
-            })()}
-          </p>
+          (() => {
+            const currentAmount = product.priceRange.maxVariantPrice.amount;
+            const currentCurrency = product.priceRange.maxVariantPrice.currencyCode;
+            const compareAtAmount = product.compareAtPriceRange?.maxVariantPrice.amount;
+            const compareAtCurrency = product.compareAtPriceRange?.maxVariantPrice.currencyCode;
+
+            const hasDiscount = compareAtAmount && parseFloat(compareAtAmount) > parseFloat(currentAmount);
+
+            if (hasDiscount) {
+              // Calculate discount percentage
+              const discount = Math.round((1 - parseFloat(currentAmount) / parseFloat(compareAtAmount)) * 100);
+
+              // Convert prices
+              const currentConverted = convertPrice(currentAmount, currentCurrency);
+              const compareAtConverted = convertPrice(compareAtAmount, compareAtCurrency || currentCurrency);
+
+              const currencySymbol = currentConverted.currency === 'TWD' ? 'NT$' : '$';
+
+              return (
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-xs text-gray-500 line-through sm:text-sm">
+                    {currencySymbol}{Math.floor(parseFloat(compareAtConverted.amount)).toLocaleString()} {compareAtConverted.currency}
+                  </p>
+                  <div className="flex items-baseline gap-1.5">
+                    <p className="text-xs font-bold text-red-600 sm:text-sm">
+                      {currencySymbol}{Math.floor(parseFloat(currentConverted.amount)).toLocaleString()} {currentConverted.currency}
+                    </p>
+                    <span className="text-xs font-bold text-red-600">({discount}%)</span>
+                  </div>
+                </div>
+              );
+            } else {
+              // No discount - show regular price with consistent layout
+              const converted = convertPrice(currentAmount, currentCurrency);
+              return (
+                <div className="flex flex-col gap-0.5">
+                  <div className="h-[1.25rem] sm:h-[1.5rem]"></div>
+                  <p className="text-xs font-bold text-gray-900 sm:text-sm">
+                    {converted.currency === 'TWD' ? 'NT$' : '$'}{Math.floor(parseFloat(converted.amount)).toLocaleString()} {converted.currency}
+                  </p>
+                </div>
+              );
+            }
+          })()
         ) : (
-          <p className="text-xs font-bold text-red-600 sm:text-sm">SOLD OUT</p>
+          <div className="flex flex-col gap-0.5">
+            <div className="h-[1.25rem] sm:h-[1.5rem]"></div>
+            <p className="text-xs font-bold text-red-600 sm:text-sm">SOLD OUT</p>
+          </div>
         )}
       </div>
     </div>
