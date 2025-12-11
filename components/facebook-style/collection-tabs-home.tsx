@@ -506,6 +506,11 @@ export function CollectionTabsHome({
     setActiveTab(handle);
     onTabChange?.(handle);
 
+    // 清空搜尋欄位
+    setSearchQuery('');
+    setSearchResults([]);
+    setIsSearching(false);
+
     // 使用push來支持瀏覽器歷史記錄
     // 清除所有參數，只保留 collection
     const newParams = new URLSearchParams();
