@@ -277,10 +277,6 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
     // Build URL with post parameter for OG tags, and anchor for scrolling
     const shareUrl = `${window.location.origin}?post=${encodeURIComponent(post.id)}#post-${post.id}`;
 
-    console.log('Share URL:', shareUrl);
-    console.log('Post ID:', post.id);
-    console.log('Post linkTo:', post.linkTo);
-
     if (navigator.share) {
       navigator.share({
         title: post.content || post.author,

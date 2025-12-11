@@ -183,11 +183,6 @@ export async function shopifyAdminFetch<T>({
       throw new Error('SHOPIFY_ADMIN_ACCESS_TOKEN is not configured. Please add it to your .env file.');
     }
 
-    console.log('=== Admin API call ===');
-    console.log('Endpoint:', adminEndpoint);
-    console.log('Query:', query);
-    console.log('Variables:', variables);
-
     const result = await fetch(adminEndpoint, {
       method: 'POST',
       headers: {
@@ -201,7 +196,6 @@ export async function shopifyAdminFetch<T>({
     });
 
     const body = await result.json();
-    console.log('Admin API response:', JSON.stringify(body, null, 2));
 
     if (body.errors) {
       console.error('Admin API errors:', body.errors);
@@ -443,7 +437,6 @@ export async function getCollectionProducts({
   });
 
   if (!res.body.data.collection) {
-    console.log(`No collection found for \`${collection}\``);
     return { products: [], pageInfo: { hasNextPage: false, endCursor: null } };
   }
 
@@ -825,22 +818,17 @@ export async function updateCustomerWishlist(
 // 獲取客戶購物車
 export async function getCustomerCart(accessToken: string): Promise<Array<{merchandiseId: string, quantity: number}>> {
   try {
-    console.log('=== getCustomerCart called ===');
     const res = await shopifyCustomerFetch<any>({
       accessToken,
       query: getCustomerCartQuery
     });
 
-    console.log('Customer cart GraphQL response:', JSON.stringify(res.body, null, 2));
-
     const cartData = res.body.data.customer.metafield;
     if (!cartData || !cartData.value) {
-      console.log('No cart metafield found for customer');
       return [];
     }
 
     const parsedCart = JSON.parse(cartData.value);
-    console.log('Parsed cart from metafield:', parsedCart);
     return parsedCart;
   } catch (e) {
     console.error('Error fetching customer cart:', e);
@@ -854,9 +842,6 @@ export async function updateCustomerCart(
   cartItems: Array<{merchandiseId: string, quantity: number}>
 ): Promise<boolean> {
   try {
-    console.log('=== updateCustomerCart called (Storefront API - deprecated) ===');
-    console.log('Cart items to save:', cartItems);
-
     const res = await shopifyCustomerFetch<any>({
       accessToken,
       query: updateCustomerCartMutation,
@@ -865,13 +850,9 @@ export async function updateCustomerCart(
       }
     });
 
-    console.log('Update cart GraphQL response:', JSON.stringify(res.body, null, 2));
-
     const hasErrors = res.body.data.customerUpdate.customerUserErrors.length > 0;
     if (hasErrors) {
       console.error('Customer cart update errors:', res.body.data.customerUpdate.customerUserErrors);
-    } else {
-      console.log('✅ Customer cart updated successfully');
     }
 
     return !hasErrors;
@@ -887,10 +868,6 @@ export async function adminUpdateCustomerWishlist(
   wishlistItems: string[]
 ): Promise<boolean> {
   try {
-    console.log('=== adminUpdateCustomerWishlist called ===');
-    console.log('Customer ID:', customerId);
-    console.log('Wishlist items to save:', wishlistItems);
-
     const response = await shopifyAdminFetch<any>({
       query: adminUpdateCustomerWishlistMutation,
       variables: {
@@ -904,7 +881,6 @@ export async function adminUpdateCustomerWishlist(
       return false;
     }
 
-    console.log('✅ Wishlist synced to customer metafield via Admin API');
     return true;
   } catch (e) {
     console.error('Error updating customer wishlist via Admin API:', e);
@@ -918,10 +894,6 @@ export async function adminUpdateCustomerCart(
   cartItems: Array<{merchandiseId: string, quantity: number}>
 ): Promise<boolean> {
   try {
-    console.log('=== adminUpdateCustomerCart called ===');
-    console.log('Customer ID:', customerId);
-    console.log('Cart items to save:', cartItems);
-
     const response = await shopifyAdminFetch<any>({
       query: adminUpdateCustomerCartMutation,
       variables: {
@@ -935,7 +907,6 @@ export async function adminUpdateCustomerCart(
       return false;
     }
 
-    console.log('✅ Cart synced to customer metafield via Admin API');
     return true;
   } catch (e) {
     console.error('Error updating customer cart via Admin API:', e);
@@ -946,9 +917,6 @@ export async function adminUpdateCustomerCart(
 // 使用 Admin API 獲取客戶購物車
 export async function adminGetCustomerCart(customerId: string): Promise<Array<{merchandiseId: string, quantity: number}>> {
   try {
-    console.log('=== adminGetCustomerCart called ===');
-    console.log('Customer ID:', customerId);
-
     const response = await shopifyAdminFetch<any>({
       query: adminGetCustomerCartQuery,
       variables: {
@@ -956,16 +924,12 @@ export async function adminGetCustomerCart(customerId: string): Promise<Array<{m
       }
     });
 
-    console.log('Admin API get cart response:', JSON.stringify(response.body, null, 2));
-
     const cartData = response.body.data?.customer?.metafield;
     if (!cartData || !cartData.value) {
-      console.log('No cart metafield found for customer via Admin API');
       return [];
     }
 
     const parsedCart = JSON.parse(cartData.value);
-    console.log('✅ Parsed cart from metafield via Admin API:', parsedCart);
     return parsedCart;
   } catch (e) {
     console.error('Error fetching customer cart via Admin API:', e);
@@ -976,9 +940,6 @@ export async function adminGetCustomerCart(customerId: string): Promise<Array<{m
 // 使用 Admin API 獲取客戶 Wishlist
 export async function adminGetCustomerWishlist(customerId: string): Promise<string[]> {
   try {
-    console.log('=== adminGetCustomerWishlist called ===');
-    console.log('Customer ID:', customerId);
-
     const response = await shopifyAdminFetch<any>({
       query: adminGetCustomerWishlistQuery,
       variables: {
@@ -986,16 +947,12 @@ export async function adminGetCustomerWishlist(customerId: string): Promise<stri
       }
     });
 
-    console.log('Admin API get wishlist response:', JSON.stringify(response.body, null, 2));
-
     const wishlistData = response.body.data?.customer?.metafield;
     if (!wishlistData || !wishlistData.value) {
-      console.log('No wishlist metafield found for customer via Admin API');
       return [];
     }
 
     const parsedWishlist = JSON.parse(wishlistData.value);
-    console.log('✅ Parsed wishlist from metafield via Admin API:', parsedWishlist);
     return parsedWishlist;
   } catch (e) {
     console.error('Error fetching customer wishlist via Admin API:', e);
@@ -1223,7 +1180,6 @@ export async function getDiscountBanner(): Promise<DiscountBanner | null> {
     const metaobject = res.body.data.metaobject;
 
     if (!metaobject) {
-      console.log('No metaobject found for discount banner');
       return null;
     }
 
@@ -1262,7 +1218,6 @@ export async function getMusicEmbedUrl(): Promise<string | null> {
     const metafield = res.body.data.shop.metafield;
 
     if (!metafield || !metafield.value) {
-      console.log('No music embed URL found in shop metafield');
       return null;
     }
 

@@ -75,11 +75,6 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
       const res = await fetch('/api/customer');
       if (res.ok) {
         const data = await res.json();
-        console.log('=== Fetched Customer Data ===');
-        console.log('Has avatar:', !!data.customer?.avatar);
-        if (data.customer?.avatar) {
-          console.log('Avatar preview:', data.customer.avatar.substring(0, 50) + '...');
-        }
         setCustomer(data.customer);
         setViewMode('account');
       } else {
@@ -128,9 +123,7 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
       setViewMode('login');
 
       // Dispatch event to notify all components that user logged out
-      console.log('📢 Dispatching authStatusChange event (logout)');
       window.dispatchEvent(new CustomEvent('authStatusChange', { detail: { isLoggedIn: false } }));
-      console.log('✅ authStatusChange event dispatched');
 
       // Don't call router.refresh() here - let collection-tabs-home handle it after cart clearing
       // router.refresh();
@@ -158,21 +151,16 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
       }
 
       // Login successful - clear local cart and wishlist, then restore from account
-      console.log('🔐 Login successful, clearing local data and restoring from account...');
 
       // Clear local cart and wishlist
       await clearLocalCartAndSync();
       await clearLocalWishlist();
-      console.log('✅ Local cart and wishlist cleared');
 
       // Restore cart and wishlist from account
       const [cartResult, wishlistResult] = await Promise.all([
         restoreCartFromCustomer(),
         restoreWishlistFromCustomer()
       ]);
-
-      console.log('Cart restore result:', cartResult);
-      console.log('Wishlist restore result:', wishlistResult);
 
       // Update UI
       await fetchCustomer();
@@ -189,9 +177,7 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
       }
 
       // Dispatch event to notify all components that user logged in
-      console.log('📢 Dispatching authStatusChange event (login)');
       window.dispatchEvent(new CustomEvent('authStatusChange', { detail: { isLoggedIn: true } }));
-      console.log('✅ authStatusChange event dispatched');
 
       // Refresh page to show synced cart
       router.refresh();
@@ -239,12 +225,10 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
       }
 
       // Registration successful - clear local cart and wishlist (new account should start fresh)
-      console.log('📝 Registration successful, clearing local data...');
 
       // Clear local cart and wishlist
       await clearLocalCartAndSync();
       await clearLocalWishlist();
-      console.log('✅ Local cart and wishlist cleared for new account');
 
       // Update UI
       await fetchCustomer();
@@ -257,10 +241,8 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
       });
 
       // Dispatch event to notify all components that user registered and logged in
-      console.log('📢 Dispatching authStatusChange event (register)');
       window.dispatchEvent(new CustomEvent('authStatusChange', { detail: { isLoggedIn: true } }));
       window.dispatchEvent(new CustomEvent('wishlistUpdate', { detail: { count: 0 } }));
-      console.log('✅ authStatusChange event dispatched');
 
       // Refresh page
       router.refresh();

@@ -15,12 +15,8 @@ function parseNewsPosts(htmlBody: string): NewsPost[] {
   const doc = parser.parseFromString(htmlBody, 'text/html');
   const posts: NewsPost[] = [];
 
-  console.log('=== Parsing News Posts ===');
-  console.log('HTML Body:', htmlBody);
-
   // Find all article elements or div with class 'post'
   const articles = doc.querySelectorAll('article, .post, [data-post]');
-  console.log('Found articles:', articles.length);
 
   articles.forEach((article, index) => {
     // Extract post data from article element
@@ -39,8 +35,6 @@ function parseNewsPosts(htmlBody: string): NewsPost[] {
     const img = article.querySelector('img');
     const imageUrl = img?.getAttribute('src') || '';
 
-    console.log(`Article ${index}:`, { textContent, imageUrl, linkTo });
-
     if (textContent || imageUrl) {
       // Use collection handle as ID if linkTo exists
       const postId = linkTo ? `collection-${linkTo}` : `post-${index}`;
@@ -58,13 +52,9 @@ function parseNewsPosts(htmlBody: string): NewsPost[] {
 
   // If no articles found, try to parse as simple image + text pairs
   if (posts.length === 0) {
-    console.log('No articles found, trying fallback parsing...');
-
     // Try to find all images and group them with nearby text
     const body = doc.body;
     const allElements = Array.from(body.children);
-
-    console.log('Body children:', allElements.length);
 
     // Strategy: Look for patterns of text followed by image, or image with surrounding text
     let i = 0;
@@ -100,8 +90,6 @@ function parseNewsPosts(htmlBody: string): NewsPost[] {
           content = img.getAttribute('alt') || '';
         }
 
-        console.log(`Image ${posts.length}:`, { content, imageUrl, linkTo });
-
         if (imageUrl) {
           // Use collection handle as ID if linkTo exists
           const postId = linkTo ? `collection-${linkTo}` : `post-${posts.length}`;
@@ -120,9 +108,6 @@ function parseNewsPosts(htmlBody: string): NewsPost[] {
       i++;
     }
   }
-
-  console.log('Total posts parsed:', posts.length);
-  console.log('Posts:', posts);
 
   return posts;
 }

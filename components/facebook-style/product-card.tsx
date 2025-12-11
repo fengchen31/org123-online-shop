@@ -21,14 +21,6 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
 
   // Determine which collection name to display
   const displayCollectionName = (() => {
-    // Debug logging
-    if (collectionName?.toLowerCase() === 'view all' || collectionName?.toLowerCase() === 'view-all') {
-      console.log('=== ProductCard Debug ===');
-      console.log('Product title:', product.title);
-      console.log('collectionName prop:', collectionName);
-      console.log('product.collections:', product.collections);
-    }
-
     // If collectionName is "View All", "Sale", or similar, use product's first non-hidden collection
     if (
       !collectionName ||
@@ -45,11 +37,6 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
           col.handle !== 'all' &&
           col.handle !== 'sale'
       );
-
-      if (collectionName?.toLowerCase() === 'view all' || collectionName?.toLowerCase() === 'view-all') {
-        console.log('validCollection found:', validCollection);
-        console.log('Returning:', validCollection?.title || collectionName || 'Product');
-      }
 
       return validCollection?.title || collectionName || 'Product';
     }

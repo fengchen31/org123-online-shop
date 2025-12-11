@@ -39,16 +39,11 @@ export function DeleteItemButton({
   return (
     <form
       action={async () => {
-        console.log('=== Delete button clicked ===');
-        console.log('Merchandise ID:', merchandiseId);
-
         // Optimistic update first
         optimisticUpdate(merchandiseId, 'delete');
 
         // Then call server action
-        console.log('Calling removeItem server action...');
         await formAction(merchandiseId);
-        console.log('removeItem completed');
       }}
     >
       <RemoveButton />

@@ -319,7 +319,6 @@ export function CollectionTabsHome({
     // Listen for auth status changes (login/logout)
     const handleAuthStatusChange = async (event: Event) => {
       const { isLoggedIn: newLoginStatus } = (event as CustomEvent).detail;
-      console.log('=== Auth status changed ===', { newLoginStatus });
 
       if (newLoginStatus) {
         // User logged in - clear local data first, then restore from customer metafield
@@ -413,8 +412,6 @@ export function CollectionTabsHome({
           })
         );
 
-        console.log('Refreshing page data to clear account data...');
-
         // Refresh page data without full reload
         router.refresh();
       }
@@ -423,7 +420,6 @@ export function CollectionTabsHome({
     // Handle avatar update event
     const handleAvatarUpdate = async (event: Event) => {
       const { avatar } = (event as CustomEvent).detail;
-      console.log('=== Avatar updated ===');
 
       try {
         // Update avatar in sidebar
@@ -449,7 +445,6 @@ export function CollectionTabsHome({
 
             // Refresh fan list
             await fetchRecentFans(data.customer.id);
-            console.log('✅ Recent fans updated after avatar change');
           }
         }
       } catch (error) {
@@ -460,16 +455,12 @@ export function CollectionTabsHome({
     // Handle page visibility change for cross-device sync
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible') {
-        console.log('=== Page became visible, checking for cross-device updates ===');
-
         try {
           // Check if user is logged in by calling /api/customer
           const customerResponse = await fetch('/api/customer');
           const isLoggedIn = customerResponse.ok;
 
           if (isLoggedIn) {
-            console.log('User is logged in, syncing cart and wishlist from server...');
-
             // Sync cart and wishlist from server using API endpoints
             const [cartResponse, wishlistResult] = await Promise.all([
               fetch('/api/customer/sync-cart'),
@@ -477,9 +468,6 @@ export function CollectionTabsHome({
             ]);
 
             const cartResult = cartResponse.ok ? await cartResponse.json() : { success: false };
-
-            console.log('Cart sync result:', cartResult);
-            console.log('Wishlist sync result:', wishlistResult);
 
             // Dispatch events to update UI
             if (wishlistResult.success) {
@@ -492,7 +480,6 @@ export function CollectionTabsHome({
 
             // Refresh page data to reflect synced cart and wishlist
             if (cartResponse.ok || wishlistResult.success) {
-              console.log('✅ Cross-device sync completed, refreshing UI...');
               router.refresh();
             }
           }

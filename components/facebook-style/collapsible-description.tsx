@@ -30,9 +30,6 @@ function cleanContentLines(content: string): string {
 function parseDescriptionHtml(html: string): DescriptionSection[] {
   const sections: DescriptionSection[] = [];
 
-  console.log('=== PARSING HTML ===');
-  console.log('Original HTML:', html);
-
   // Parse HTML
   if (typeof window === 'undefined') {
     // Server-side fallback - simple regex approach
@@ -179,7 +176,6 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
           content: content.trim()
         });
       }
-      console.log(`Section "${title}" (nested content):`, content);
       return; // Skip to next bold element
     }
 
@@ -269,20 +265,12 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
     if (content.trim() || htmlContent) {
       // Clean up content: remove leading underscores
       const cleanedContent = content.trim() ? cleanContentLines(content) : content.trim();
-      console.log(`Section "${title}" (normal):`, cleanedContent);
       sections.push({
         title: title,
         content: cleanedContent,
         htmlContent: hasTable ? htmlContent : undefined
       });
     }
-  });
-
-  console.log('=== PARSED SECTIONS ===');
-  sections.forEach(s => {
-    console.log(`Title: "${s.title}"`);
-    console.log(`Content: "${s.content}"`);
-    if (s.htmlContent) console.log(`Has HTML content`);
   });
 
   // If no sections found, create a default one
@@ -505,9 +493,6 @@ function isSizeChartSection(section: DescriptionSection): boolean {
 
 // Merge all non-size sections into Features and keep Size Chart separate
 function mergeIntoFeaturesAndSizeChart(sections: DescriptionSection[]): DescriptionSection[] {
-  console.log('=== BEFORE MERGE ===');
-  sections.forEach(s => console.log(`Title: "${s.title}", Content length: ${s.content.length}`));
-
   const sizeChartSections: DescriptionSection[] = [];
   const featureSections: DescriptionSection[] = [];
 
@@ -546,8 +531,6 @@ function mergeIntoFeaturesAndSizeChart(sections: DescriptionSection[]): Descript
       content: featuresContent,
       htmlContent: featuresHtml
     });
-    console.log('=== FEATURES HTML ===');
-    console.log(featuresHtml);
   }
 
   // Create a single Size Chart section
