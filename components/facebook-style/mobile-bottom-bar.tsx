@@ -204,7 +204,7 @@ export function MobileBottomBar({
               value={localSearchQuery}
               onChange={handleSearchChange}
               placeholder="Search..."
-              className="w-full rounded border-none bg-white px-3 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none"
+              className="w-full rounded border-none bg-white px-3 py-2 text-base text-gray-700 placeholder-gray-400 focus:outline-none"
             />
           </form>
 
