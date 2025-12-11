@@ -599,10 +599,10 @@ export function CollectionTabsHome({
       {/* White Content Section */}
       <div className="relative -mt-0 bg-white pt-0">
         {/* Content below tabs */}
-        <div className="mx-auto px-2 pb-6 sm:px-4">
-          <div className="flex gap-3 sm:gap-4 lg:gap-6">
+        <div className="mx-auto px-2 pb-6 sm:px-4 md:px-4">
+          <div className="flex gap-3 sm:gap-4 md:gap-4">
             {/* Left Column - Sidebar with Avatar */}
-            <div className="hidden shrink-0 pt-3 md:block md:w-[calc(100%/7)] sm:pt-4 md:pt-6 lg:pt-5">
+            <div className="hidden shrink-0 pt-3 md:block md:w-[calc(100%/7)] sm:pt-4 md:pt-4">
               {/* Avatar - positioned with negative margin to overlap gray area, with equal spacing below */}
               <div className="relative -mt-[66px] mb-3 w-full sm:-mt-[78px] sm:mb-4 md:-mt-[88px] md:mb-6 lg:-mt-[94px] lg:mb-5">
                 <div className="relative z-20 overflow-hidden border border-gray-300 shadow-lg">
@@ -639,7 +639,7 @@ export function CollectionTabsHome({
               </div>
 
               {/* Discount Marquee */}
-              <div className="mb-4 overflow-hidden border border-gray-300 bg-white p-2">
+              <div className="mb-4 overflow-hidden border border-gray-300 bg-white p-3">
                 <div className="animate-marquee">
                   <span className="marquee-content text-xs text-gray-700">
                     {discountMessage}
@@ -684,7 +684,7 @@ export function CollectionTabsHome({
                   <div className="border-b border-gray-300 bg-[#f7f7f7] px-3 py-2">
                     <h3 className="text-xs font-bold text-gray-800">Music</h3>
                   </div>
-                  <div className="p-2">
+                  <div className="p-3">
                     <iframe
                       width="100%"
                       height="150"
@@ -737,7 +737,7 @@ export function CollectionTabsHome({
                 <div className="border-b border-gray-300 bg-[#f7f7f7] px-3 py-2">
                   <h3 className="text-xs font-bold text-gray-800">Information</h3>
                 </div>
-                <div className="px-3 py-2">
+                <div className="p-3">
                   <div className="flex flex-wrap items-start gap-1">
                     {/* Instagram Icon - 2009 vintage camera style */}
                     <a
@@ -915,7 +915,7 @@ export function CollectionTabsHome({
             {/* Right Column - Content */}
             <div className="flex-1">
               {/* Main Content - Product Grid */}
-              <div className="mt-3 p-3 md:border md:border-gray-300 md:bg-white md:shadow-sm sm:mt-4 sm:p-4 lg:mt-6 lg:p-6">
+              <div className="mt-3 p-3 md:border md:border-gray-300 md:bg-white md:shadow-sm sm:mt-4 sm:p-4 md:mt-4 md:p-4">
                 {isSearching && searchQuery ? (
                   // Show search results
                   searchResults.length > 0 ? (
