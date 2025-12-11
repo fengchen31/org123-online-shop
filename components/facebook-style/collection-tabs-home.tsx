@@ -323,31 +323,19 @@ export function CollectionTabsHome({
 
       if (newLoginStatus) {
         // User logged in - clear local data first, then restore from customer metafield
-        console.log('User logged in, clearing local cart and wishlist...');
         try {
           // Clear local cart and wishlist first
           await clearLocalCartAndSync();
           await clearLocalWishlist();
-          console.log('✅ Local cart and wishlist cleared');
-
-          console.log('Restoring cart and wishlist from account...');
 
           // Restore cart from account
           const cartResult = await restoreCartFromCustomer();
-          console.log('Cart restore result:', cartResult);
 
           // Restore wishlist from account
           const wishlistResult = await restoreWishlistFromCustomer();
-          console.log('Wishlist restore result:', wishlistResult);
 
           if (cartResult.success || wishlistResult.success) {
-            console.log('✅ Account data restored successfully');
-            if (cartResult.success) {
-              console.log('  Cart items restored:', cartResult.itemsRestored);
-            }
             if (wishlistResult.success) {
-              console.log('  Wishlist items restored:', wishlistResult.itemsRestored);
-
               // Dispatch wishlistUpdate event to update UI components
               window.dispatchEvent(
                 new CustomEvent('wishlistUpdate', {
@@ -355,7 +343,6 @@ export function CollectionTabsHome({
                 })
               );
             }
-            console.log('Refreshing page data to show updated cart and wishlist...');
 
             // Refresh page data without full reload
             router.refresh();
@@ -366,7 +353,6 @@ export function CollectionTabsHome({
           }
 
           // Fetch customer info to update avatar and name
-          console.log('Fetching customer info to update UI...');
           try {
             const res = await fetch('/api/customer');
             if (res.ok) {
@@ -401,7 +387,6 @@ export function CollectionTabsHome({
                     console.error('Error updating recent fans on login:', error);
                   }
                 }
-                console.log('✅ Customer info updated:', { name, hasAvatar: !!data.customer.avatar });
               }
             }
           } catch (error) {
@@ -412,7 +397,6 @@ export function CollectionTabsHome({
         }
       } else {
         // User logged out - clear cart, wishlist and all account data
-        console.log('User logged out, clearing local cart and wishlist...');
         await clearLocalCartAndSync();
         await clearLocalWishlist();
 
