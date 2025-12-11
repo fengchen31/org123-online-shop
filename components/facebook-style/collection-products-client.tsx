@@ -37,7 +37,6 @@ export function CollectionProductsClient({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentSort, setCurrentSort] = useState<SortFilterItem>(defaultSort);
   const [activeCategory, setActiveCategory] = useState<CategoryType>('all');
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // 從所有商品中動態生成 categories (不受過濾影響)
@@ -66,19 +65,8 @@ export function CollectionProductsClient({
   }, [allProducts]);
 
   const handleSortChange = async (sortOption: SortFilterItem) => {
-    // 開始過渡動畫
-    setIsTransitioning(true);
-
-    // 短暫延遲讓淡出動畫完成
-    await new Promise(resolve => setTimeout(resolve, 150));
-
     setCurrentSort(sortOption);
     await fetchProducts(sortOption, activeCategory);
-
-    // 淡入動畫
-    setTimeout(() => {
-      setIsTransitioning(false);
-    }, 50);
   };
 
   const handleCategoryChange = async (category: CategoryType) => {
@@ -189,17 +177,38 @@ export function CollectionProductsClient({
         productCount={productCount}
       />
 
-      {isLoading && (
-        <div className="mb-4 flex items-center justify-center border border-blue-200 bg-blue-50 px-4 py-2 text-xs text-blue-700">
-          <LoadingDots />
-        </div>
-      )}
+      {isLoading ? (
+        <>
+          {/* Filters Skeleton */}
+          <div className="mb-3 sm:mb-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              {/* Category Filter Skeleton */}
+              <div className="flex min-w-0 flex-shrink gap-2">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-8 w-16 animate-pulse rounded bg-gray-200"></div>
+                ))}
+              </div>
 
-      <div
-        className={`transition-opacity duration-200 ease-in-out ${
-          isTransitioning ? 'opacity-0' : 'opacity-100'
-        }`}
-      >
+              {/* Currency Toggle and Sort Filter Skeleton */}
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-24 animate-pulse rounded bg-gray-200"></div>
+                <div className="h-8 w-28 animate-pulse rounded bg-gray-200"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Products Grid Skeleton */}
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="aspect-square rounded bg-gray-200"></div>
+                <div className="mt-2 h-4 rounded bg-gray-200"></div>
+                <div className="mt-2 h-3 rounded bg-gray-200"></div>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
         <CollectionProductsGrid
           products={filteredProducts}
           collectionName={collectionTitle}
@@ -208,7 +217,7 @@ export function CollectionProductsClient({
           activeCategory={activeCategory}
           onCategoryChange={handleCategoryChange}
         />
-      </div>
+      )}
 
       {/* Infinite scroll trigger */}
       <div ref={observerTarget} className="h-20 w-full">

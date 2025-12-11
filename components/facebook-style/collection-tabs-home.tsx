@@ -41,16 +41,17 @@ export function CollectionTabsHome({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // 從URL讀取當前collection，如果沒有則預設使用 news-feed
+  // 從URL讀取當前collection
   const getInitialTab = () => {
     const collectionParam = searchParams.get('collection');
     if (collectionParam && collections.some(c => c.handle === collectionParam)) {
       return collectionParam;
     }
-    return 'news-feed';
+    return ''; // 如果沒有 URL 參數，先不設定 tab
   };
 
   const [activeTab, setActiveTab] = useState<string>(getInitialTab);
+  const [isInitializing, setIsInitializing] = useState<boolean>(!searchParams.get('collection'));
   const [customerName, setCustomerName] = useState<string>('org123.xyz');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [customerAvatar, setCustomerAvatar] = useState<string>('');
@@ -73,15 +74,32 @@ export function CollectionTabsHome({
   // Newsletter subscription state
   const [isSubscribing, setIsSubscribing] = useState(false);
 
+  // 客戶端掛載後，立即根據螢幕寬度設置初始 tab（僅在沒有 URL 參數時）
+  useEffect(() => {
+    if (isInitializing) {
+      const isMobile = window.innerWidth < 768;
+      const initialTab = isMobile ? 'nul1-org' : 'news-feed';
+
+      setActiveTab(initialTab);
+
+      // 更新 URL，但不觸發頁面滾動
+      const newParams = new URLSearchParams(window.location.search);
+      newParams.set('collection', initialTab);
+      router.push(`?${newParams.toString()}`, { scroll: false });
+
+      setIsInitializing(false);
+    }
+  }, [isInitializing, router]);
+
   // 監聽URL變化並同步activeTab狀態
   useEffect(() => {
-    const collectionParam = searchParams.get('collection');
-    if (collectionParam && collections.some(c => c.handle === collectionParam)) {
-      setActiveTab(collectionParam);
-    } else {
-      setActiveTab('news-feed');
+    if (!isInitializing) {
+      const collectionParam = searchParams.get('collection');
+      if (collectionParam && collections.some(c => c.handle === collectionParam)) {
+        setActiveTab(collectionParam);
+      }
     }
-  }, [searchParams, collections]);
+  }, [searchParams, collections, isInitializing]);
 
   // Cart from context
   const { cart } = useCart();
@@ -916,7 +934,18 @@ export function CollectionTabsHome({
             <div className="flex-1">
               {/* Main Content - Product Grid */}
               <div className="mt-3 p-3 md:border md:border-gray-300 md:bg-white md:shadow-sm sm:mt-4 sm:p-4 md:mt-4 md:p-4">
-                {isSearching && searchQuery ? (
+                {isInitializing ? (
+                  // Show skeleton while determining initial tab
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                    {[...Array(8)].map((_, i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="aspect-square rounded bg-gray-200"></div>
+                        <div className="mt-2 h-4 rounded bg-gray-200"></div>
+                        <div className="mt-2 h-3 rounded bg-gray-200"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : isSearching && searchQuery ? (
                   // Show search results
                   searchResults.length > 0 ? (
                     <CollectionProductsGrid products={searchResults} />
