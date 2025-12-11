@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import Image from 'next/image';
 import type { Product } from 'lib/shopify/types';
 import { ProductProvider } from 'components/product/product-context';
 import { AddToCart } from 'components/cart/add-to-cart';
@@ -108,10 +107,11 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
                           : 'border border-gray-300 hover:border-gray-400'
                       }`}
                     >
-                      <Image
-                        src={image.url}
+                      <ImageWithFallback
+                        src={image?.url || '/images/default-fallback-image.png'}
                         alt={`${product.title} - ${index + 1}`}
                         fill
+                        sizes="100px"
                         className="object-contain"
                       />
                     </button>

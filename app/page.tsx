@@ -12,9 +12,6 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const params = await searchParams;
   const postId = params.post as string | undefined;
 
-  console.log('=== generateMetadata called ===');
-  console.log('postId:', postId);
-
   // Default metadata
   const defaultMetadata: Metadata = {
     description: 'org123.xyz - Your online shopping destination',
@@ -25,20 +22,16 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
   // If no post parameter, return default
   if (!postId) {
-    console.log('No postId, returning default metadata');
     return defaultMetadata;
   }
 
   try {
     // Check if it's a Shopify Article ID (format: gid://shopify/Article/xxx)
     if (postId.startsWith('gid://shopify/Article/')) {
-      console.log('Detected Shopify Article ID');
       const articles = await getBlogArticles('news');
       const article = articles.find((a) => a.id === postId);
 
       if (article) {
-        console.log('Article found:', article.title);
-
         // Extract first image URL from article content or use featured image
         const extractFirstImageUrl = (htmlContent: string): string | undefined => {
           try {
@@ -50,7 +43,6 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
         };
 
         const imageUrl = article.image?.url || extractFirstImageUrl(article.contentHtml);
-        console.log('Extracted image URL:', imageUrl);
 
         const metadata = {
           title: article.title,
@@ -73,20 +65,16 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
               : undefined
           }
         };
-        console.log('Generated metadata for article:', metadata);
         return metadata;
       }
     }
 
     // Try to extract collection handle from postId
     // Format: "collection-{handle}"
-    console.log('Checking if postId starts with "collection-":', postId.startsWith('collection-'));
     if (postId.startsWith('collection-')) {
       const collectionHandle = postId.replace('collection-', '');
-      console.log('Collection handle:', collectionHandle);
 
       const collection = await getCollection(collectionHandle);
-      console.log('Collection found:', !!collection);
 
       if (collection) {
         const metadata = {
@@ -98,7 +86,6 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
             description: collection.description || collection.seo?.description || 'org123.xyz'
           }
         };
-        console.log('Generated metadata for collection:', metadata);
         return metadata;
       }
     }
@@ -106,7 +93,6 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     console.error('Error generating metadata for post:', postId, error);
   }
 
-  console.log('Returning default metadata');
   return defaultMetadata;
 }
 

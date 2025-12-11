@@ -126,9 +126,10 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
                       }`}
                     >
                       <ImageWithFallback
-                        src={image.url}
+                        src={image?.url || '/images/default-fallback-image.png'}
                         alt={`${product.title} - ${index + 1}`}
                         fill
+                        sizes="100px"
                         className="object-contain"
                       />
                     </button>

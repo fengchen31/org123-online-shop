@@ -556,28 +556,16 @@ export async function getBlogArticles(
   cacheTag('articles');
   cacheLife('days');
 
-  console.log(`=== getBlogArticles called ===`);
-  console.log(`Blog handle: ${blogHandle}`);
-
   const res = await shopifyFetch<ShopifyBlogArticlesOperation>({
     query: getBlogArticlesQuery,
     variables: { blogHandle, first }
   });
 
-  console.log(`Response data:`, JSON.stringify(res.body.data, null, 2));
-
   if (!res.body.data.blog) {
-    console.log(`❌ No blog found for handle: ${blogHandle}`);
-    console.log(`Make sure you have created a blog with handle "${blogHandle}" in Shopify Admin`);
     return [];
   }
 
   const articles = removeEdgesAndNodes(res.body.data.blog.articles);
-  console.log(`✅ Found ${articles.length} articles in blog "${blogHandle}"`);
-
-  if (articles.length > 0) {
-    console.log(`Article titles:`, articles.map(a => a.title));
-  }
 
   return articles;
 }

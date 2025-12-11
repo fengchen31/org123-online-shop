@@ -275,29 +275,18 @@ export function CollectionTabsHome({
     // Initial sync on page load if user is logged in
     const performInitialSync = async () => {
       try {
-        console.log('=== performInitialSync called ===');
-
         // Check if user is logged in by calling /api/customer
-        console.log('Checking login status via /api/customer...');
         const customerResponse = await fetch('/api/customer');
         const isLoggedIn = customerResponse.ok;
-        console.log('Is logged in:', isLoggedIn);
 
         if (isLoggedIn) {
-          console.log('=== Initial page load sync for logged-in user ===');
-
           // Sync cart and wishlist from server using API endpoints
-          console.log('Calling sync APIs...');
           const [cartResponse, wishlistResult] = await Promise.all([
             fetch('/api/customer/sync-cart'),
             syncWishlistFromServer()
           ]);
 
-          console.log('Cart response status:', cartResponse.status);
           const cartResult = cartResponse.ok ? await cartResponse.json() : { success: false, error: await cartResponse.text() };
-
-          console.log('Initial cart sync result:', cartResult);
-          console.log('Initial wishlist sync result:', wishlistResult);
 
           // Dispatch events to update UI
           if (wishlistResult.success) {
@@ -310,13 +299,10 @@ export function CollectionTabsHome({
 
           // Refresh page data to reflect synced cart and wishlist
           if (cartResponse.ok || wishlistResult.success) {
-            console.log('✅ Initial sync completed, refreshing UI...');
             router.refresh();
           } else {
             console.error('❌ Initial sync failed:', { cart: cartResult, wishlist: wishlistResult });
           }
-        } else {
-          console.log('User not logged in, skipping initial sync');
         }
       } catch (error) {
         console.error('❌ Fatal error in performInitialSync:', error);
@@ -532,12 +518,10 @@ export function CollectionTabsHome({
       }
     };
 
-    console.log('🔧 Setting up event listeners in collection-tabs-home');
     window.addEventListener('wishlistUpdate', handleWishlistUpdate);
     window.addEventListener('authStatusChange', handleAuthStatusChange);
     window.addEventListener('avatarUpdate', handleAvatarUpdate);
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    console.log('✅ Event listeners registered');
 
     return () => {
       window.removeEventListener('wishlistUpdate', handleWishlistUpdate);
