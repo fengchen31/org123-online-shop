@@ -29,19 +29,21 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
       console.log('product.collections:', product.collections);
     }
 
-    // If collectionName is "View All" or similar, use product's first non-hidden collection
+    // If collectionName is "View All", "Sale", or similar, use product's first non-hidden collection
     if (
       !collectionName ||
       collectionName.toLowerCase() === 'view all' ||
       collectionName.toLowerCase() === 'view-all' ||
-      collectionName.toLowerCase() === 'all'
+      collectionName.toLowerCase() === 'all' ||
+      collectionName.toLowerCase() === 'sale'
     ) {
-      // Find first collection that is not hidden or view-all
+      // Find first collection that is not hidden, view-all, or sale
       const validCollection = product.collections?.find(
         (col) =>
           !col.handle.startsWith('hidden-') &&
           col.handle !== 'view-all' &&
-          col.handle !== 'all'
+          col.handle !== 'all' &&
+          col.handle !== 'sale'
       );
 
       if (collectionName?.toLowerCase() === 'view all' || collectionName?.toLowerCase() === 'view-all') {
