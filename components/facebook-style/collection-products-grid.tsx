@@ -38,6 +38,7 @@ export function CollectionProductsGrid({
   const [expandedProduct, setExpandedProduct] = useState<Product | null>(null);
   const [startRect, setStartRect] = useState<DOMRect | null>(null);
   const [currentSort, setCurrentSort] = useState<SortFilterItem>(defaultSort);
+  const [savedScrollPosition, setSavedScrollPosition] = useState<number>(0);
 
   // 從URL讀取展開的商品並設置初始狀態
   useEffect(() => {
@@ -66,6 +67,9 @@ export function CollectionProductsGrid({
   }
 
   const handleExpand = (product: Product, rect: DOMRect) => {
+    // 儲存當前滾動位置
+    setSavedScrollPosition(window.scrollY);
+
     setStartRect(rect);
     setExpandedProduct(product);
 
@@ -83,6 +87,11 @@ export function CollectionProductsGrid({
     const newParams = new URLSearchParams(window.location.search);
     newParams.delete('product');
     router.push(`?${newParams.toString()}`, { scroll: false });
+
+    // 恢復到之前的滾動位置
+    setTimeout(() => {
+      window.scrollTo(0, savedScrollPosition);
+    }, 0);
   };
 
   const handleSortChange = (sortOption: SortFilterItem) => {

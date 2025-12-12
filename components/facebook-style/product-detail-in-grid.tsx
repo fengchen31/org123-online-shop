@@ -61,6 +61,9 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
   };
 
   useEffect(() => {
+    // 滾動到頁面最頂端
+    window.scrollTo(0, 0);
+
     // 立即開始動畫
     setIsAnimating(true);
 

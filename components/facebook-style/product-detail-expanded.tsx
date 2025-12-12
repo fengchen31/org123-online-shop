@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { Product } from 'lib/shopify/types';
 import { ProductProvider } from 'components/product/product-context';
 import { AddToCart } from 'components/cart/add-to-cart';
@@ -21,6 +21,11 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
   const [showFullscreen, setShowFullscreen] = useState(false);
   const images = product.images.length > 0 ? product.images : [product.featuredImage];
   const { convertPrice } = useCurrency();
+
+  // 當商品詳情打開時，滾動到頁面最頂端
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   // Touch swipe handling
   const touchStartX = useRef<number>(0);
