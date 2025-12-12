@@ -657,7 +657,7 @@ export function CollectionTabsHome({
               </div>
 
               {/* Discount Marquee */}
-              <div className="mb-4 overflow-hidden border border-gray-300 bg-white p-3">
+              <div className="mb-4 overflow-hidden border border-gray-300 bg-white px-3 py-1">
                 <div className="animate-marquee">
                   <span className="marquee-content text-xs text-gray-700">
                     {discountMessage}
