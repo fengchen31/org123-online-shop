@@ -23,7 +23,29 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
 
     if (!registerResult.success) {
-      return NextResponse.json({ error: registerResult.error }, { status: 400 });
+      // 檢查是否為 email 已存在的錯誤
+      // Shopify 可能返回的錯誤碼: CUSTOMER_DISABLED, TAKEN 等
+      console.log('Register error:', {
+        error: registerResult.error,
+        errorCode: registerResult.errorCode
+      });
+
+      const isEmailTaken =
+        registerResult.errorCode === 'TAKEN' ||
+        registerResult.error?.toLowerCase().includes('taken') ||
+        registerResult.error?.toLowerCase().includes('already') ||
+        registerResult.error?.toLowerCase().includes('exists');
+
+      console.log('isEmailTaken:', isEmailTaken);
+
+      return NextResponse.json(
+        {
+          error: registerResult.error,
+          errorCode: registerResult.errorCode,
+          isEmailTaken
+        },
+        { status: 400 }
+      );
     }
 
     // 註冊成功後自動登錄

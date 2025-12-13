@@ -353,6 +353,7 @@ export type Customer = {
   lastName: string;
   email: string;
   phone?: string;
+  acceptsMarketing: boolean;
   defaultAddress?: Address;
   avatar?: string;
 };

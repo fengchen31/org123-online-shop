@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const { resetUrl, password } = await request.json();
+    const { resetUrl, password, firstName, lastName } = await request.json();
 
     if (!resetUrl || !password) {
       return NextResponse.json(
@@ -13,7 +13,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const result = await customerResetByUrl(resetUrl, password);
+    const result = await customerResetByUrl(resetUrl, password, firstName, lastName);
 
     if (!result.success) {
       console.error('Password reset failed:', result.error);

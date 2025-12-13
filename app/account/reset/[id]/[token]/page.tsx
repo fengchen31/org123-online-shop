@@ -14,6 +14,8 @@ interface PageProps {
 export default function PasswordResetPage({ params }: PageProps) {
   const { id, token } = use(params);
   const router = useRouter();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -76,7 +78,7 @@ export default function PasswordResetPage({ params }: PageProps) {
       const res = await fetch('/api/auth/reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resetUrl, password })
+        body: JSON.stringify({ resetUrl, password, firstName, lastName })
       });
 
       const data = await res.json();
@@ -103,19 +105,26 @@ export default function PasswordResetPage({ params }: PageProps) {
       <div className="w-full max-w-md space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            Reset your password
+            Set up your password
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your new password below
+            Create a password for your account
           </p>
         </div>
 
         {success ? (
-          <div className="rounded-md bg-green-50 p-4">
-            <p className="text-sm font-medium text-green-800">Password reset successful!</p>
-            <p className="mt-1 text-sm text-green-700">
-              You are now logged in. Redirecting to homepage...
-            </p>
+          <div className="rounded-md bg-green-50 border border-green-200 p-4">
+            <div className="flex items-start gap-3">
+              <svg className="h-5 w-5 text-green-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="text-sm font-semibold text-green-900">Password set successfully!</p>
+                <p className="mt-1 text-sm text-green-800">
+                  You are now logged in. Redirecting to homepage
+                </p>
+              </div>
+            </div>
           </div>
         ) : (
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -126,6 +135,40 @@ export default function PasswordResetPage({ params }: PageProps) {
             )}
 
             <div className="space-y-4">
+              {/* First Name */}
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  className="mt-1 w-full border border-gray-300 px-4 py-2 focus:border-[#3b5998] focus:outline-none focus:ring-2 focus:ring-[#3b5998]/20"
+                  placeholder="John"
+                  disabled={isLoading}
+                />
+              </div>
+
+              {/* Last Name */}
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  className="mt-1 w-full border border-gray-300 px-4 py-2 focus:border-[#3b5998] focus:outline-none focus:ring-2 focus:ring-[#3b5998]/20"
+                  placeholder="Doe"
+                  disabled={isLoading}
+                />
+              </div>
+
               {/* New Password */}
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
@@ -214,7 +257,7 @@ export default function PasswordResetPage({ params }: PageProps) {
               className="w-full bg-[#3b5998] px-4 py-3 font-semibold text-white transition-colors hover:bg-[#344e86] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <span className="inline-flex h-[1.25rem] items-center justify-center">
-                {isLoading ? <LoadingDots className="text-white" /> : 'Reset Password'}
+                {isLoading ? <LoadingDots className="text-white" /> : 'Set Password'}
               </span>
             </button>
           </form>

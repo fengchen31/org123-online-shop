@@ -1023,7 +1023,7 @@ export async function customerRegister(input: {
   password: string;
   firstName: string;
   lastName: string;
-}): Promise<{ success: boolean; customer?: any; error?: string }> {
+}): Promise<{ success: boolean; customer?: any; error?: string; errorCode?: string }> {
   try {
     const res = await shopifyFetch<{
       data: {
@@ -1065,7 +1065,8 @@ export async function customerRegister(input: {
       const error = res.body.data.customerCreate.customerUserErrors[0];
       return {
         success: false,
-        error: error?.message || '註冊失敗'
+        error: error?.message || '註冊失敗',
+        errorCode: error?.code
       };
     }
 
@@ -1073,8 +1074,18 @@ export async function customerRegister(input: {
       success: true,
       customer: res.body.data.customerCreate.customer
     };
-  } catch (e) {
+  } catch (e: any) {
     console.error('Error registering customer:', e);
+
+    // Check if it's a rate limiting error
+    if (e?.error?.extensions?.code === 'THROTTLED') {
+      return {
+        success: false,
+        error: 'Too many registration attempts. Please try again in a few minutes.',
+        errorCode: 'THROTTLED'
+      };
+    }
+
     return {
       success: false,
       error: '註冊時發生錯誤'
@@ -1126,7 +1137,9 @@ export async function customerRecover(email: string): Promise<{ success: boolean
 // 使用 reset URL 完成密碼重設
 export async function customerResetByUrl(
   resetUrl: string,
-  password: string
+  password: string,
+  firstName?: string,
+  lastName?: string
 ): Promise<{ success: boolean; error?: string; accessToken?: string }> {
   try {
     const res = await shopifyFetch<ShopifyCustomerResetByUrlOperation>({
@@ -1146,6 +1159,42 @@ export async function customerResetByUrl(
     }
 
     const accessToken = res.body.data.customerResetByUrl.customerAccessToken?.accessToken;
+
+    // If firstName and lastName are provided, update customer info
+    if (accessToken && (firstName || lastName)) {
+      try {
+        const updateMutation = `
+          mutation customerUpdate($customerAccessToken: String!, $customer: CustomerUpdateInput!) {
+            customerUpdate(customerAccessToken: $customerAccessToken, customer: $customer) {
+              customer {
+                id
+                firstName
+                lastName
+              }
+              customerUserErrors {
+                code
+                field
+                message
+              }
+            }
+          }
+        `;
+
+        await shopifyFetch<any>({
+          query: updateMutation,
+          variables: {
+            customerAccessToken: accessToken,
+            customer: {
+              firstName: firstName || '',
+              lastName: lastName || ''
+            }
+          }
+        });
+      } catch (updateError) {
+        console.error('Error updating customer name:', updateError);
+        // Don't fail the whole operation if name update fails
+      }
+    }
 
     return {
       success: true,

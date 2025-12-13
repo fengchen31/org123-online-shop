@@ -507,15 +507,22 @@ export function CollectionTabsHome({
       }
     };
 
+    const handleCustomerUpdated = async () => {
+      console.log('🔄 Customer data updated, refreshing...');
+      await fetchCustomerInfo();
+    };
+
     window.addEventListener('wishlistUpdate', handleWishlistUpdate);
     window.addEventListener('authStatusChange', handleAuthStatusChange);
     window.addEventListener('avatarUpdate', handleAvatarUpdate);
+    window.addEventListener('customerUpdated', handleCustomerUpdated);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('wishlistUpdate', handleWishlistUpdate);
       window.removeEventListener('authStatusChange', handleAuthStatusChange);
       window.removeEventListener('avatarUpdate', handleAvatarUpdate);
+      window.removeEventListener('customerUpdated', handleCustomerUpdated);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);

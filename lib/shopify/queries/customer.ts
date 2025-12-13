@@ -6,6 +6,7 @@ export const getCustomerQuery = /* GraphQL */ `
       lastName
       email
       phone
+      acceptsMarketing
       defaultAddress {
         id
         address1

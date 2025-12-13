@@ -41,6 +41,7 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Register state
   const [registerData, setRegisterData] = useState({
@@ -52,11 +53,53 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   });
   const [registerError, setRegisterError] = useState('');
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
+  const [showUpgradeOption, setShowUpgradeOption] = useState(false);
+  const [upgradeEmail, setUpgradeEmail] = useState('');
+  const [isUpgrading, setIsUpgrading] = useState(false);
+  const [upgradeSuccess, setUpgradeSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Forgot password state
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [forgotPasswordError, setForgotPasswordError] = useState('');
   const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
+
+  // Edit profile state
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState('');
+
+  // Edit address state
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [editAddress, setEditAddress] = useState({
+    address1: '',
+    address2: '',
+    city: '',
+    province: '',
+    zip: '',
+    country: ''
+  });
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+  const [addressError, setAddressError] = useState('');
+
+  // Newsletter subscription state
+  const [isUpdatingNewsletter, setIsUpdatingNewsletter] = useState(false);
+
+  // Change password state
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
+  });
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [isForgotPasswordLoading, setIsForgotPasswordLoading] = useState(false);
 
   // Avatar upload state
@@ -192,6 +235,7 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     e.preventDefault();
     setIsRegisterLoading(true);
     setRegisterError('');
+    setShowUpgradeOption(false);
 
     // Validate passwords
     if (registerData.password !== registerData.confirmPassword) {
@@ -221,7 +265,16 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Registration failed');
+        // Check if this is an "email already exists" error
+        if (data.isEmailTaken) {
+          setShowUpgradeOption(true);
+          setUpgradeEmail(registerData.email);
+          setRegisterError('');
+        } else {
+          throw new Error(data.error || 'Registration failed');
+        }
+        setIsRegisterLoading(false);
+        return;
       }
 
       // Registration successful - clear local cart and wishlist (new account should start fresh)
@@ -250,6 +303,31 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
       setRegisterError(err instanceof Error ? err.message : 'An error occurred during registration');
     } finally {
       setIsRegisterLoading(false);
+    }
+  };
+
+  const handleUpgradeAccount = async () => {
+    setIsUpgrading(true);
+    setRegisterError('');
+
+    try {
+      const res = await fetch('/api/auth/recover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: upgradeEmail })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to send password setup email');
+      }
+
+      setUpgradeSuccess(true);
+    } catch (err) {
+      setRegisterError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsUpgrading(false);
     }
   };
 
@@ -472,27 +550,555 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
 
               {/* Account Details */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900">Personal Information</h3>
-                <div className="grid gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-gray-500">First Name</label>
-                    <p className="text-sm text-gray-900">{customer.firstName || '-'}</p>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900">Personal Information</h3>
+                  {!isEditingProfile && (
+                    <button
+                      onClick={() => {
+                        setIsEditingProfile(true);
+                        setEditFirstName(customer.firstName || '');
+                        setEditLastName(customer.lastName || '');
+                        setProfileError('');
+                      }}
+                      className="text-sm font-medium text-[#3b5998] hover:underline"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
+
+                {profileError && (
+                  <div className="bg-red-50 p-3">
+                    <p className="text-sm text-red-800">{profileError}</p>
                   </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-500">Last Name</label>
-                    <p className="text-sm text-gray-900">{customer.lastName || '-'}</p>
+                )}
+
+                {isEditingProfile ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label htmlFor="edit-firstName" className="block text-xs font-medium text-gray-700">
+                        First Name
+                      </label>
+                      <input
+                        type="text"
+                        id="edit-firstName"
+                        value={editFirstName}
+                        onChange={(e) => setEditFirstName(e.target.value)}
+                        className="mt-1 w-full border border-gray-300 px-3 py-2 text-sm focus:border-[#3b5998] focus:outline-none focus:ring-2 focus:ring-[#3b5998]/20"
+                        placeholder="First name"
+                        disabled={isSavingProfile}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="edit-lastName" className="block text-xs font-medium text-gray-700">
+                        Last Name
+                      </label>
+                      <input
+                        type="text"
+                        id="edit-lastName"
+                        value={editLastName}
+                        onChange={(e) => setEditLastName(e.target.value)}
+                        className="mt-1 w-full border border-gray-300 px-3 py-2 text-sm focus:border-[#3b5998] focus:outline-none focus:ring-2 focus:ring-[#3b5998]/20"
+                        placeholder="Last name"
+                        disabled={isSavingProfile}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={async () => {
+                          setIsSavingProfile(true);
+                          setProfileError('');
+                          try {
+                            const res = await fetch('/api/customer/update', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                firstName: editFirstName,
+                                lastName: editLastName
+                              })
+                            });
+
+                            const data = await res.json();
+
+                            if (!res.ok) {
+                              throw new Error(data.error || 'Failed to update profile');
+                            }
+
+                            // Refresh customer data
+                            await fetchCustomer();
+                            setIsEditingProfile(false);
+
+                            // Notify other components that customer data has been updated
+                            window.dispatchEvent(
+                              new CustomEvent('customerUpdated', {
+                                detail: { firstName: editFirstName, lastName: editLastName }
+                              })
+                            );
+
+                            // Also refresh the page to update all components
+                            router.refresh();
+                          } catch (err) {
+                            setProfileError(err instanceof Error ? err.message : 'An error occurred');
+                          } finally {
+                            setIsSavingProfile(false);
+                          }
+                        }}
+                        disabled={isSavingProfile}
+                        className="flex-1 bg-[#3b5998] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#344e86] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isSavingProfile ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditingProfile(false);
+                          setProfileError('');
+                        }}
+                        disabled={isSavingProfile}
+                        className="flex-1 border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-500">Email</label>
-                    <p className="text-sm text-gray-900">{customer.email}</p>
+                ) : (
+                  <div className="grid gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">First Name</label>
+                      <p className="text-sm text-gray-900">{customer.firstName || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Last Name</label>
+                      <p className="text-sm text-gray-900">{customer.lastName || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Email</label>
+                      <p className="text-sm text-gray-900">{customer.email}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Marketing Preferences */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-gray-900">Marketing Preferences</h3>
+                <div className="border border-gray-200 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">Newsletter Subscription</p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        Receive updates about new products and special offers
+                      </p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        setIsUpdatingNewsletter(true);
+                        try {
+                          const newValue = !customer.acceptsMarketing;
+                          const res = await fetch('/api/customer/update-marketing', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ acceptsMarketing: newValue })
+                          });
+
+                          const data = await res.json();
+
+                          if (!res.ok) {
+                            throw new Error(data.error || 'Failed to update preferences');
+                          }
+
+                          await fetchCustomer();
+                          router.refresh();
+                        } catch (err) {
+                          console.error('Failed to update newsletter preference:', err);
+                        } finally {
+                          setIsUpdatingNewsletter(false);
+                        }
+                      }}
+                      disabled={isUpdatingNewsletter}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#3b5998] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                        customer.acceptsMarketing ? 'bg-[#3b5998]' : 'bg-gray-200'
+                      }`}
+                      role="switch"
+                      aria-checked={customer.acceptsMarketing}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          customer.acceptsMarketing ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
                   </div>
                 </div>
               </div>
 
+              {/* Change Password */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900">Change Password</h3>
+                  {!isChangingPassword && !passwordSuccess && (
+                    <button
+                      onClick={() => {
+                        setIsChangingPassword(true);
+                        setPasswordData({
+                          currentPassword: '',
+                          newPassword: '',
+                          confirmNewPassword: ''
+                        });
+                        setPasswordError('');
+                      }}
+                      className="text-sm font-medium text-[#3b5998] hover:underline"
+                    >
+                      Change
+                    </button>
+                  )}
+                </div>
+
+                {passwordError && (
+                  <div className="bg-red-50 p-3">
+                    <p className="text-sm text-red-800">{passwordError}</p>
+                  </div>
+                )}
+
+                {passwordSuccess && (
+                  <div className="bg-green-50 border border-green-200 p-3">
+                    <div className="flex gap-3">
+                      <svg className="h-5 w-5 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <div>
+                        <p className="text-sm font-semibold text-green-900">Password changed successfully!</p>
+                        <button
+                          onClick={() => {
+                            setPasswordSuccess(false);
+                            setIsChangingPassword(false);
+                          }}
+                          className="mt-2 text-sm font-medium text-green-700 hover:underline"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {isChangingPassword && !passwordSuccess ? (
+                  <div className="space-y-3">
+                    {/* Current Password */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700">Current Password</label>
+                      <div className="relative mt-1">
+                        <input
+                          type={showCurrentPassword ? 'text' : 'password'}
+                          value={passwordData.currentPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                          className="w-full border border-gray-300 px-3 py-2 pr-10 text-sm focus:border-[#3b5998] focus:outline-none focus:ring-2 focus:ring-[#3b5998]/20"
+                          placeholder="Enter current password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          tabIndex={-1}
+                        >
+                          {showCurrentPassword ? (
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                          ) : (
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* New Password */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700">New Password</label>
+                      <div className="relative mt-1">
+                        <input
+                          type={showNewPassword ? 'text' : 'password'}
+                          value={passwordData.newPassword}
+                          onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                          className="w-full border border-gray-300 px-3 py-2 pr-10 text-sm focus:border-[#3b5998] focus:outline-none focus:ring-2 focus:ring-[#3b5998]/20"
+                          placeholder="At least 6 characters"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          tabIndex={-1}
+                        >
+                          {showNewPassword ? (
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                          ) : (
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Confirm New Password */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700">Confirm New Password</label>
+                      <div className="relative mt-1">
+                        <input
+                          type={showConfirmNewPassword ? 'text' : 'password'}
+                          value={passwordData.confirmNewPassword}
+                          onChange={(e) =>
+                            setPasswordData({ ...passwordData, confirmNewPassword: e.target.value })
+                          }
+                          className="w-full border border-gray-300 px-3 py-2 pr-10 text-sm focus:border-[#3b5998] focus:outline-none focus:ring-2 focus:ring-[#3b5998]/20"
+                          placeholder="Re-enter new password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          tabIndex={-1}
+                        >
+                          {showConfirmNewPassword ? (
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                          ) : (
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={async () => {
+                          setPasswordError('');
+
+                          // Validation
+                          if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmNewPassword) {
+                            setPasswordError('Please fill in all fields');
+                            return;
+                          }
+
+                          if (passwordData.newPassword.length < 6) {
+                            setPasswordError('New password must be at least 6 characters');
+                            return;
+                          }
+
+                          if (passwordData.newPassword !== passwordData.confirmNewPassword) {
+                            setPasswordError('New passwords do not match');
+                            return;
+                          }
+
+                          try {
+                            const res = await fetch('/api/customer/change-password', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                currentPassword: passwordData.currentPassword,
+                                newPassword: passwordData.newPassword
+                              })
+                            });
+
+                            const data = await res.json();
+
+                            if (!res.ok) {
+                              throw new Error(data.error || 'Failed to change password');
+                            }
+
+                            setPasswordSuccess(true);
+                            setPasswordData({
+                              currentPassword: '',
+                              newPassword: '',
+                              confirmNewPassword: ''
+                            });
+                          } catch (err) {
+                            setPasswordError(err instanceof Error ? err.message : 'An error occurred');
+                          }
+                        }}
+                        className="flex-1 bg-[#3b5998] px-4 py-2 text-sm font-semibold text-white hover:bg-[#344e86]"
+                      >
+                        Change Password
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsChangingPassword(false);
+                          setPasswordError('');
+                          setPasswordData({
+                            currentPassword: '',
+                            newPassword: '',
+                            confirmNewPassword: ''
+                          });
+                        }}
+                        className="flex-1 border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : !passwordSuccess ? (
+                  <div className="border border-gray-200 border-dashed p-4 text-center">
+                    <p className="text-sm text-gray-500">Click "Change" to update your password</p>
+                  </div>
+                ) : null}
+              </div>
+
               {/* Default Address */}
-              {customer.defaultAddress && (
-                <div className="space-y-4">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-gray-900">Default Address</h3>
+                  {!isEditingAddress && (
+                    <button
+                      onClick={() => {
+                        setIsEditingAddress(true);
+                        const addr = customer.defaultAddress;
+                        setEditAddress({
+                          address1: addr?.address1 || '',
+                          address2: addr?.address2 || '',
+                          city: addr?.city || '',
+                          province: addr?.province || '',
+                          zip: addr?.zip || '',
+                          country: addr?.country || ''
+                        });
+                        setAddressError('');
+                      }}
+                      className="text-sm font-medium text-[#3b5998] hover:underline"
+                    >
+                      {customer.defaultAddress ? 'Edit' : 'Add Address'}
+                    </button>
+                  )}
+                </div>
+
+                {addressError && (
+                  <div className="bg-red-50 p-3">
+                    <p className="text-sm text-red-800">{addressError}</p>
+                  </div>
+                )}
+
+                {isEditingAddress ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700">Address Line 1</label>
+                      <input
+                        type="text"
+                        value={editAddress.address1}
+                        onChange={(e) => setEditAddress({ ...editAddress, address1: e.target.value })}
+                        className="mt-1 w-full border border-gray-300 px-3 py-2 text-sm"
+                        placeholder="Street address"
+                        disabled={isSavingAddress}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700">
+                        Address Line 2 (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={editAddress.address2}
+                        onChange={(e) => setEditAddress({ ...editAddress, address2: e.target.value })}
+                        className="mt-1 w-full border border-gray-300 px-3 py-2 text-sm"
+                        placeholder="Apt, suite, etc."
+                        disabled={isSavingAddress}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">City</label>
+                        <input
+                          type="text"
+                          value={editAddress.city}
+                          onChange={(e) => setEditAddress({ ...editAddress, city: e.target.value })}
+                          className="mt-1 w-full border border-gray-300 px-3 py-2 text-sm"
+                          disabled={isSavingAddress}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">State/Province</label>
+                        <input
+                          type="text"
+                          value={editAddress.province}
+                          onChange={(e) => setEditAddress({ ...editAddress, province: e.target.value })}
+                          className="mt-1 w-full border border-gray-300 px-3 py-2 text-sm"
+                          disabled={isSavingAddress}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">ZIP/Postal Code</label>
+                        <input
+                          type="text"
+                          value={editAddress.zip}
+                          onChange={(e) => setEditAddress({ ...editAddress, zip: e.target.value })}
+                          className="mt-1 w-full border border-gray-300 px-3 py-2 text-sm"
+                          disabled={isSavingAddress}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700">Country</label>
+                        <input
+                          type="text"
+                          value={editAddress.country}
+                          onChange={(e) => setEditAddress({ ...editAddress, country: e.target.value })}
+                          className="mt-1 w-full border border-gray-300 px-3 py-2 text-sm"
+                          disabled={isSavingAddress}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={async () => {
+                          setIsSavingAddress(true);
+                          setAddressError('');
+                          try {
+                            const res = await fetch('/api/customer/update-address', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify(editAddress)
+                            });
+
+                            const data = await res.json();
+
+                            if (!res.ok) {
+                              throw new Error(data.error || 'Failed to update address');
+                            }
+
+                            await fetchCustomer();
+                            setIsEditingAddress(false);
+                            router.refresh();
+                          } catch (err) {
+                            setAddressError(err instanceof Error ? err.message : 'An error occurred');
+                          } finally {
+                            setIsSavingAddress(false);
+                          }
+                        }}
+                        disabled={isSavingAddress}
+                        className="flex-1 bg-[#3b5998] px-4 py-2 text-sm font-semibold text-white hover:bg-[#344e86] disabled:opacity-50"
+                      >
+                        {isSavingAddress ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditingAddress(false);
+                          setAddressError('');
+                        }}
+                        disabled={isSavingAddress}
+                        className="flex-1 border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : customer.defaultAddress ? (
                   <div className="border border-gray-200 p-4">
                     <p className="text-sm text-gray-900">{customer.defaultAddress.address1}</p>
                     {customer.defaultAddress.address2 && (
@@ -504,8 +1110,12 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                     </p>
                     <p className="text-sm text-gray-900">{customer.defaultAddress.country}</p>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="border border-gray-200 border-dashed p-4 text-center">
+                    <p className="text-sm text-gray-500">No address on file</p>
+                  </div>
+                )}
+              </div>
 
               {/* Order History - Collapsible */}
               <div className="space-y-2">
@@ -670,16 +1280,35 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                       Forgot password?
                     </button>
                   </div>
-                  <input
-                    type="password"
-                    id="login-password"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    required
-                    className="w-full border border-gray-300 px-4 py-2 focus:outline-none focus:ring-0 focus:border-gray-300"
-                    placeholder="••••••••"
-                    disabled={isLoginLoading}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showLoginPassword ? 'text' : 'password'}
+                      id="login-password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      required
+                      className="w-full border border-gray-300 px-4 py-2 pr-10 focus:outline-none focus:ring-0 focus:border-gray-300"
+                      placeholder="••••••••"
+                      disabled={isLoginLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      tabIndex={-1}
+                    >
+                      {showLoginPassword ? (
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                      ) : (
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Login Button */}
@@ -733,23 +1362,119 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                 </div>
               )}
 
-              <form onSubmit={handleRegister} className="space-y-4">
-                {/* First Name */}
-                <div>
-                  <label htmlFor="register-firstName" className="mb-1 block text-sm font-medium text-gray-700">
-                    First name
-                  </label>
-                  <input
-                    type="text"
-                    id="register-firstName"
-                    value={registerData.firstName}
-                    onChange={(e) => setRegisterData({ ...registerData, firstName: e.target.value })}
-                    required
-                    className="w-full border border-gray-300 px-4 py-2 focus:border-[#3b5998] focus:outline-none focus:ring-2 focus:ring-[#3b5998]/20"
-                    placeholder="John"
-                    disabled={isRegisterLoading}
-                  />
+              {showUpgradeOption && !upgradeSuccess && (
+                <div className="bg-blue-50 border border-blue-200 p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <svg
+                      className="h-5 w-5 text-blue-600 mt-0.5 shrink-0"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-blue-900">Email Already Registered</h4>
+                      <p className="mt-1 text-sm text-blue-800">
+                        This email (<strong>{upgradeEmail}</strong>) is already in our system. Would you like
+                        to set up a password and upgrade to a full member account?
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleUpgradeAccount}
+                    disabled={isUpgrading}
+                    className="w-full bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <span className="inline-flex h-[1.25rem] items-center justify-center">
+                      {isUpgrading ? <LoadingDots className="text-white" /> : 'Send Password Setup Email'}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowUpgradeOption(false);
+                      setUpgradeEmail('');
+                      setRegisterData({
+                        firstName: '',
+                        lastName: '',
+                        email: '',
+                        password: '',
+                        confirmPassword: ''
+                      });
+                    }}
+                    className="w-full border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                  >
+                    Try Different Email
+                  </button>
                 </div>
+              )}
+
+              {upgradeSuccess && (
+                <div className="bg-green-50 border border-green-200 p-4">
+                  <div className="flex gap-3">
+                    <svg
+                      className="h-5 w-5 text-green-600 shrink-0"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <div>
+                      <h4 className="text-sm font-semibold text-green-900">Email Sent!</h4>
+                      <p className="mt-1 text-sm text-green-800">
+                        Please check your email (<strong>{upgradeEmail}</strong>). Follow the instructions to set up
+                        your password and complete your account upgrade.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setViewMode('login');
+                          setShowUpgradeOption(false);
+                          setUpgradeSuccess(false);
+                          setUpgradeEmail('');
+                          setRegisterData({
+                            firstName: '',
+                            lastName: '',
+                            email: '',
+                            password: '',
+                            confirmPassword: ''
+                          });
+                        }}
+                        className="mt-3 text-sm font-medium text-green-700 hover:text-green-800 hover:underline"
+                      >
+                        Back to Sign In
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!showUpgradeOption && !upgradeSuccess && (
+                <>
+                  <form onSubmit={handleRegister} className="space-y-4">
+                    {/* First Name */}
+                    <div>
+                      <label htmlFor="register-firstName" className="mb-1 block text-sm font-medium text-gray-700">
+                        First name
+                      </label>
+                      <input
+                        type="text"
+                        id="register-firstName"
+                        value={registerData.firstName}
+                        onChange={(e) => setRegisterData({ ...registerData, firstName: e.target.value })}
+                        required
+                        className="w-full border border-gray-300 px-4 py-2 focus:border-[#3b5998] focus:outline-none focus:ring-2 focus:ring-[#3b5998]/20"
+                        placeholder="John"
+                        disabled={isRegisterLoading}
+                      />
+                    </div>
 
                 {/* Last Name */}
                 <div>
@@ -790,17 +1515,36 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                   <label htmlFor="register-password" className="mb-1 block text-sm font-medium text-gray-700">
                     Password
                   </label>
-                  <input
-                    type="password"
-                    id="register-password"
-                    value={registerData.password}
-                    onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                    required
-                    minLength={6}
-                    className="w-full border border-gray-300 px-4 py-2 focus:border-[#3b5998] focus:outline-none focus:ring-2 focus:ring-[#3b5998]/20"
-                    placeholder="At least 6 characters"
-                    disabled={isRegisterLoading}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      id="register-password"
+                      value={registerData.password}
+                      onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                      required
+                      minLength={6}
+                      className="w-full border border-gray-300 px-4 py-2 pr-10 focus:border-[#3b5998] focus:outline-none focus:ring-2 focus:ring-[#3b5998]/20"
+                      placeholder="At least 6 characters"
+                      disabled={isRegisterLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? (
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                      ) : (
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Confirm Password */}
@@ -811,17 +1555,36 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                   >
                     Confirm password
                   </label>
-                  <input
-                    type="password"
-                    id="register-confirmPassword"
-                    value={registerData.confirmPassword}
-                    onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
-                    required
-                    minLength={6}
-                    className="w-full border border-gray-300 px-4 py-2 focus:border-[#3b5998] focus:outline-none focus:ring-2 focus:ring-[#3b5998]/20"
-                    placeholder="Enter password again"
-                    disabled={isRegisterLoading}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      id="register-confirmPassword"
+                      value={registerData.confirmPassword}
+                      onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                      required
+                      minLength={6}
+                      className="w-full border border-gray-300 px-4 py-2 pr-10 focus:border-[#3b5998] focus:outline-none focus:ring-2 focus:ring-[#3b5998]/20"
+                      placeholder="Enter password again"
+                      disabled={isRegisterLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      tabIndex={-1}
+                    >
+                      {showConfirmPassword ? (
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                      ) : (
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Register Button */}
@@ -833,31 +1596,35 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                   <span className="inline-flex h-[1.25rem] items-center justify-center">
                     {isRegisterLoading ? <LoadingDots className="text-white" /> : 'Sign up'}
                   </span>
-                </button>
-              </form>
+                    </button>
+                  </form>
 
-              {/* Divider */}
-              <div className="flex items-center">
-                <div className="flex-1 border-t border-gray-300"></div>
-                <span className="px-4 text-sm text-gray-500">or</span>
-                <div className="flex-1 border-t border-gray-300"></div>
-              </div>
+                  {/* Divider */}
+                  <div className="flex items-center">
+                    <div className="flex-1 border-t border-gray-300"></div>
+                    <span className="px-4 text-sm text-gray-500">or</span>
+                    <div className="flex-1 border-t border-gray-300"></div>
+                  </div>
 
-              {/* Switch to Login */}
-              <div className="text-center">
-                <p className="text-sm text-gray-600">
-                  Already have an account?{' '}
-                  <button
-                    onClick={() => {
-                      setViewMode('login');
-                      setRegisterError('');
-                    }}
-                    className="font-semibold text-[#3b5998] hover:underline"
-                  >
-                    Sign in
-                  </button>
-                </p>
-              </div>
+                  {/* Switch to Login */}
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600">
+                      Already have an account?{' '}
+                      <button
+                        onClick={() => {
+                          setViewMode('login');
+                          setRegisterError('');
+                          setShowUpgradeOption(false);
+                          setUpgradeSuccess(false);
+                        }}
+                        className="font-semibold text-[#3b5998] hover:underline"
+                      >
+                        Sign in
+                      </button>
+                    </p>
+                  </div>
+                </>
+              )}
               </div>
             </div>
           ) : viewMode === 'forgot-password' ? (
