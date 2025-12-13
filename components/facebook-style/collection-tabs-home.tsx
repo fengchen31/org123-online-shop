@@ -509,7 +509,7 @@ export function CollectionTabsHome({
 
     const handleCustomerUpdated = async () => {
       console.log('🔄 Customer data updated, refreshing...');
-      await fetchCustomerInfo();
+      await fetchCustomer();
     };
 
     window.addEventListener('wishlistUpdate', handleWishlistUpdate);
