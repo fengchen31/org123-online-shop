@@ -421,9 +421,11 @@ export async function getCollectionProducts({
   first?: number;
   after?: string;
 }): Promise<{ products: Product[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } }> {
-  'use cache';
-  cacheTag(TAGS.collections, TAGS.products);
-  cacheLife('days');
+  // 移除緩存以支持動態排序功能
+  // 如果需要緩存，可以在 API route 層面處理
+  // 'use cache';
+  // cacheTag(TAGS.collections, TAGS.products);
+  // cacheLife('days');
 
   const res = await shopifyFetch<ShopifyCollectionProductsOperation>({
     query: getCollectionProductsQuery,

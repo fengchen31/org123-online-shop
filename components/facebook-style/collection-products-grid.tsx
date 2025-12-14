@@ -6,6 +6,8 @@ import { ProductCard } from './product-card';
 import { ProductDetailInGrid } from './product-detail-in-grid';
 import { ProductFilter } from './product-filter';
 import { CurrencyToggle } from './currency-toggle';
+import { SaleToggle } from './sale-toggle';
+import { StockToggle } from './stock-toggle';
 import { CategoryFilter, type CategoryType } from './category-filter';
 import type { Product } from 'lib/shopify/types';
 import type { SortFilterItem } from 'lib/constants';
@@ -15,6 +17,11 @@ interface CollectionProductsGridProps {
   products: Product[];
   collectionName?: string;
   onSortChange?: (sortOption: SortFilterItem) => void;
+  currentSort?: SortFilterItem;
+  showOnSale?: boolean;
+  onSaleToggle?: (showOnSale: boolean) => void;
+  inStockOnly?: boolean;
+  onStockToggle?: (inStockOnly: boolean) => void;
   categories?: Array<{
     id: CategoryType;
     label: string;
@@ -28,6 +35,11 @@ export function CollectionProductsGrid({
   products,
   collectionName,
   onSortChange,
+  currentSort = defaultSort,
+  showOnSale = false,
+  onSaleToggle,
+  inStockOnly = false,
+  onStockToggle,
   categories,
   activeCategory,
   onCategoryChange
@@ -37,7 +49,6 @@ export function CollectionProductsGrid({
 
   const [expandedProduct, setExpandedProduct] = useState<Product | null>(null);
   const [startRect, setStartRect] = useState<DOMRect | null>(null);
-  const [currentSort, setCurrentSort] = useState<SortFilterItem>(defaultSort);
   const [savedScrollPosition, setSavedScrollPosition] = useState<number>(0);
 
   // 從URL讀取展開的商品並設置初始狀態
@@ -54,17 +65,6 @@ export function CollectionProductsGrid({
       setStartRect(null);
     }
   }, [searchParams, products]);
-
-  if (!products?.length) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="text-center text-gray-500">
-          <p className="text-lg">No products found in this collection.</p>
-          <p className="mt-2 text-sm">Please check back later.</p>
-        </div>
-      </div>
-    );
-  }
 
   const handleExpand = (product: Product, rect: DOMRect) => {
     // 儲存當前滾動位置
@@ -95,7 +95,6 @@ export function CollectionProductsGrid({
   };
 
   const handleSortChange = (sortOption: SortFilterItem) => {
-    setCurrentSort(sortOption);
     onSortChange?.(sortOption);
   };
 
@@ -116,8 +115,10 @@ export function CollectionProductsGrid({
               </div>
             )}
 
-            {/* Currency Toggle and Sort Filter */}
+            {/* Sale Toggle, Stock Toggle, Currency Toggle and Sort Filter */}
             <div className="flex items-center gap-2">
+              {onSaleToggle && <SaleToggle showOnSale={showOnSale} onToggle={onSaleToggle} />}
+              {onStockToggle && <StockToggle inStockOnly={inStockOnly} onToggle={onStockToggle} />}
               <CurrencyToggle />
               <ProductFilter onSortChange={handleSortChange} currentSort={currentSort} />
             </div>
@@ -125,25 +126,34 @@ export function CollectionProductsGrid({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-        {expandedProduct ? (
-          <ProductDetailInGrid
-            product={expandedProduct}
-            startRect={startRect}
-            onClose={handleClose}
-          />
-        ) : (
-          products.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onExpand={(rect) => handleExpand(product, rect)}
-              isHidden={false}
-              collectionName={collectionName}
+      {!products?.length ? (
+        <div className="col-span-full flex min-h-[400px] items-center justify-center">
+          <div className="text-center text-gray-500">
+            <p className="text-lg">No products found with current filters.</p>
+            <p className="mt-2 text-sm">Try adjusting your filters.</p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          {expandedProduct ? (
+            <ProductDetailInGrid
+              product={expandedProduct}
+              startRect={startRect}
+              onClose={handleClose}
             />
-          ))
-        )}
-      </div>
+          ) : (
+            products.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onExpand={(rect) => handleExpand(product, rect)}
+                isHidden={false}
+                collectionName={collectionName}
+              />
+            ))
+          )}
+        </div>
+      )}
     </>
   );
 }

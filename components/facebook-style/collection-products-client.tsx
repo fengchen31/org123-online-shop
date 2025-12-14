@@ -37,6 +37,8 @@ export function CollectionProductsClient({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [currentSort, setCurrentSort] = useState<SortFilterItem>(defaultSort);
   const [activeCategory, setActiveCategory] = useState<CategoryType>('all');
+  const [showOnSale, setShowOnSale] = useState(false);
+  const [inStockOnly, setInStockOnly] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // 從所有商品中動態生成 categories (不受過濾影響)
@@ -73,6 +75,14 @@ export function CollectionProductsClient({
     // 只需要更新 category 狀態，filteredProducts 會自動重新計算
     // 不需要重新獲取數據，避免閃爍
     setActiveCategory(category);
+  };
+
+  const handleSaleToggle = (onSale: boolean) => {
+    setShowOnSale(onSale);
+  };
+
+  const handleStockToggle = (stockOnly: boolean) => {
+    setInStockOnly(stockOnly);
   };
 
   const fetchProducts = async (sortOption: SortFilterItem, category: CategoryType, cursor?: string) => {
@@ -157,15 +167,42 @@ export function CollectionProductsClient({
     };
   }, [loadMore]);
 
-  // Filter products based on category (client-side filtering as fallback)
+  // Filter products based on category, sale status, and stock (client-side filtering as fallback)
   const filteredProducts = useMemo(() => {
-    if (activeCategory === 'all') return products;
+    let filtered = products;
 
-    return products.filter((product) => {
-      const tags = product.tags.map((tag) => tag.toLowerCase());
-      return tags.includes(activeCategory.toLowerCase());
-    });
-  }, [products, activeCategory]);
+    // Filter by category
+    if (activeCategory !== 'all') {
+      filtered = filtered.filter((product) => {
+        const tags = product.tags.map((tag) => tag.toLowerCase());
+        return tags.includes(activeCategory.toLowerCase());
+      });
+    }
+
+    // Filter by sale status
+    if (showOnSale) {
+      filtered = filtered.filter((product) => {
+        // Check if product has a compareAtPrice and it's greater than the current price
+        const variant = product.variants?.[0];
+        if (!variant) return false;
+
+        const compareAtPrice = parseFloat(variant.compareAtPrice?.amount || '0');
+        const price = parseFloat(variant.price.amount);
+
+        return compareAtPrice > 0 && compareAtPrice > price;
+      });
+    }
+
+    // Filter by stock availability
+    if (inStockOnly) {
+      filtered = filtered.filter((product) => {
+        // Check if product has at least one variant that is available for sale
+        return product.availableForSale && product.variants?.some(variant => variant.availableForSale);
+      });
+    }
+
+    return filtered;
+  }, [products, activeCategory, showOnSale, inStockOnly]);
 
   const productCount = filteredProducts.length;
 
@@ -213,6 +250,11 @@ export function CollectionProductsClient({
           products={filteredProducts}
           collectionName={collectionTitle}
           onSortChange={handleSortChange}
+          currentSort={currentSort}
+          showOnSale={showOnSale}
+          onSaleToggle={collectionHandle.toLowerCase().includes('sale') ? undefined : handleSaleToggle}
+          inStockOnly={inStockOnly}
+          onStockToggle={handleStockToggle}
           categories={categories}
           activeCategory={activeCategory}
           onCategoryChange={handleCategoryChange}
