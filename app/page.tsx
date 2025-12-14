@@ -10,87 +10,99 @@ type Props = {
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const params = await searchParams;
+  const collectionHandle = params.collection as string | undefined;
   const postId = params.post as string | undefined;
 
   // Default metadata
   const defaultMetadata: Metadata = {
-    description: 'org123.xyz - Your online shopping destination',
     openGraph: {
-      type: 'website'
+      type: 'website',
+      title: 'org123.xyz'
     }
   };
 
-  // If no post parameter, return default
-  if (!postId) {
-    return defaultMetadata;
-  }
-
   try {
-    // Check if it's a Shopify Article ID (format: gid://shopify/Article/xxx)
-    if (postId.startsWith('gid://shopify/Article/')) {
-      const articles = await getBlogArticles('news');
-      const article = articles.find((a) => a.id === postId);
-
-      if (article) {
-        // Extract first image URL from article content or use featured image
-        const extractFirstImageUrl = (htmlContent: string): string | undefined => {
-          try {
-            const imgMatch = htmlContent.match(/<img[^>]+src="([^">]+)"/);
-            return imgMatch ? imgMatch[1] : undefined;
-          } catch (error) {
-            return undefined;
-          }
-        };
-
-        const imageUrl = article.image?.url || extractFirstImageUrl(article.contentHtml);
-
-        const metadata = {
-          title: article.title,
-          description: article.excerpt || article.seo?.description || 'org123.xyz',
-          openGraph: {
-            type: 'article' as const,
-            title: article.title,
-            description: article.excerpt || article.seo?.description || 'org123.xyz',
-            publishedTime: article.publishedAt,
-            authors: article.author?.name ? [article.author.name] : undefined,
-            images: imageUrl
-              ? [
-                  {
-                    url: imageUrl,
-                    width: 1200,
-                    height: 630,
-                    alt: article.title
-                  }
-                ]
-              : undefined
-          }
-        };
-        return metadata;
-      }
-    }
-
-    // Try to extract collection handle from postId
-    // Format: "collection-{handle}"
-    if (postId.startsWith('collection-')) {
-      const collectionHandle = postId.replace('collection-', '');
-
+    // Check for collection parameter first (format: ?collection=handle)
+    if (collectionHandle) {
       const collection = await getCollection(collectionHandle);
 
       if (collection) {
-        const metadata = {
-          title: collection.title,
-          description: collection.description || collection.seo?.description || 'org123.xyz',
+        return {
+          title: `org123.xyz | ${collection.title}`,
+          description: collection.description || collection.seo?.description,
           openGraph: {
             type: 'website' as const,
-            title: collection.title,
-            description: collection.description || collection.seo?.description || 'org123.xyz'
+            title: `org123.xyz | ${collection.title}`,
+            description: collection.description || collection.seo?.description
           }
         };
-        return metadata;
+      }
+    }
+
+    // Check for post parameter (for articles or legacy collection format)
+    if (postId) {
+      // Check if it's a Shopify Article ID (format: gid://shopify/Article/xxx)
+      if (postId.startsWith('gid://shopify/Article/')) {
+        const articles = await getBlogArticles('news');
+        const article = articles.find((a) => a.id === postId);
+
+        if (article) {
+          // Extract first image URL from article content or use featured image
+          const extractFirstImageUrl = (htmlContent: string): string | undefined => {
+            try {
+              const imgMatch = htmlContent.match(/<img[^>]+src="([^">]+)"/);
+              return imgMatch ? imgMatch[1] : undefined;
+            } catch (error) {
+              return undefined;
+            }
+          };
+
+          const imageUrl = article.image?.url || extractFirstImageUrl(article.contentHtml);
+
+          return {
+            title: article.title,
+            description: article.excerpt || article.seo?.description || 'org123.xyz',
+            openGraph: {
+              type: 'article' as const,
+              title: article.title,
+              description: article.excerpt || article.seo?.description || 'org123.xyz',
+              publishedTime: article.publishedAt,
+              authors: article.author?.name ? [article.author.name] : undefined,
+              images: imageUrl
+                ? [
+                    {
+                      url: imageUrl,
+                      width: 1200,
+                      height: 630,
+                      alt: article.title
+                    }
+                  ]
+                : undefined
+            }
+          };
+        }
+      }
+
+      // Legacy format: "collection-{handle}"
+      if (postId.startsWith('collection-')) {
+        const handle = postId.replace('collection-', '');
+        const collection = await getCollection(handle);
+
+        if (collection) {
+          return {
+            title: `org123.xyz | ${collection.title}`,
+            description: collection.description || collection.seo?.description,
+            openGraph: {
+              type: 'website' as const,
+              title: `org123.xyz | ${collection.title}`,
+              description: collection.description || collection.seo?.description
+            }
+          };
+        }
       }
     }
   } catch (error) {
-    console.error('Error generating metadata for post:', postId, error);
+    console.error('Error generating metadata:', error);
   }
 
   return defaultMetadata;
