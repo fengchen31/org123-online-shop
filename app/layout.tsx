@@ -5,7 +5,7 @@ import { FacebookHeader } from 'components/facebook-style/facebook-header';
 import { GeistSans } from 'geist/font/sans';
 import { getCart } from 'lib/shopify';
 import { baseUrl } from 'lib/utils';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { ReactNode } from 'react';
 import './globals.css';
 
@@ -19,6 +19,10 @@ export const metadata: Metadata = {
     follow: true,
     index: true
   }
+};
+
+export const viewport: Viewport = {
+  themeColor: '#3b5998'
 };
 
 export default async function RootLayout({
