@@ -42,27 +42,16 @@ function extractFirstImageUrl(htmlBody: string): string | undefined {
   }
 }
 
-// 從 HTML 中提取純文字內容（客戶端和伺服器端使用相同邏輯）
-function extractTextFromHtml(htmlBody: string): string {
-  // 使用 regex 方法，確保客戶端和伺服器端結果一致
-  const text = htmlBody
+// 從 HTML 中移除圖片但保留其他格式
+function removeImagesFromHtml(htmlBody: string): string {
+  // 移除不安全的標籤但保留格式化標籤（如 <a>, <strong>, <span style> 等）
+  const cleaned = htmlBody
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n\n')
-    .replace(/<\/div>/gi, '\n')
-    .replace(/<\/h[1-6]>/gi, '\n\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\n\s*\n\s*\n/g, '\n\n')
+    .replace(/<img[^>]*>/gi, '') // 只移除 img 標籤
     .trim();
 
-  return text;
+  return cleaned;
 }
 
 export function PagesFeed({ articles }: PagesFeedProps) {
@@ -74,15 +63,15 @@ export function PagesFeed({ articles }: PagesFeedProps) {
     });
 
     return sortedArticles.map((article) => {
-      // 使用 extractTextFromHtml 從 contentHtml 提取文字
-      const content = extractTextFromHtml(article.contentHtml);
+      // 使用 removeImagesFromHtml 從 contentHtml 移除圖片但保留格式
+      const content = removeImagesFromHtml(article.contentHtml);
 
       return {
         id: article.id,
         author: 'org123.xyz',
         authorAvatar: '/images/avatars/org123xyz_head.svg',
         timestamp: formatRelativeTime(article.publishedAt),
-        content, // 顯示完整內文（純文字）
+        content, // 顯示完整內文（保留 HTML 格式）
         imageUrl: article.image?.url || extractFirstImageUrl(article.contentHtml)
       };
     });

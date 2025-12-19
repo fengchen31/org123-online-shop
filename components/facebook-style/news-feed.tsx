@@ -340,9 +340,10 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
 
             <div>
               {post.content && (
-                <div className="px-4 py-3 text-sm text-gray-800 whitespace-pre-wrap">
-                  {post.content}
-                </div>
+                <div
+                  className="px-4 py-3 text-sm text-gray-800 whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{ __html: post.content }}
+                />
               )}
 
               {post.imageUrl && (

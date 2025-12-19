@@ -24,12 +24,11 @@ function parseNewsPosts(htmlBody: string): NewsPost[] {
     const timestamp = article.getAttribute('data-timestamp') || 'Just now';
     const linkTo = article.getAttribute('data-link-to') || '';
 
-    // Get text content (all text not in img tags)
-    const textContent = Array.from(article.childNodes)
-      .filter(node => node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && node.nodeName !== 'IMG'))
-      .map(node => node.textContent?.trim())
-      .filter(Boolean)
-      .join(' ');
+    // Get HTML content (all content not in img tags)
+    const clone = article.cloneNode(true) as HTMLElement;
+    const images = clone.querySelectorAll('img');
+    images.forEach(img => img.remove());
+    const textContent = clone.innerHTML.trim();
 
     // Get first image if exists
     const img = article.querySelector('img');
@@ -68,20 +67,23 @@ function parseNewsPosts(htmlBody: string): NewsPost[] {
         const imageUrl = img.getAttribute('src');
         const linkTo = img.getAttribute('data-link-to') || '';
 
-        // Collect text from current element (excluding img) and previous elements
+        // Collect HTML content from current element (excluding img) and previous elements
         let content = '';
 
-        // Get text from current element
+        // Get HTML content from current element
         const clone = element?.cloneNode(true) as HTMLElement;
         const images = clone?.querySelectorAll('img');
         images?.forEach(i => i.remove());
-        content = clone?.textContent?.trim() || '';
+        content = clone?.innerHTML?.trim() || '';
 
-        // If no text in current element, look at previous element
+        // If no content in current element, look at previous element
         if (!content && i > 0) {
           const prevElement = allElements[i - 1];
           if (prevElement && !prevElement.querySelector('img')) {
-            content = prevElement.textContent?.trim() || '';
+            const prevClone = prevElement.cloneNode(true) as HTMLElement;
+            const prevImages = prevClone.querySelectorAll('img');
+            prevImages.forEach(i => i.remove());
+            content = prevClone.innerHTML?.trim() || '';
           }
         }
 
