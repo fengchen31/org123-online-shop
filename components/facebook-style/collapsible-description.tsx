@@ -7,6 +7,7 @@ interface DescriptionSection {
   title: string;
   content: string;
   htmlContent?: string; // For sections that contain HTML like tables
+  isNotice?: boolean; // For non-collapsible notice sections
 }
 
 interface CollapsibleDescriptionProps {
@@ -57,6 +58,9 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
 
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
+
+  // Track the text content of notice sections to avoid duplication
+  let noticeText = '';
 
   // Helper function to check if element or its children have bold styling
   const hasBoldStyling = (element: HTMLElement): boolean => {
@@ -121,6 +125,53 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
     }
   });
 
+  // Find all elements with color styling anywhere in the document
+  const coloredElements: HTMLElement[] = [];
+  const allElementsInDoc = doc.body.querySelectorAll('*');
+
+  allElementsInDoc.forEach(el => {
+    const element = el as HTMLElement;
+    const style = element.getAttribute('style');
+
+    // Check if this element has color or background color styling
+    if (style && /color:\s*rgb\(255,\s*42,\s*0\)|color:\s*red/i.test(style)) {
+      // Make sure this isn't nested inside another colored element we already found
+      const isNested = coloredElements.some(parent => parent.contains(element));
+      if (!isNested) {
+        coloredElements.push(element);
+      }
+    }
+  });
+
+  // Create notice section from colored elements
+  if (coloredElements.length > 0) {
+    let noticeHtml = '';
+    let noticeContent = '';
+
+    coloredElements.forEach(element => {
+      noticeHtml += element.outerHTML;
+      noticeContent += (element.textContent?.trim() || '') + '\n';
+    });
+
+    if (noticeContent.trim()) {
+      noticeText = noticeContent.trim(); // Save for deduplication
+      sections.push({
+        title: 'Notice',
+        content: noticeContent.trim(),
+        htmlContent: noticeHtml,
+        isNotice: true
+      });
+    }
+  }
+
+  // Helper function to check if text contains the notice text
+  const containsNoticeText = (text: string): boolean => {
+    if (!noticeText) return false;
+    const cleanText = text.replace(/\s+/g, ' ').trim();
+    const cleanNotice = noticeText.replace(/\s+/g, ' ').trim();
+    return cleanText.includes(cleanNotice);
+  };
+
   // Process each bold element as a section title
   boldElements.forEach((boldEl, index) => {
     // Extract only the direct text nodes of the bold element, not nested elements with different font-weight
@@ -144,6 +195,7 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
 
     // Find content between this bold element and the next one
     let content = '';
+    let contentHtml = '';
 
     // First, check if there are child nodes with font-weight: 400 (nested content in the same element)
     boldEl.childNodes.forEach(node => {
@@ -153,13 +205,21 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
         if (childStyle && /font-weight:\s*(400|normal)/i.test(childStyle)) {
           // This is nested content with normal font-weight, extract it
           const clone = el.cloneNode(true) as HTMLElement;
-          clone.querySelectorAll('br').forEach(br => {
-            const textNode = document.createTextNode('\n');
-            br.replaceWith(textNode);
-          });
+
           const text = clone.textContent || '';
-          if (text.trim()) {
-            content += text;
+
+          // Skip this content if it contains the notice text
+          if (text.trim() && !containsNoticeText(text)) {
+            // Preserve HTML with inline styles (especially color)
+            contentHtml += el.innerHTML;
+
+            clone.querySelectorAll('br').forEach(br => {
+              const textNode = document.createTextNode('\n');
+              br.replaceWith(textNode);
+            });
+            if (text.trim()) {
+              content += text;
+            }
           }
         }
       }
@@ -173,7 +233,8 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
       if (content.trim()) {
         sections.push({
           title: title,
-          content: content.trim()
+          content: content.trim(),
+          htmlContent: contentHtml || undefined
         });
       }
       return; // Skip to next bold element
@@ -194,6 +255,7 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
     const nextBoldEl = boldElements[index + 1];
     let htmlContent = '';
     let hasTable = false;
+    let hasInlineStyles = false;
 
     while (currentNode) {
       // Stop if we hit the next bold element
@@ -203,8 +265,9 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
 
       if (currentNode.nodeType === Node.TEXT_NODE) {
         const text = currentNode.textContent?.replace(/\s+/g, ' ').trim() || '';
-        if (text) {
+        if (text && !containsNoticeText(text)) {
           content += (content ? '\n' : '') + text;
+          htmlContent += text;
         }
       } else if (currentNode.nodeType === Node.ELEMENT_NODE) {
         const element = currentNode as HTMLElement;
@@ -213,6 +276,22 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
         const containsBold = boldElements.some(b => element === b || element.contains(b));
         if (containsBold) {
           break;
+        }
+
+        // Get element's text to check for notice duplication
+        const elementText = element.textContent || '';
+
+        // Skip this element if it contains the notice text
+        if (containsNoticeText(elementText)) {
+          // Move to next sibling
+          if (currentNode.nextSibling) {
+            currentNode = currentNode.nextSibling;
+          } else if (currentNode.parentElement && currentNode.parentElement !== doc.body) {
+            currentNode = currentNode.parentElement.nextSibling;
+          } else {
+            break;
+          }
+          continue;
         }
 
         // Check if this is a table - if so, preserve the HTML
@@ -224,10 +303,20 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
           break; // Table is the content, stop here
         }
 
+        // Check if element has inline styles (color, etc.)
+        const style = element.getAttribute('style');
+        if (style && (style.includes('color') || style.includes('background'))) {
+          hasInlineStyles = true;
+        }
+
         // Handle BR tags as line breaks
         if (element.tagName === 'BR') {
           content += '\n';
+          htmlContent += '<br>';
         } else {
+          // Preserve HTML for elements with styling
+          htmlContent += element.outerHTML;
+
           // Get all text from this element, preserving line breaks from BR tags
           const clone = element.cloneNode(true) as HTMLElement;
 
@@ -268,7 +357,7 @@ function parseDescriptionHtml(html: string): DescriptionSection[] {
       sections.push({
         title: title,
         content: cleanedContent,
-        htmlContent: hasTable ? htmlContent : undefined
+        htmlContent: (hasTable || hasInlineStyles) ? htmlContent : undefined
       });
     }
   });
@@ -436,14 +525,21 @@ function CollapsibleSection({ title, content, htmlContent, defaultOpen = false, 
               </table>
             </div>
           ) : (
-            // Display as regular text
-            <div className="space-y-1 text-xs leading-relaxed text-gray-700 sm:text-sm">
-              {content.split('\n').map((line, i) => (
-                <div key={i} className="whitespace-pre-wrap">
-                  {line.trim() || '\u00A0'}
-                </div>
-              ))}
-            </div>
+            // Display content - use HTML if available, otherwise plain text
+            htmlContent ? (
+              <div
+                className="space-y-1 text-xs leading-relaxed sm:text-sm"
+                dangerouslySetInnerHTML={{ __html: htmlContent }}
+              />
+            ) : (
+              <div className="space-y-1 text-xs leading-relaxed text-gray-700 sm:text-sm">
+                {content.split('\n').map((line, i) => (
+                  <div key={i} className="whitespace-pre-wrap">
+                    {line.trim() || '\u00A0'}
+                  </div>
+                ))}
+              </div>
+            )
           )}
         </div>
       )}
@@ -495,10 +591,13 @@ function isSizeChartSection(section: DescriptionSection): boolean {
 function mergeIntoFeaturesAndSizeChart(sections: DescriptionSection[]): DescriptionSection[] {
   const sizeChartSections: DescriptionSection[] = [];
   const featureSections: DescriptionSection[] = [];
+  const noticeSections: DescriptionSection[] = [];
 
-  // Separate Size Chart sections from feature sections
+  // Separate Size Chart sections, Notice sections, and feature sections
   sections.forEach(section => {
-    if (isSizeChartSection(section) || isSizeTitle(section.title)) {
+    if (section.isNotice) {
+      noticeSections.push(section);
+    } else if (isSizeChartSection(section) || isSizeTitle(section.title)) {
       sizeChartSections.push(section);
     } else {
       featureSections.push(section);
@@ -507,6 +606,11 @@ function mergeIntoFeaturesAndSizeChart(sections: DescriptionSection[]): Descript
 
   const result: DescriptionSection[] = [];
 
+  // Add Notice sections first (preserving HTML content)
+  noticeSections.forEach(section => {
+    result.push(section);
+  });
+
   // Create a single Features section from all feature sections
   if (featureSections.length > 0) {
     // Create HTML for better formatting with inline styles
@@ -514,7 +618,9 @@ function mergeIntoFeaturesAndSizeChart(sections: DescriptionSection[]): Descript
     featureSections.forEach((section) => {
       featuresHtml += '<div>';
       featuresHtml += `<div style="font-weight: 700; color: #111827; font-size: 0.875rem;">${section.title}</div>`;
-      featuresHtml += `<div style="color: #374151; margin-top: 0.25rem; font-size: 0.875rem;">${section.content.split('\n').join('<br>')}</div>`;
+      // Use section's HTML content if available, otherwise convert plain text to HTML
+      const sectionContent = section.htmlContent || section.content.split('\n').join('<br>');
+      featuresHtml += `<div style="color: #374151; margin-top: 0.25rem; font-size: 0.875rem;">${sectionContent}</div>`;
       featuresHtml += '</div>';
     });
     featuresHtml += '</div>';
@@ -590,9 +696,24 @@ export function CollapsibleDescription({ description, descriptionHtml }: Collaps
     return null;
   }
 
+  // Separate notice sections from collapsible sections
+  const noticeSections = sections.filter(s => s.isNotice);
+  const collapsibleSections = sections.filter(s => !s.isNotice);
+
   return (
     <div>
-      {sections.map((section, index) => (
+      {/* Render notice sections as non-collapsible banners */}
+      {noticeSections.map((section, index) => (
+        <div key={`notice-${index}`} className="mb-4">
+          <div
+            className="text-xs leading-relaxed sm:text-sm"
+            dangerouslySetInnerHTML={{ __html: section.htmlContent || section.content }}
+          />
+        </div>
+      ))}
+
+      {/* Render collapsible sections */}
+      {collapsibleSections.map((section, index) => (
         <CollapsibleSection
           key={index}
           title={section.title}
