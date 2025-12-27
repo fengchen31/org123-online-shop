@@ -660,6 +660,8 @@ function mergeIntoFeaturesAndSizeChart(sections: DescriptionSection[]): Descript
       sectionContent = sectionContent.replace(/^(<br\s*\/?>)+/gi, '');
       // Remove trailing <br> tags
       sectionContent = sectionContent.replace(/(<br\s*\/?>)+$/gi, '');
+      // Remove inline font-size styles to ensure consistent sizing
+      sectionContent = sectionContent.replace(/font-size:\s*[^;]+;?/gi, '');
       featuresHtml += `<div style="color: #374151; margin-top: 0.25rem; font-size: 0.875rem;">${sectionContent}</div>`;
       featuresHtml += '</div>';
     });
