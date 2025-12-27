@@ -395,14 +395,23 @@ function extractHtmlTable(html: string): string | null {
   return table ? table.outerHTML : null;
 }
 
-// Parse size chart content into table data (fallback for text format)
-function parseSizeChart(content: string): { size: string; measurements: string[] }[] | null {
+// Parse size chart content into horizontal table data (sizes as columns)
+function parseSizeChart(content: string): {
+  sizes: string[];
+  measurements: { label: string; values: string[] }[]
+} | null {
   const lines = content.split('\n').map(l => l.trim()).filter(Boolean);
 
   // Common size keywords
-  const sizeKeywords = ['small', 'medium', 'large', 'x-large', 'xl', 'xxl', '2xl', 'xs', 's', 'm', 'l'];
-  const sizes: { size: string; measurements: string[] }[] = [];
-  let currentSize: { size: string; measurements: string[] } | null = null;
+  const sizeKeywords = ['small', 'medium', 'large', 'x-large', 'xl', 'xxl', '2xl', 'xs', 's', 'm', 'l', '3xl', 'xxxl'];
+
+  interface SizeData {
+    size: string;
+    measurements: Map<string, string>;
+  }
+
+  const sizesData: SizeData[] = [];
+  let currentSize: SizeData | null = null;
 
   for (const line of lines) {
     const lowerLine = line.toLowerCase();
@@ -416,23 +425,47 @@ function parseSizeChart(content: string): { size: string; measurements: string[]
 
     if (isSize) {
       // Save previous size if exists
-      if (currentSize && currentSize.measurements.length > 0) {
-        sizes.push(currentSize);
+      if (currentSize && currentSize.measurements.size > 0) {
+        sizesData.push(currentSize);
       }
       // Start new size
-      currentSize = { size: line, measurements: [] };
+      currentSize = { size: line, measurements: new Map() };
     } else if (currentSize) {
-      // Add measurement to current size
-      currentSize.measurements.push(line);
+      // Parse measurement line (e.g., "Length: 60cm / Chest: 62cm" or "Length: 60cm")
+      const parts = line.split('/').map(p => p.trim());
+
+      parts.forEach(part => {
+        const match = part.match(/^(.+?):\s*(.+)$/);
+        if (match && match[1] && match[2]) {
+          const label = match[1].trim();
+          const value = match[2].trim();
+          currentSize!.measurements.set(label, value);
+        }
+      });
     }
   }
 
   // Add last size
-  if (currentSize && currentSize.measurements.length > 0) {
-    sizes.push(currentSize);
+  if (currentSize && currentSize.measurements.size > 0) {
+    sizesData.push(currentSize);
   }
 
-  return sizes.length > 0 ? sizes : null;
+  if (sizesData.length === 0) return null;
+
+  // Extract all unique measurement labels
+  const measurementLabels = new Set<string>();
+  sizesData.forEach(sizeData => {
+    sizeData.measurements.forEach((_, label) => measurementLabels.add(label));
+  });
+
+  // Build the table data structure
+  const sizes = sizesData.map(sd => getSizeAcronym(sd.size));
+  const measurements = Array.from(measurementLabels).map(label => ({
+    label: label.toUpperCase(),
+    values: sizesData.map(sd => sd.measurements.get(label) || '-')
+  }));
+
+  return { sizes, measurements };
 }
 
 function CollapsibleSection({ title, content, htmlContent, defaultOpen = false, isFirst = false, sectionId }: DescriptionSection & { defaultOpen?: boolean; isFirst?: boolean; sectionId: string }) {
@@ -501,24 +534,24 @@ function CollapsibleSection({ title, content, htmlContent, defaultOpen = false, 
               dangerouslySetInnerHTML={{ __html: htmlContent }}
             />
           ) : sizeData ? (
-            // Display as parsed table (fallback)
+            // Display as horizontal table with sizes as columns
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-xs sm:text-sm">
                 <thead>
                   <tr className="border-b border-gray-300 bg-gray-50">
-                    <th className="w-16 px-2 py-2 text-left font-semibold text-gray-900 sm:w-20 sm:px-3">Size</th>
-                    <th className="px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">Measurements</th>
+                    <th className="px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">SIZE</th>
+                    {sizeData.sizes.map((size, i) => (
+                      <th key={i} className="px-2 py-2 text-center font-semibold text-gray-900 sm:px-3">{size}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {sizeData.map((row, i) => (
+                  {sizeData.measurements.map((measurement, i) => (
                     <tr key={i} className="border-b border-gray-200 last:border-b-0">
-                      <td className="px-2 py-2 font-medium text-gray-900 sm:px-3">{getSizeAcronym(row.size)}</td>
-                      <td className="px-2 py-2 text-gray-700 sm:px-3">
-                        {row.measurements.map((m, j) => (
-                          <div key={j}>{m}</div>
-                        ))}
-                      </td>
+                      <td className="px-2 py-2 font-medium text-gray-900 sm:px-3">{measurement.label}</td>
+                      {measurement.values.map((value, j) => (
+                        <td key={j} className="px-2 py-2 text-center text-gray-700 sm:px-3">{value}</td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
@@ -619,7 +652,14 @@ function mergeIntoFeaturesAndSizeChart(sections: DescriptionSection[]): Descript
       featuresHtml += '<div>';
       featuresHtml += `<div style="font-weight: 700; color: #111827; font-size: 0.875rem;">${section.title}</div>`;
       // Use section's HTML content if available, otherwise convert plain text to HTML
-      const sectionContent = section.htmlContent || section.content.split('\n').join('<br>');
+      // Clean up: remove underscores and trim leading/trailing <br> tags
+      let sectionContent = section.htmlContent || section.content.split('\n').join('<br>');
+      // Remove all underscores
+      sectionContent = sectionContent.replace(/_/g, '');
+      // Remove leading <br> tags
+      sectionContent = sectionContent.replace(/^(<br\s*\/?>)+/gi, '');
+      // Remove trailing <br> tags
+      sectionContent = sectionContent.replace(/(<br\s*\/?>)+$/gi, '');
       featuresHtml += `<div style="color: #374151; margin-top: 0.25rem; font-size: 0.875rem;">${sectionContent}</div>`;
       featuresHtml += '</div>';
     });
@@ -641,43 +681,97 @@ function mergeIntoFeaturesAndSizeChart(sections: DescriptionSection[]): Descript
 
   // Create a single Size Chart section
   if (sizeChartSections.length > 0) {
-    // Check if any section already has HTML table
-    const htmlSection = sizeChartSections.find(s => s.htmlContent);
+    // Check if any section already has a proper HTML table
+    const htmlSection = sizeChartSections.find(s => s.htmlContent && s.htmlContent.includes('<table'));
 
     if (htmlSection) {
+      // Already has a table, use it as-is
       result.push({
         title: 'Size Chart',
         content: htmlSection.content,
         htmlContent: htmlSection.htmlContent
       });
-    } else if (sizeChartSections.length >= 1 && sizeChartSections[0] && isSizeTitle(sizeChartSections[0].title)) {
-      // Create a table from size sections
-      let tableHtml = '<table class="w-full border-collapse"><thead><tr class="border-b border-gray-300 bg-gray-50">';
-      tableHtml += '<th class="w-16 sm:w-20 px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">Size</th>';
-      tableHtml += '<th class="px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">Measurements</th>';
-      tableHtml += '</tr></thead><tbody>';
+    } else if (sizeChartSections.length >= 1) {
+      // Try to parse size sections into horizontal table format
+      interface SizeMeasurements {
+        [measurementName: string]: string;
+      }
 
+      const sizesData: { size: string; measurements: SizeMeasurements }[] = [];
+      const allMeasurements = new Set<string>();
+
+      // Extract data from each size section
       sizeChartSections.forEach(section => {
-        tableHtml += '<tr class="border-b border-gray-200 last:border-b-0">';
-        tableHtml += `<td class="px-2 py-2 font-medium text-gray-900 sm:px-3">${getSizeAcronym(section.title)}</td>`;
-        tableHtml += `<td class="px-2 py-2 text-gray-700 sm:px-3">${section.content.split('\n').join('<br>')}</td>`;
-        tableHtml += '</tr>';
+        const sizeName = getSizeAcronym(section.title);
+        const measurements: SizeMeasurements = {};
+
+        // Parse measurements from content (e.g., "Length: 60cm / Chest: 62cm")
+        // Normalize line breaks first
+        const normalizedContent = section.content
+          .replace(/\r\n/g, '\n')
+          .replace(/\r/g, '\n');
+
+        const lines = normalizedContent.split('\n')
+          .map(l => l.trim().replace(/\s+/g, ' '))  // Normalize spaces within each line
+          .filter(Boolean);
+        lines.forEach(line => {
+          const parts = line.split('/').map(p => p.trim());
+          parts.forEach(part => {
+            // More robust regex: handle optional whitespace and special characters
+            const match = part.match(/^(.+?)\s*:\s*(.+?)$/);
+            if (match && match[1] && match[2]) {
+              const label = match[1].trim().toUpperCase().replace(/\s+/g, ' ');
+              const value = match[2].trim();
+              measurements[label] = value;
+              allMeasurements.add(label);
+            }
+          });
+        });
+
+        sizesData.push({ size: sizeName, measurements });
       });
 
-      tableHtml += '</tbody></table>';
+      const measurementOrder = Array.from(allMeasurements);
 
-      result.push({
-        title: 'Size Chart',
-        content: sizeChartSections.map(s => `${s.title}:\n${s.content}`).join('\n\n'),
-        htmlContent: tableHtml
-      });
-    } else if (sizeChartSections.length > 0 && sizeChartSections[0]) {
-      // Just use the first size chart section as-is
-      result.push({
-        title: 'Size Chart',
-        content: sizeChartSections.map(s => s.content).join('\n\n'),
-        htmlContent: sizeChartSections[0].htmlContent
-      });
+      // Only create table if we successfully parsed measurements
+      if (sizesData.length > 0 && measurementOrder.length > 0) {
+        // Create horizontal table HTML with 30% smaller font
+        let tableHtml = '<table class="w-full border-collapse text-xs sm:text-sm" style="font-size: 70%;"><thead><tr class="border-b border-gray-300 bg-gray-50">';
+        tableHtml += '<th class="px-2 py-2 text-left font-semibold text-gray-900 sm:px-3">SIZE</th>';
+        sizesData.forEach(sizeData => {
+          tableHtml += `<th class="px-2 py-2 text-center font-semibold text-gray-900 sm:px-3">${sizeData.size}</th>`;
+        });
+        tableHtml += '</tr></thead><tbody>';
+
+        // Add rows for each measurement
+        measurementOrder.forEach(measurement => {
+          tableHtml += '<tr class="border-b border-gray-200 last:border-b-0">';
+          tableHtml += `<td class="px-2 py-2 font-medium text-gray-900 sm:px-3">${measurement}</td>`;
+          sizesData.forEach(sizeData => {
+            const value = sizeData.measurements[measurement] || '-';
+            tableHtml += `<td class="px-2 py-2 text-center text-gray-700 sm:px-3">${value}</td>`;
+          });
+          tableHtml += '</tr>';
+        });
+
+        tableHtml += '</tbody></table>';
+
+        result.push({
+          title: 'Size Chart',
+          content: sizeChartSections.map(s => `${s.title}:\n${s.content}`).join('\n\n'),
+          htmlContent: tableHtml
+        });
+      } else {
+        // Fallback: couldn't parse into table, use first section's HTML or content
+        const firstSection = sizeChartSections[0];
+        if (firstSection) {
+          result.push({
+            title: 'Size Chart',
+            content: sizeChartSections.map(s => s.content).join('\n\n'),
+            htmlContent: firstSection.htmlContent
+          });
+        }
+      }
     }
   }
 
