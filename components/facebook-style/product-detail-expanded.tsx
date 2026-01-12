@@ -144,19 +144,45 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
 
           {/* Right side - Product info */}
           <div className="flex flex-col p-8 pt-16">
-            <div className="flex-1">
+            <div className="flex-1 md:flex-none">
               <h1 className="pr-12 text-xl font-bold text-gray-900">
                 {product.title}
               </h1>
 
-              <p className="mt-3 text-base font-semibold text-[#3b5998]">
+              <div className="mt-3">
                 {(() => {
-                  const originalAmount = product.priceRange.maxVariantPrice.amount;
-                  const originalCurrency = product.priceRange.maxVariantPrice.currencyCode;
-                  const converted = convertPrice(originalAmount, originalCurrency);
-                  return `${converted.currency === 'TWD' ? 'NT$' : '$'}${Math.floor(parseFloat(converted.amount)).toLocaleString()} ${converted.currency}`;
+                  const currentAmount = product.priceRange.maxVariantPrice.amount;
+                  const currentCurrency = product.priceRange.maxVariantPrice.currencyCode;
+                  const compareAtAmount = product.compareAtPriceRange?.maxVariantPrice.amount;
+                  const compareAtCurrency = product.compareAtPriceRange?.maxVariantPrice.currencyCode;
+                  const hasDiscount = compareAtAmount && parseFloat(compareAtAmount) > parseFloat(currentAmount);
+
+                  if (hasDiscount) {
+                    const currentConverted = convertPrice(currentAmount, currentCurrency);
+                    const compareAtConverted = convertPrice(compareAtAmount, compareAtCurrency || currentCurrency);
+                    const currencySymbol = currentConverted.currency === 'TWD' ? 'NT$' : '$';
+                    const discount = Math.round((1 - parseFloat(currentAmount) / parseFloat(compareAtAmount)) * 100);
+
+                    return (
+                      <>
+                        <p className="text-base font-semibold text-gray-500 line-through">
+                          {currencySymbol}{Math.floor(parseFloat(compareAtConverted.amount)).toLocaleString()} {compareAtConverted.currency}
+                        </p>
+                        <p className="text-base font-semibold text-red-600">
+                          {currencySymbol}{Math.floor(parseFloat(currentConverted.amount)).toLocaleString()} {currentConverted.currency}
+                        </p>
+                      </>
+                    );
+                  } else {
+                    const converted = convertPrice(currentAmount, currentCurrency);
+                    return (
+                      <p className="text-base font-semibold text-[#3b5998]">
+                        {converted.currency === 'TWD' ? 'NT$' : '$'}{Math.floor(parseFloat(converted.amount)).toLocaleString()} {converted.currency}
+                      </p>
+                    );
+                  }
                 })()}
-              </p>
+              </div>
 
               {/* Collapsible Description - After price */}
               {product.description && (
@@ -172,12 +198,12 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
               <div className="mt-4">
                 <FacebookVariantSelector options={product.options} variants={product.variants} />
               </div>
-            </div>
 
-            {/* Add to cart and wishlist buttons */}
-            <div className="mt-8 space-y-3">
-              <AddToCart product={product} />
-              <AddToWishlist product={product} />
+              {/* Add to cart and wishlist buttons - follows variant selector on desktop */}
+              <div className="mt-4 space-y-3 md:mt-6">
+                <AddToCart product={product} />
+                <AddToWishlist product={product} />
+              </div>
             </div>
           </div>
         </div>

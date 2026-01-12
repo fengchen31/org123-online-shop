@@ -162,19 +162,45 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
           <div className={`flex flex-col p-3 pt-8 transition-all duration-500 sm:p-4 sm:pt-10 md:p-6 md:pt-12 lg:p-8 lg:pt-14 ${
             showContent ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'
           }`}>
-            <div className="flex-1">
+            <div className="flex-1 md:flex-none">
               <h1 className="pr-8 text-base font-bold text-gray-900 sm:pr-10 sm:text-lg lg:text-xl">
                 {product.title}
               </h1>
 
-              <p className="mt-2 text-sm font-semibold text-[#3b5998] sm:mt-3 sm:text-base">
+              <div className="mt-2 sm:mt-3">
                 {(() => {
-                  const originalAmount = product.priceRange.maxVariantPrice.amount;
-                  const originalCurrency = product.priceRange.maxVariantPrice.currencyCode;
-                  const converted = convertPrice(originalAmount, originalCurrency);
-                  return `${converted.currency === 'TWD' ? 'NT$' : '$'}${Math.floor(parseFloat(converted.amount)).toLocaleString()} ${converted.currency}`;
+                  const currentAmount = product.priceRange.maxVariantPrice.amount;
+                  const currentCurrency = product.priceRange.maxVariantPrice.currencyCode;
+                  const compareAtAmount = product.compareAtPriceRange?.maxVariantPrice.amount;
+                  const compareAtCurrency = product.compareAtPriceRange?.maxVariantPrice.currencyCode;
+                  const hasDiscount = compareAtAmount && parseFloat(compareAtAmount) > parseFloat(currentAmount);
+
+                  if (hasDiscount) {
+                    const currentConverted = convertPrice(currentAmount, currentCurrency);
+                    const compareAtConverted = convertPrice(compareAtAmount, compareAtCurrency || currentCurrency);
+                    const currencySymbol = currentConverted.currency === 'TWD' ? 'NT$' : '$';
+                    const discount = Math.round((1 - parseFloat(currentAmount) / parseFloat(compareAtAmount)) * 100);
+
+                    return (
+                      <>
+                        <p className="text-sm font-semibold text-gray-500 line-through sm:text-base">
+                          {currencySymbol}{Math.floor(parseFloat(compareAtConverted.amount)).toLocaleString()} {compareAtConverted.currency}
+                        </p>
+                        <p className="text-sm font-semibold text-red-600 sm:text-base">
+                          {currencySymbol}{Math.floor(parseFloat(currentConverted.amount)).toLocaleString()} {currentConverted.currency}
+                        </p>
+                      </>
+                    );
+                  } else {
+                    const converted = convertPrice(currentAmount, currentCurrency);
+                    return (
+                      <p className="text-sm font-semibold text-[#3b5998] sm:text-base">
+                        {converted.currency === 'TWD' ? 'NT$' : '$'}{Math.floor(parseFloat(converted.amount)).toLocaleString()} {converted.currency}
+                      </p>
+                    );
+                  }
                 })()}
-              </p>
+              </div>
 
               {/* Collapsible Description - After price */}
               {product.description && (
@@ -190,12 +216,12 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
               <div className="mt-3 sm:mt-4">
                 <FacebookVariantSelector options={product.options} variants={product.variants} />
               </div>
-            </div>
 
-            {/* Add to cart and wishlist buttons */}
-            <div className="mt-4 space-y-2 sm:mt-6 sm:space-y-3 lg:mt-8">
-              <AddToCart product={product} />
-              <AddToWishlist product={product} />
+              {/* Add to cart and wishlist buttons - follows variant selector on desktop */}
+              <div className="mt-3 space-y-2 sm:mt-4 sm:space-y-3 md:mt-6">
+                <AddToCart product={product} />
+                <AddToWishlist product={product} />
+              </div>
             </div>
           </div>
         </div>

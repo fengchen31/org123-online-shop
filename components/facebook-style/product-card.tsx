@@ -114,8 +114,8 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
           {displayCollectionName}
         </div>
 
-        {/* Product Name - Smaller - Min height for 2 lines */}
-        <h3 className="line-clamp-2 text-xs leading-tight text-gray-900 sm:text-sm">
+        {/* Product Name - Smaller - Min height for 3 lines */}
+        <h3 className="line-clamp-3 text-xs leading-tight text-gray-900 sm:text-sm">
           {product.title}
         </h3>
 
@@ -144,15 +144,12 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
 
               return (
                 <div className="flex flex-col gap-0.5">
-                  <p className="text-xs font-bold text-gray-900 line-through sm:text-sm">
+                  <p className="text-xs font-bold text-gray-500 line-through sm:text-sm">
                     {currencySymbol}{Math.floor(parseFloat(compareAtConverted.amount)).toLocaleString()} {compareAtConverted.currency}
                   </p>
-                  <div className="flex items-baseline gap-1.5">
-                    <p className="text-xs font-bold text-gray-900 sm:text-sm">
-                      {currencySymbol}{Math.floor(parseFloat(currentConverted.amount)).toLocaleString()} {currentConverted.currency}
-                    </p>
-                    <span className="text-xs font-bold text-red-600 sm:text-sm">({discount}%)</span>
-                  </div>
+                  <p className="text-xs font-bold text-red-600 sm:text-sm">
+                    {currencySymbol}{Math.floor(parseFloat(currentConverted.amount)).toLocaleString()} {currentConverted.currency}
+                  </p>
                 </div>
               );
             } else {
@@ -160,7 +157,7 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
               const converted = convertPrice(currentAmount, currentCurrency);
               return (
                 <div className="flex flex-col gap-0.5">
-                  <div className="h-[1.25rem] sm:h-[1.5rem]"></div>
+                  <p className="text-xs font-bold text-transparent sm:text-sm">&nbsp;</p>
                   <p className="text-xs font-bold text-gray-900 sm:text-sm">
                     {converted.currency === 'TWD' ? 'NT$' : '$'}{Math.floor(parseFloat(converted.amount)).toLocaleString()} {converted.currency}
                   </p>
@@ -170,7 +167,7 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
           })()
         ) : (
           <div className="flex flex-col gap-0.5">
-            <div className="h-[1.25rem] sm:h-[1.5rem]"></div>
+            <p className="text-xs font-bold text-transparent sm:text-sm">&nbsp;</p>
             <p className="text-xs font-bold text-red-600 sm:text-sm">SOLD OUT</p>
           </div>
         )}
