@@ -169,7 +169,7 @@ export function ProductDetailExpanded({ product, onClose }: ProductDetailExpande
                           {currencySymbol}{Math.floor(parseFloat(compareAtConverted.amount)).toLocaleString()} {compareAtConverted.currency}
                         </p>
                         <p className="text-base font-semibold text-red-600">
-                          {currencySymbol}{Math.floor(parseFloat(currentConverted.amount)).toLocaleString()} {currentConverted.currency}
+                          {currencySymbol}{Math.floor(parseFloat(currentConverted.amount)).toLocaleString()} {currentConverted.currency} ({discount}%)
                         </p>
                       </>
                     );

@@ -148,7 +148,7 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
                     {currencySymbol}{Math.floor(parseFloat(compareAtConverted.amount)).toLocaleString()} {compareAtConverted.currency}
                   </p>
                   <p className="text-xs font-bold text-red-600 sm:text-sm">
-                    {currencySymbol}{Math.floor(parseFloat(currentConverted.amount)).toLocaleString()} {currentConverted.currency}
+                    {currencySymbol}{Math.floor(parseFloat(currentConverted.amount)).toLocaleString()} {currentConverted.currency} ({discount}%)
                   </p>
                 </div>
               );

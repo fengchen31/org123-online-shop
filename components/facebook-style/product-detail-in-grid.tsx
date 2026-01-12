@@ -187,7 +187,7 @@ export function ProductDetailInGrid({ product, startRect, onClose }: ProductDeta
                           {currencySymbol}{Math.floor(parseFloat(compareAtConverted.amount)).toLocaleString()} {compareAtConverted.currency}
                         </p>
                         <p className="text-sm font-semibold text-red-600 sm:text-base">
-                          {currencySymbol}{Math.floor(parseFloat(currentConverted.amount)).toLocaleString()} {currentConverted.currency}
+                          {currencySymbol}{Math.floor(parseFloat(currentConverted.amount)).toLocaleString()} {currentConverted.currency} ({discount}%)
                         </p>
                       </>
                     );
