@@ -108,7 +108,7 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
       </div>
 
       {/* Product Info */}
-      <div className="grid min-h-[110px] grid-rows-[auto_minmax(2.5rem,auto)_1fr_auto] gap-1 p-3 sm:min-h-[120px] sm:p-4">
+      <div className="grid min-h-[130px] grid-rows-[auto_minmax(3rem,auto)_1fr_auto] gap-1 p-3 sm:min-h-[140px] sm:p-4">
         {/* Collection Name (Tab Name) - Larger */}
         <div className="text-sm font-bold tracking-wide text-gray-900 sm:text-base">
           {displayCollectionName}
