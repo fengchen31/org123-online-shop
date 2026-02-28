@@ -35,6 +35,7 @@ export function CollectionProductsClient({
   const [pageInfo, setPageInfo] = useState<PageInfo>(initialPageInfo);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isProductExpanded, setIsProductExpanded] = useState(false);
   const [currentSort, setCurrentSort] = useState<SortFilterItem>(defaultSort);
   const [activeCategory, setActiveCategory] = useState<CategoryType>('all');
   const [showOnSale, setShowOnSale] = useState(false);
@@ -258,17 +259,20 @@ export function CollectionProductsClient({
           categories={categories}
           activeCategory={activeCategory}
           onCategoryChange={handleCategoryChange}
+          onProductExpandChange={setIsProductExpanded}
         />
       )}
 
-      {/* Infinite scroll trigger */}
-      <div ref={observerTarget} className="h-20 w-full">
-        {isLoadingMore && (
-          <div className="flex items-center justify-center py-8">
-            <LoadingDots className="text-gray-500" />
-          </div>
-        )}
-      </div>
+      {/* Infinite scroll trigger - hidden when product detail is expanded */}
+      {!isProductExpanded && (
+        <div ref={observerTarget} className="h-20 w-full">
+          {isLoadingMore && (
+            <div className="flex items-center justify-center py-8">
+              <LoadingDots className="text-gray-500" />
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 }

@@ -29,6 +29,7 @@ interface CollectionProductsGridProps {
   }>;
   activeCategory?: CategoryType;
   onCategoryChange?: (category: CategoryType) => void;
+  onProductExpandChange?: (expanded: boolean) => void;
 }
 
 export function CollectionProductsGrid({
@@ -42,7 +43,8 @@ export function CollectionProductsGrid({
   onStockToggle,
   categories,
   activeCategory,
-  onCategoryChange
+  onCategoryChange,
+  onProductExpandChange
 }: CollectionProductsGridProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -58,11 +60,13 @@ export function CollectionProductsGrid({
       const product = products.find(p => p.handle === productHandle);
       if (product) {
         setExpandedProduct(product);
+        onProductExpandChange?.(true);
       }
     } else {
       // 當URL中沒有product參數時，關閉商品詳情
       setExpandedProduct(null);
       setStartRect(null);
+      onProductExpandChange?.(false);
     }
   }, [searchParams, products]);
 
@@ -72,6 +76,7 @@ export function CollectionProductsGrid({
 
     setStartRect(rect);
     setExpandedProduct(product);
+    onProductExpandChange?.(true);
 
     // 使用push來支持瀏覽器歷史記錄
     const newParams = new URLSearchParams(window.location.search);
@@ -82,6 +87,7 @@ export function CollectionProductsGrid({
   const handleClose = () => {
     setExpandedProduct(null);
     setStartRect(null);
+    onProductExpandChange?.(false);
 
     // 使用push來支持瀏覽器歷史記錄
     const newParams = new URLSearchParams(window.location.search);
