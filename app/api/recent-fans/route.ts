@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { getCustomer } from 'lib/shopify';
+import { SHOPIFY_ADMIN_API_VERSION } from 'lib/constants';
 
-const SHOPIFY_ADMIN_ENDPOINT = `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/api/2024-10/graphql.json`;
+const SHOPIFY_ADMIN_ENDPOINT = `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/api/${SHOPIFY_ADMIN_API_VERSION}/graphql.json`;
 const ADMIN_TOKEN = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN!;
 
 interface RecentFan {
@@ -152,14 +155,42 @@ export async function GET() {
 // POST: Add a new fan to the list
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { customerId, email, firstName, lastName, avatar } = body;
+    // Authenticate: derive customer data from session, not request body
+    const accessToken = (await cookies()).get('customerAccessToken')?.value;
+    if (!accessToken) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    const customer = await getCustomer(accessToken);
+    if (!customer || !customer.id) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
 
-    if (!customerId || !avatar) {
+    const body = await request.json();
+    const { avatar } = body;
+
+    // Use server-verified customer data
+    const customerId = customer.id;
+    const email = customer.email;
+    const firstName = customer.firstName;
+    const lastName = customer.lastName;
+
+    if (!avatar || typeof avatar !== 'string') {
       return NextResponse.json(
-        { error: 'customerId and avatar are required' },
+        { error: 'avatar is required' },
         { status: 400 }
       );
+    }
+
+    // Validate avatar MIME type
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const mimeMatch = avatar.match(/^data:(image\/[a-z+]+);base64,/);
+    if (!mimeMatch || !allowedMimeTypes.includes(mimeMatch[1]!)) {
+      return NextResponse.json({ error: 'Invalid avatar format' }, { status: 400 });
+    }
+
+    // Validate avatar size (max 200KB)
+    if (avatar.length * 0.75 > 200 * 1024) {
+      return NextResponse.json({ error: 'Avatar too large' }, { status: 400 });
     }
 
     // Get current fans

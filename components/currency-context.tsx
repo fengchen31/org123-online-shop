@@ -19,15 +19,10 @@ const USD_TO_TWD_RATE = 32.26; // 1 USD ≈ 32.26 TWD
 
 async function detectUserLocation(): Promise<Currency> {
   try {
-    // 使用免費的 IP geolocation API
-    const response = await fetch('https://ipapi.co/json/');
+    const response = await fetch('/api/geo');
     const data = await response.json();
-
-    // 如果是台灣，返回 TWD，否則返回 USD
-    return data.country_code === 'TW' ? 'TWD' : 'USD';
-  } catch (error) {
-    console.error('Failed to detect location:', error);
-    // 默認返回 USD
+    return data.country === 'TW' ? 'TWD' : 'USD';
+  } catch {
     return 'USD';
   }
 }

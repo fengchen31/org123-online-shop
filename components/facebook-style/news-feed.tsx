@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import clsx from 'clsx';
+import { sanitizeHtml } from 'lib/sanitize';
 import { ImageWithFallback } from './image-with-fallback';
 import Image from 'next/image';
 
@@ -342,7 +343,7 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
               {post.content && (
                 <div
                   className="px-4 py-3 text-sm text-gray-800 whitespace-pre-wrap"
-                  dangerouslySetInnerHTML={{ __html: post.content }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
                 />
               )}
 
@@ -352,7 +353,15 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
                     'relative w-full bg-black',
                     post.linkTo && 'cursor-pointer transition-opacity hover:opacity-90'
                   )}
+                  role={post.linkTo ? 'button' : undefined}
+                  tabIndex={post.linkTo ? 0 : undefined}
                   onClick={() => post.linkTo && onPostClick?.(post.linkTo)}
+                  onKeyDown={(e) => {
+                    if (post.linkTo && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault();
+                      onPostClick?.(post.linkTo);
+                    }
+                  }}
                   style={{ maxHeight: '800px' }}
                 >
                   <ImageWithFallback
@@ -490,8 +499,9 @@ export function NewsFeed({ posts, onPostClick }: NewsFeedProps) {
                       onChange={(e) =>
                         setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))
                       }
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
                           handleCommentSubmit(post.id);
                         }
                       }}

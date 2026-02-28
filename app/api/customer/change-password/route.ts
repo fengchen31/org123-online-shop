@@ -17,7 +17,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ error: 'New password must be at least 6 characters' }, { status: 400 });
     }
 
-    // Get customer access token and email from cookie
+    // Get customer access token from cookie
     const cookieStore = await cookies();
     const accessToken = cookieStore.get('customerAccessToken')?.value;
 
@@ -25,17 +25,18 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    // First, get customer email
+    // First, get customer email — use GraphQL variables, not string interpolation
     const customerQuery = `
-      query {
-        customer(customerAccessToken: "${accessToken}") {
+      query getCustomerEmail($customerAccessToken: String!) {
+        customer(customerAccessToken: $customerAccessToken) {
           email
         }
       }
     `;
 
     const customerRes = await shopifyFetch<any>({
-      query: customerQuery
+      query: customerQuery,
+      variables: { customerAccessToken: accessToken }
     });
 
     const email = customerRes.body.data.customer?.email;

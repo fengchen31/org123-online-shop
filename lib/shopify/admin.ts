@@ -1,12 +1,13 @@
 // Shopify Admin API client for metafields operations
 import { ensureStartsWith } from 'lib/utils';
+import { SHOPIFY_ADMIN_API_VERSION } from 'lib/constants';
 
 const domain = process.env.SHOPIFY_STORE_DOMAIN
   ? ensureStartsWith(process.env.SHOPIFY_STORE_DOMAIN, 'https://')
   : '';
 
 // Admin API endpoint (different from Storefront API)
-const adminEndpoint = `${domain}/admin/api/2024-10/graphql.json`;
+const adminEndpoint = `${domain}/admin/api/${SHOPIFY_ADMIN_API_VERSION}/graphql.json`;
 const adminToken = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN!;
 
 interface ShopifyAdminResponse<T> {

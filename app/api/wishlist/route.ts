@@ -11,37 +11,20 @@ interface WishlistItem {
 // Helper function to sync wishlist to customer metafield
 async function syncWishlistToCustomer(wishlistItems: WishlistItem[]) {
   try {
-    console.log('=== syncWishlistToCustomer called ===');
     const cookieStore = await cookies();
     const accessToken = cookieStore.get('customerAccessToken')?.value;
 
     if (!accessToken) {
-      console.log('No customerAccessToken found, skipping wishlist sync');
       return;
     }
 
-    console.log('AccessToken found, fetching customer ID...');
-
-    // Get customer info to obtain customer ID
     const customer = await getCustomer(accessToken);
     if (!customer || !customer.id) {
-      console.error('❌ Failed to get customer ID');
       return;
     }
 
-    console.log('Customer ID:', customer.id);
-
-    // Extract variant IDs for metafield storage
     const variantIds = wishlistItems.map(item => item.variantId);
-
-    console.log('Syncing wishlist items to customer metafield via Admin API:', variantIds);
-    const success = await adminUpdateCustomerWishlist(customer.id, variantIds);
-
-    if (success) {
-      console.log('✅ Wishlist synced to customer metafield successfully');
-    } else {
-      console.error('❌ Failed to sync wishlist to customer metafield');
-    }
+    await adminUpdateCustomerWishlist(customer.id, variantIds);
   } catch (e) {
     console.error('Error in syncWishlistToCustomer:', e);
   }

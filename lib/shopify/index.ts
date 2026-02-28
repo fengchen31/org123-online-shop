@@ -1,5 +1,6 @@
 import {
   HIDDEN_PRODUCT_TAG,
+  SHOPIFY_ADMIN_API_VERSION,
   SHOPIFY_GRAPHQL_API_ENDPOINT,
   TAGS
 } from 'lib/constants';
@@ -76,10 +77,12 @@ import {
   ShopifyCollectionProductsOperation,
   ShopifyCollectionsOperation,
   ShopifyCreateCartOperation,
+  ShopifyCustomerCartOperation,
   ShopifyCustomerOperation,
   ShopifyCustomerOrdersOperation,
   ShopifyCustomerResetByUrlOperation,
   ShopifyCustomerWishlistOperation,
+  ShopifyUpdateCustomerCartOperation,
   ShopifyMenuOperation,
   ShopifyPageOperation,
   ShopifyPagesOperation,
@@ -106,7 +109,7 @@ const endpoint = `${domain}${SHOPIFY_GRAPHQL_API_ENDPOINT}`;
 const key = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN!;
 
 // Admin API configuration
-const adminEndpoint = `${domain}/admin/api/2024-01/graphql.json`;
+const adminEndpoint = `${domain}/admin/api/${SHOPIFY_ADMIN_API_VERSION}/graphql.json`;
 const adminKey = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
 
 // Check if Admin API token is configured
@@ -175,7 +178,7 @@ export async function shopifyAdminFetch<T>({
   variables
 }: {
   query: string;
-  variables?: any;
+  variables?: Record<string, unknown>;
 }): Promise<{ status: number; body: T } | never> {
   try {
     // Check if Admin API token is configured
@@ -329,9 +332,10 @@ export async function createCart(): Promise<Cart> {
 }
 
 export async function addToCart(
-  lines: { merchandiseId: string; quantity: number }[]
+  lines: { merchandiseId: string; quantity: number }[],
+  explicitCartId?: string
 ): Promise<Cart> {
-  const cartId = (await cookies()).get('cartId')?.value!;
+  const cartId = explicitCartId || (await cookies()).get('cartId')?.value!;
   const res = await shopifyFetch<ShopifyAddToCartOperation>({
     query: addToCartMutation,
     variables: {
@@ -421,11 +425,9 @@ export async function getCollectionProducts({
   first?: number;
   after?: string;
 }): Promise<{ products: Product[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } }> {
-  // 移除緩存以支持動態排序功能
-  // 如果需要緩存，可以在 API route 層面處理
-  // 'use cache';
-  // cacheTag(TAGS.collections, TAGS.products);
-  // cacheLife('days');
+  'use cache';
+  cacheTag(TAGS.collections, TAGS.products);
+  cacheLife('days');
 
   const res = await shopifyFetch<ShopifyCollectionProductsOperation>({
     query: getCollectionProductsQuery,
@@ -454,9 +456,9 @@ export async function getCollectionProducts({
 }
 
 export async function getCollections(): Promise<Collection[]> {
-  // 'use cache';
-  // cacheTag(TAGS.collections);
-  // cacheLife('days');
+  'use cache';
+  cacheTag(TAGS.collections);
+  cacheLife('days');
 
   const res = await shopifyFetch<ShopifyCollectionsOperation>({
     query: getCollectionsQuery
@@ -684,7 +686,8 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
     'products/update'
   ];
   const topic = (await headers()).get('x-shopify-topic') || 'unknown';
-  const secret = req.nextUrl.searchParams.get('secret');
+  // Accept secret from header first (preferred, avoids log exposure), fall back to query param
+  const secret = (await headers()).get('x-shopify-revalidation-secret') || req.nextUrl.searchParams.get('secret');
   const isCollectionUpdate = collectionWebhooks.includes(topic);
   const isProductUpdate = productWebhooks.includes(topic);
 
@@ -742,8 +745,8 @@ export async function getCustomer(accessToken: string): Promise<Customer | null>
     const customer = res.body.data.customer;
 
     // Extract avatar from metafield if exists
-    if (customer && (customer as any).metafield?.value) {
-      customer.avatar = (customer as any).metafield.value;
+    if (customer?.metafield?.value) {
+      customer.avatar = customer.metafield.value;
     }
 
     return customer;
@@ -820,7 +823,7 @@ export async function updateCustomerWishlist(
 // 獲取客戶購物車
 export async function getCustomerCart(accessToken: string): Promise<Array<{merchandiseId: string, quantity: number}>> {
   try {
-    const res = await shopifyCustomerFetch<any>({
+    const res = await shopifyCustomerFetch<ShopifyCustomerCartOperation>({
       accessToken,
       query: getCustomerCartQuery
     });
@@ -844,7 +847,7 @@ export async function updateCustomerCart(
   cartItems: Array<{merchandiseId: string, quantity: number}>
 ): Promise<boolean> {
   try {
-    const res = await shopifyCustomerFetch<any>({
+    const res = await shopifyCustomerFetch<ShopifyUpdateCustomerCartOperation>({
       accessToken,
       query: updateCustomerCartMutation,
       variables: {
@@ -864,13 +867,37 @@ export async function updateCustomerCart(
   }
 }
 
+// Admin API response types
+interface AdminMetafieldsSetResponse {
+  data: {
+    metafieldsSet: {
+      metafields: Array<{ id: string; namespace: string; key: string }>;
+      userErrors: Array<{ field: string[]; message: string }>;
+    };
+  };
+}
+
+interface AdminCustomerMetafieldResponse {
+  data: {
+    customer: {
+      id: string;
+      metafield: {
+        id: string;
+        namespace: string;
+        key: string;
+        value: string;
+      } | null;
+    } | null;
+  };
+}
+
 // 使用 Admin API 更新客戶 Wishlist
 export async function adminUpdateCustomerWishlist(
   customerId: string,
   wishlistItems: string[]
 ): Promise<boolean> {
   try {
-    const response = await shopifyAdminFetch<any>({
+    const response = await shopifyAdminFetch<AdminMetafieldsSetResponse>({
       query: adminUpdateCustomerWishlistMutation,
       variables: {
         customerId,
@@ -879,7 +906,7 @@ export async function adminUpdateCustomerWishlist(
     });
 
     if (response.body.data?.metafieldsSet?.userErrors?.length > 0) {
-      console.error('❌ Admin API errors:', response.body.data.metafieldsSet.userErrors);
+      console.error('Admin API errors:', response.body.data.metafieldsSet.userErrors);
       return false;
     }
 
@@ -896,7 +923,7 @@ export async function adminUpdateCustomerCart(
   cartItems: Array<{merchandiseId: string, quantity: number}>
 ): Promise<boolean> {
   try {
-    const response = await shopifyAdminFetch<any>({
+    const response = await shopifyAdminFetch<AdminMetafieldsSetResponse>({
       query: adminUpdateCustomerCartMutation,
       variables: {
         customerId,
@@ -905,7 +932,7 @@ export async function adminUpdateCustomerCart(
     });
 
     if (response.body.data?.metafieldsSet?.userErrors?.length > 0) {
-      console.error('❌ Admin API errors:', response.body.data.metafieldsSet.userErrors);
+      console.error('Admin API errors:', response.body.data.metafieldsSet.userErrors);
       return false;
     }
 
@@ -919,7 +946,7 @@ export async function adminUpdateCustomerCart(
 // 使用 Admin API 獲取客戶購物車
 export async function adminGetCustomerCart(customerId: string): Promise<Array<{merchandiseId: string, quantity: number}>> {
   try {
-    const response = await shopifyAdminFetch<any>({
+    const response = await shopifyAdminFetch<AdminCustomerMetafieldResponse>({
       query: adminGetCustomerCartQuery,
       variables: {
         customerId
@@ -942,7 +969,7 @@ export async function adminGetCustomerCart(customerId: string): Promise<Array<{m
 // 使用 Admin API 獲取客戶 Wishlist
 export async function adminGetCustomerWishlist(customerId: string): Promise<string[]> {
   try {
-    const response = await shopifyAdminFetch<any>({
+    const response = await shopifyAdminFetch<AdminCustomerMetafieldResponse>({
       query: adminGetCustomerWishlistQuery,
       variables: {
         customerId

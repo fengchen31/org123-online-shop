@@ -1,4 +1,5 @@
 import { getCustomer } from 'lib/shopify';
+import { SHOPIFY_ADMIN_API_VERSION } from 'lib/constants';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -31,7 +32,7 @@ export async function GET(): Promise<NextResponse> {
         `;
 
         const avatarRes = await fetch(
-          `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/api/2024-01/graphql.json`,
+          `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/api/${SHOPIFY_ADMIN_API_VERSION}/graphql.json`,
           {
             method: 'POST',
             headers: {
@@ -52,11 +53,8 @@ export async function GET(): Promise<NextResponse> {
           customer.avatar = avatarValue;
         }
 
-        console.log('=== /api/customer Response ===');
-        console.log('Customer ID:', customer.id);
-        console.log('Has avatar:', !!customer.avatar);
       } catch (err) {
-        console.error('Failed to fetch avatar from Admin API:', err);
+        // Avatar fetch failed, continue without it
       }
     }
 

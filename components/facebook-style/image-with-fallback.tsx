@@ -30,7 +30,7 @@ export function ImageWithFallback({
   const [hasError, setHasError] = useState(false);
 
   return (
-    <div className="relative h-full w-full">
+    <div className={fill ? 'relative h-full w-full' : 'relative'}>
       {/* Loading Skeleton - Only show if blur effect is disabled */}
       {isLoading && !hasError && !enableBlurEffect && (
         <div className="absolute inset-0 animate-pulse bg-gray-200">

@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { getCustomer } from 'lib/shopify';
 import { getMetafields, setMetafields } from 'lib/shopify/admin';
+
+async function getAuthenticatedCustomer() {
+  const accessToken = (await cookies()).get('customerAccessToken')?.value;
+  if (!accessToken) return null;
+  return getCustomer(accessToken);
+}
 
 const NAMESPACE = 'news_feed';
 const KEY = 'comments';
@@ -22,6 +30,11 @@ export async function GET(request: NextRequest) {
 
     if (!postId) {
       return NextResponse.json({ error: 'postId is required' }, { status: 400 });
+    }
+
+    // Validate postId is a Shopify Page or Article GID
+    if (!postId.startsWith('gid://shopify/Page/') && !postId.startsWith('gid://shopify/Article/')) {
+      return NextResponse.json({ error: 'Invalid postId format' }, { status: 400 });
     }
 
     // 從 Shopify Page metafields 讀取 comments 資料
@@ -51,14 +64,31 @@ export async function GET(request: NextRequest) {
 // POST: 新增 comment
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { postId, userId, author, avatar, content } = body;
+    const customer = await getAuthenticatedCustomer();
+    if (!customer) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
 
-    if (!postId || !userId || !author || !content) {
+    const body = await request.json();
+    const { postId, content } = body;
+
+    // Derive userId and author from verified session, not from request body
+    const userId = customer.id;
+    const author = customer.firstName && customer.lastName
+      ? `${customer.firstName} ${customer.lastName}`
+      : customer.email;
+    const avatar = customer.avatar;
+
+    if (!postId || !content) {
       return NextResponse.json(
-        { error: 'postId, userId, author, and content are required' },
+        { error: 'postId and content are required' },
         { status: 400 }
       );
+    }
+
+    // Validate postId is a Shopify Page or Article GID to prevent IDOR
+    if (!postId.startsWith('gid://shopify/Page/') && !postId.startsWith('gid://shopify/Article/')) {
+      return NextResponse.json({ error: 'Invalid postId format' }, { status: 400 });
     }
 
     // 從 Shopify Page metafields 讀取現有 comments 資料
@@ -85,11 +115,6 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     };
 
-    console.log('=== Creating new comment ===');
-    console.log('Author:', author);
-    console.log('Avatar:', avatar);
-    console.log('New comment:', JSON.stringify(newComment, null, 2));
-
     comments.push(newComment);
 
     // 寫回 Shopify metafields
@@ -114,16 +139,28 @@ export async function POST(request: NextRequest) {
 // DELETE: 刪除 comment
 export async function DELETE(request: NextRequest) {
   try {
+    const customer = await getAuthenticatedCustomer();
+    if (!customer) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const commentId = searchParams.get('commentId');
-    const userId = searchParams.get('userId');
     const postId = searchParams.get('postId');
 
-    if (!commentId || !userId || !postId) {
+    // Use verified customer ID from session
+    const userId = customer.id;
+
+    if (!commentId || !postId) {
       return NextResponse.json(
-        { error: 'commentId, userId, and postId are required' },
+        { error: 'commentId and postId are required' },
         { status: 400 }
       );
+    }
+
+    // Validate postId is a Shopify Page or Article GID
+    if (!postId.startsWith('gid://shopify/Page/') && !postId.startsWith('gid://shopify/Article/')) {
+      return NextResponse.json({ error: 'Invalid postId format' }, { status: 400 });
     }
 
     // 從 Shopify Page metafields 讀取現有 comments 資料

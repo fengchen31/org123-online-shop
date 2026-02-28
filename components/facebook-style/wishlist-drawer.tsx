@@ -116,24 +116,12 @@ export function WishlistDrawer({ isOpen, onClose, onOpenCart }: WishlistDrawerPr
   const handleAddToCart = async (variant: WishlistVariant) => {
     setAddingToCartIds((prev) => new Set(prev).add(variant.id));
 
-    try {
-      // Add to cart first (server action)
-      const addResult = await addItem(null, variant.id);
-
-      if (addResult) {
-        // If there's an error message, show it
-        console.error('Error adding to cart:', addResult);
-        alert('Failed to add item to cart. Please try again.');
-        setAddingToCartIds((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(variant.id);
-          return newSet;
-        });
-        return;
-      }
-
-      // Then update the optimistic UI using startTransition
-      startTransition(() => {
+    // Use startTransition to wrap optimistic update + server action together.
+    // Optimistic update MUST come before the server action so the cart UI
+    // updates immediately while the server action is in flight.
+    startTransition(async () => {
+      try {
+        // Optimistic update FIRST
         addCartItem(
           {
             id: variant.id,
@@ -164,46 +152,55 @@ export function WishlistDrawer({ isOpen, onClose, onOpenCart }: WishlistDrawerPr
             updatedAt: ''
           }
         );
-      });
 
-      // Remove from wishlist
-      const removeRes = await fetch('/api/wishlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          variantId: variant.id,
-          productId: '',
-          productHandle: '',
-          action: 'remove'
-        })
-      });
+        // Then server action
+        const addResult = await addItem(null, variant.id);
 
-      if (removeRes.ok) {
-        const data = await removeRes.json();
+        if (addResult) {
+          console.error('Error adding to cart:', addResult);
+          alert('Failed to add item to cart. Please try again.');
+          return;
+        }
 
-        // Update local state
-        setVariants((prev) => prev.filter((v) => v.id !== variant.id));
-
-        // Dispatch event to update wishlist counter
-        window.dispatchEvent(
-          new CustomEvent('wishlistUpdate', {
-            detail: { count: data.wishlist?.length || 0 }
+        // Remove from wishlist after successful cart add
+        const removeRes = await fetch('/api/wishlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            variantId: variant.id,
+            productId: '',
+            productHandle: '',
+            action: 'remove'
           })
-        );
+        });
 
-        // Close wishlist drawer without opening cart drawer
-        onClose();
+        if (removeRes.ok) {
+          const data = await removeRes.json();
+
+          // Update local state
+          setVariants((prev) => prev.filter((v) => v.id !== variant.id));
+
+          // Dispatch event to update wishlist counter
+          window.dispatchEvent(
+            new CustomEvent('wishlistUpdate', {
+              detail: { count: data.wishlist?.length || 0 }
+            })
+          );
+
+          // Close wishlist drawer without opening cart drawer
+          onClose();
+        }
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+        alert('Failed to add item to cart. Please try again.');
+      } finally {
+        setAddingToCartIds((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(variant.id);
+          return newSet;
+        });
       }
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      alert('Failed to add item to cart. Please try again.');
-    } finally {
-      setAddingToCartIds((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(variant.id);
-        return newSet;
-      });
-    }
+    });
   };
 
   return (

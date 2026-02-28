@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { Page } from 'lib/shopify/types';
+import { sanitizeHtml } from 'lib/sanitize';
 import { NewsFeed, type NewsPost } from './news-feed';
 
 interface NewsContentProps {
@@ -142,7 +143,7 @@ export function NewsContent({ page, onTabChange }: NewsContentProps) {
     <div className="space-y-4">
       <div
         className="prose prose-sm max-w-none text-gray-700"
-        dangerouslySetInnerHTML={{ __html: page.body }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.body) }}
       />
     </div>
   );

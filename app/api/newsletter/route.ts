@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { shopifyFetch } from 'lib/shopify';
+import { SHOPIFY_ADMIN_API_VERSION } from 'lib/constants';
 
 // Generate a unique discount code
 function generateDiscountCode(): string {
@@ -43,7 +45,7 @@ async function createShopifyDiscount(code: string): Promise<boolean> {
 
   try {
     const response = await fetch(
-      `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/api/2024-01/graphql.json`,
+      `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/api/${SHOPIFY_ADMIN_API_VERSION}/graphql.json`,
       {
         method: 'POST',
         headers: {
@@ -112,12 +114,14 @@ export async function POST(req: NextRequest) {
   try {
     const { email } = await req.json();
 
-    if (!email || !email.includes('@')) {
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
       return NextResponse.json({ error: 'Valid email is required' }, { status: 400 });
     }
 
-    // Generate a random password for the customer (they won't use it for newsletter)
-    const randomPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12);
+    // Generate a cryptographically secure random password
+    const randomPassword = crypto.randomBytes(24).toString('base64url');
 
     // Try to create a customer with acceptsMarketing: true
     const result = await shopifyFetch<{

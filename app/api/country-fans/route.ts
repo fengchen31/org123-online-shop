@@ -71,10 +71,6 @@ const COUNTRY_NAMES: Record<string, string> = {
 
 export async function GET(request: NextRequest) {
   try {
-    // 從 headers 取得 IP (Vercel 會提供)
-    const forwarded = request.headers.get('x-forwarded-for');
-    const ip = forwarded ? forwarded.split(',')[0] : request.headers.get('x-real-ip') || '127.0.0.1';
-
     // 獲取國家代碼 (從 Vercel 的 geo header)
     const country = request.headers.get('x-vercel-ip-country') || 'US';
 
@@ -95,7 +91,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       country,
       countryName,
-      ip,
       population,
       avatars
     });

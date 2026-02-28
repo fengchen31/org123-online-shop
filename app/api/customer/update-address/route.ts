@@ -14,17 +14,18 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    // First, get customer ID
+    // First, get customer ID — use GraphQL variables, not string interpolation
     const customerQuery = `
-      query {
-        customer(customerAccessToken: "${accessToken}") {
+      query getCustomer($customerAccessToken: String!) {
+        customer(customerAccessToken: $customerAccessToken) {
           id
         }
       }
     `;
 
     const customerRes = await shopifyFetch<any>({
-      query: customerQuery
+      query: customerQuery,
+      variables: { customerAccessToken: accessToken }
     });
 
     const customerId = customerRes.body.data.customer?.id;
@@ -35,8 +36,8 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     // Get existing default address ID if it exists
     const getAddressQuery = `
-      query {
-        customer(customerAccessToken: "${accessToken}") {
+      query getCustomerAddress($customerAccessToken: String!) {
+        customer(customerAccessToken: $customerAccessToken) {
           defaultAddress {
             id
           }
@@ -45,7 +46,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     `;
 
     const addressQueryRes = await shopifyFetch<any>({
-      query: getAddressQuery
+      query: getAddressQuery,
+      variables: { customerAccessToken: accessToken }
     });
 
     const existingAddressId = addressQueryRes.body.data.customer?.defaultAddress?.id;
@@ -150,13 +152,19 @@ export async function POST(request: Request): Promise<NextResponse> {
           }
         `;
 
-        await shopifyFetch<any>({
+        const setDefaultRes = await shopifyFetch<any>({
           query: setDefaultMutation,
           variables: {
             customerAccessToken: accessToken,
             addressId: newAddressId
           }
         });
+
+        // Bug #7 fix: check for errors setting default address
+        const setDefaultErrors = setDefaultRes.body.data.customerDefaultAddressUpdate?.customerUserErrors;
+        if (setDefaultErrors?.length > 0) {
+          console.error('Failed to set default address:', setDefaultErrors);
+        }
       }
     }
 

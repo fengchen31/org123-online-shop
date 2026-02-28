@@ -4,14 +4,21 @@ import { cookies } from 'next/headers';
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const { resetUrl, password, firstName, lastName } = await request.json();
+    const { id, token, password, firstName, lastName } = await request.json();
 
-    if (!resetUrl || !password) {
+    if (!id || !token || !password) {
       return NextResponse.json(
-        { error: 'Please provide reset URL and new password' },
+        { error: 'Please provide id, token and new password' },
         { status: 400 }
       );
     }
+
+    // Construct resetUrl server-side from trusted env var — never accept URL from client
+    const storeDomain = process.env.SHOPIFY_STORE_DOMAIN;
+    if (!storeDomain) {
+      return NextResponse.json({ error: 'Store configuration error' }, { status: 500 });
+    }
+    const resetUrl = `https://${storeDomain}/account/reset/${encodeURIComponent(id)}/${encodeURIComponent(token)}`;
 
     const result = await customerResetByUrl(resetUrl, password, firstName, lastName);
 

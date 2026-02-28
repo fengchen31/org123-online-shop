@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { getCustomer } from 'lib/shopify';
 import { getMetafields, setMetafields } from 'lib/shopify/admin';
+
+async function getAuthenticatedCustomer() {
+  const accessToken = (await cookies()).get('customerAccessToken')?.value;
+  if (!accessToken) return null;
+  return getCustomer(accessToken);
+}
 
 const NAMESPACE = 'news_feed';
 const KEY = 'likes';
@@ -19,6 +27,11 @@ export async function GET(request: NextRequest) {
 
     if (!postId) {
       return NextResponse.json({ error: 'postId is required' }, { status: 400 });
+    }
+
+    // Validate postId is a Shopify Page or Article GID
+    if (!postId.startsWith('gid://shopify/Page/') && !postId.startsWith('gid://shopify/Article/')) {
+      return NextResponse.json({ error: 'Invalid postId format' }, { status: 400 });
     }
 
     // 從 Shopify Page metafields 讀取 likes 資料
@@ -49,14 +62,27 @@ export async function GET(request: NextRequest) {
 // POST: 新增或移除 like
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { postId, userId, action } = body;
+    const customer = await getAuthenticatedCustomer();
+    if (!customer) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
 
-    if (!postId || !userId || !action) {
+    const body = await request.json();
+    const { postId, action } = body;
+
+    // Use verified customer ID from session
+    const userId = customer.id;
+
+    if (!postId || !action) {
       return NextResponse.json(
-        { error: 'postId, userId, and action are required' },
+        { error: 'postId and action are required' },
         { status: 400 }
       );
+    }
+
+    // Validate postId is a Shopify Page or Article GID to prevent IDOR
+    if (!postId.startsWith('gid://shopify/Page/') && !postId.startsWith('gid://shopify/Article/')) {
+      return NextResponse.json({ error: 'Invalid postId format' }, { status: 400 });
     }
 
     // 從 Shopify Page metafields 讀取現有 likes 資料

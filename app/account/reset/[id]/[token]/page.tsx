@@ -26,10 +26,6 @@ export default function PasswordResetPage({ params }: PageProps) {
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Construct the Shopify reset URL
-  const shopDomain = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN || '';
-  const resetUrl = `https://${shopDomain}/account/reset/${id}/${token}`;
-
   // Validate password on change
   const handlePasswordChange = (value: string) => {
     setPassword(value);
@@ -78,7 +74,7 @@ export default function PasswordResetPage({ params }: PageProps) {
       const res = await fetch('/api/auth/reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resetUrl, password, firstName, lastName })
+        body: JSON.stringify({ id, token, password, firstName, lastName })
       });
 
       const data = await res.json();

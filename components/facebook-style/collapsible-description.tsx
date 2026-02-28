@@ -507,9 +507,11 @@ function CollapsibleSection({ title, content, htmlContent, defaultOpen = false, 
     <div className={`border-b border-gray-200 ${isFirst ? 'mt-4' : ''}`}>
       <button
         onClick={handleToggle}
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? `section-content-${sectionId}` : undefined}
         className="flex w-full items-center justify-between py-3 text-left sm:py-4"
       >
-        <h3 className="text-sm font-semibold text-gray-900 sm:text-base">
+        <h3 id={`section-heading-${sectionId}`} className="text-sm font-semibold text-gray-900 sm:text-base">
           {title}
         </h3>
         <svg
@@ -526,7 +528,7 @@ function CollapsibleSection({ title, content, htmlContent, defaultOpen = false, 
       </button>
 
       {isOpen && (
-        <div className="pb-3 sm:pb-4">
+        <div id={`section-content-${sectionId}`} role="region" aria-labelledby={`section-heading-${sectionId}`} className="pb-3 sm:pb-4">
           {htmlContent ? (
             // Display HTML content (e.g., tables from Shopify)
             <div

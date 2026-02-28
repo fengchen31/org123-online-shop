@@ -379,7 +379,11 @@ export type Order = {
 
 export type ShopifyCustomerOperation = {
   data: {
-    customer: Customer;
+    customer: Customer & {
+      metafield?: {
+        value: string;
+      } | null;
+    };
   };
 };
 
@@ -426,6 +430,33 @@ export type ShopifyUpdateCustomerWishlistOperation = {
       value: string;
       type: string;
     }>;
+  };
+};
+
+export type ShopifyCustomerCartOperation = {
+  data: {
+    customer: {
+      metafield: {
+        value: string;
+      } | null;
+    };
+  };
+};
+
+export type ShopifyUpdateCustomerCartOperation = {
+  data: {
+    customerUpdate: {
+      customer: {
+        id: string;
+      };
+      customerUserErrors: Array<{
+        field: string[];
+        message: string;
+      }>;
+    };
+  };
+  variables: {
+    cart: string;
   };
 };
 

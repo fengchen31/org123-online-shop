@@ -13,10 +13,8 @@ import { AccountDrawer } from './account-drawer';
 import { useCart } from 'components/cart/cart-context';
 import { NewsletterSuccessModal } from 'components/newsletter-success-modal';
 import { clearLocalCartAndSync } from 'components/cart/actions';
-import { restoreCartFromCustomer } from 'components/cart/sync-cart-action';
 import LoadingDots from 'components/loading-dots';
 import {
-  restoreWishlistFromCustomer,
   clearLocalWishlist,
   syncWishlistFromServer
 } from 'components/wishlist/sync-wishlist-action';
@@ -298,13 +296,19 @@ export function CollectionTabsHome({
         const isLoggedIn = customerResponse.ok;
 
         if (isLoggedIn) {
-          // Sync cart and wishlist from server using API endpoints
+          // Only sync cart once per session to prevent race conditions with cart operations.
+          // Login flow already handles cart restore via restoreCartFromCustomer().
+          const cartAlreadySynced = sessionStorage.getItem('cartSynced');
+
           const [cartResponse, wishlistResult] = await Promise.all([
-            fetch('/api/customer/sync-cart'),
+            cartAlreadySynced
+              ? Promise.resolve(null)
+              : fetch('/api/customer/sync-cart').then((res) => {
+                  sessionStorage.setItem('cartSynced', '1');
+                  return res;
+                }),
             syncWishlistFromServer()
           ]);
-
-          const cartResult = cartResponse.ok ? await cartResponse.json() : { success: false, error: await cartResponse.text() };
 
           // Dispatch events to update UI
           if (wishlistResult.success) {
@@ -316,10 +320,8 @@ export function CollectionTabsHome({
           }
 
           // Refresh page data to reflect synced cart and wishlist
-          if (cartResponse.ok || wishlistResult.success) {
+          if ((cartResponse && cartResponse.ok) || wishlistResult.success) {
             router.refresh();
-          } else {
-            console.error('❌ Initial sync failed:', { cart: cartResult, wishlist: wishlistResult });
           }
         }
       } catch (error) {
@@ -339,78 +341,41 @@ export function CollectionTabsHome({
       const { isLoggedIn: newLoginStatus } = (event as CustomEvent).detail;
 
       if (newLoginStatus) {
-        // User logged in - clear local data first, then restore from customer metafield
+        // User logged in - account-drawer.tsx already handled cart/wishlist restore.
+        // Here we only update UI state (customer info, avatar, recent fans).
         try {
-          // Clear local cart and wishlist first
-          await clearLocalCartAndSync();
-          await clearLocalWishlist();
+          const res = await fetch('/api/customer');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.customer) {
+              const name = data.customer.firstName
+                ? `${data.customer.firstName} ${data.customer.lastName || ''}`.trim()
+                : data.customer.email;
+              setCustomerName(name);
+              setIsLoggedIn(true);
 
-          // Restore cart from account
-          const cartResult = await restoreCartFromCustomer();
+              if (data.customer.avatar) {
+                setCustomerAvatar(data.customer.avatar);
+                setCurrentCustomerId(data.customer.id);
 
-          // Restore wishlist from account
-          const wishlistResult = await restoreWishlistFromCustomer();
-
-          if (cartResult.success || wishlistResult.success) {
-            if (wishlistResult.success) {
-              // Dispatch wishlistUpdate event to update UI components
-              window.dispatchEvent(
-                new CustomEvent('wishlistUpdate', {
-                  detail: { count: wishlistResult.itemsRestored || 0 }
-                })
-              );
-            }
-
-            // Refresh page data without full reload
-            router.refresh();
-          } else {
-            console.error('❌ Account data restore failed');
-            if (!cartResult.success) console.error('  Cart:', cartResult.error);
-            if (!wishlistResult.success) console.error('  Wishlist:', wishlistResult.error);
-          }
-
-          // Fetch customer info to update avatar and name
-          try {
-            const res = await fetch('/api/customer');
-            if (res.ok) {
-              const data = await res.json();
-              if (data.customer) {
-                const name = data.customer.firstName
-                  ? `${data.customer.firstName} ${data.customer.lastName || ''}`.trim()
-                  : data.customer.email;
-                setCustomerName(name);
-                setIsLoggedIn(true);
-
-                if (data.customer.avatar) {
-                  setCustomerAvatar(data.customer.avatar);
-                  setCurrentCustomerId(data.customer.id);
-
-                  // Record as recent fan and refresh fan list
-                  try {
-                    await fetch('/api/recent-fans', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        customerId: data.customer.id,
-                        email: data.customer.email,
-                        firstName: data.customer.firstName,
-                        lastName: data.customer.lastName,
-                        avatar: data.customer.avatar
-                      })
-                    });
-                    // Refresh fan list
-                    await fetchRecentFans(data.customer.id);
-                  } catch (error) {
-                    console.error('Error updating recent fans on login:', error);
-                  }
+                // Record as recent fan and refresh fan list
+                try {
+                  await fetch('/api/recent-fans', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      avatar: data.customer.avatar
+                    })
+                  });
+                  await fetchRecentFans(data.customer.id);
+                } catch (error) {
+                  console.error('Error updating recent fans on login:', error);
                 }
               }
             }
-          } catch (error) {
-            console.error('Error fetching customer info:', error);
           }
         } catch (error) {
-          console.error('❌ Failed to restore account data:', error);
+          console.error('Error fetching customer info:', error);
         }
       } else {
         // User logged out - clear cart, wishlist and all account data
@@ -470,34 +435,20 @@ export function CollectionTabsHome({
       }
     };
 
-    // Handle page visibility change for cross-device sync
+    // Handle page visibility change - only sync wishlist (not cart) to avoid race conditions
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible') {
         try {
-          // Check if user is logged in by calling /api/customer
           const customerResponse = await fetch('/api/customer');
-          const isLoggedIn = customerResponse.ok;
+          if (customerResponse.ok) {
+            const wishlistResult = await syncWishlistFromServer();
 
-          if (isLoggedIn) {
-            // Sync cart and wishlist from server using API endpoints
-            const [cartResponse, wishlistResult] = await Promise.all([
-              fetch('/api/customer/sync-cart'),
-              syncWishlistFromServer()
-            ]);
-
-            const cartResult = cartResponse.ok ? await cartResponse.json() : { success: false };
-
-            // Dispatch events to update UI
             if (wishlistResult.success) {
               window.dispatchEvent(
                 new CustomEvent('wishlistUpdate', {
                   detail: { count: wishlistResult.count || 0 }
                 })
               );
-            }
-
-            // Refresh page data to reflect synced cart and wishlist
-            if (cartResponse.ok || wishlistResult.success) {
               router.refresh();
             }
           }

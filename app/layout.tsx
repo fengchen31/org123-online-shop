@@ -6,7 +6,7 @@ import { GeistSans } from 'geist/font/sans';
 import { getCart } from 'lib/shopify';
 import { baseUrl } from 'lib/utils';
 import type { Metadata, Viewport } from 'next';
-import { ReactNode } from 'react';
+import { ReactNode, Suspense } from 'react';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -37,13 +37,15 @@ export default async function RootLayout({
     <html lang="en" className={GeistSans.variable}>
       <body className="bg-[#e9eaed] text-gray-900">
         <CurrencyProvider>
-          <CartProvider cartPromise={cart}>
-            <FacebookHeader />
-            <main className="min-h-screen">
-              {children}
-            </main>
-            <FacebookFooter />
-          </CartProvider>
+          <Suspense>
+            <CartProvider cartPromise={cart}>
+              <FacebookHeader />
+              <main className="min-h-screen">
+                {children}
+              </main>
+              <FacebookFooter />
+            </CartProvider>
+          </Suspense>
         </CurrencyProvider>
       </body>
     </html>

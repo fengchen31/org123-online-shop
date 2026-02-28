@@ -75,7 +75,15 @@ export function ProductCard({ product, onExpand, isHidden, collectionName }: Pro
   return (
     <div
       ref={cardRef}
+      role="button"
+      tabIndex={0}
       onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
       className={`group cursor-pointer overflow-hidden border border-gray-300 bg-white shadow-sm transition-all duration-300 hover:shadow-md ${
         isHidden ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
       }`}

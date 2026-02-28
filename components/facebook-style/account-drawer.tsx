@@ -165,6 +165,9 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
       setIsOrdersExpanded(false);
       setViewMode('login');
 
+      // Clear cart sync flag so next login can sync properly
+      sessionStorage.removeItem('cartSynced');
+
       // Dispatch event to notify all components that user logged out
       window.dispatchEvent(new CustomEvent('authStatusChange', { detail: { isLoggedIn: false } }));
 
@@ -204,6 +207,9 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         restoreCartFromCustomer(),
         restoreWishlistFromCustomer()
       ]);
+
+      // Mark cart as synced so performInitialSync doesn't re-sync
+      sessionStorage.setItem('cartSynced', '1');
 
       // Update UI
       await fetchCustomer();

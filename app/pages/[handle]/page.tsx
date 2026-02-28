@@ -1,6 +1,7 @@
 import { getPage } from 'lib/shopify';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import { PageContent } from 'components/facebook-style/page-content';
 
 type Props = {
   params: Promise<{ handle: string }>;
@@ -35,10 +36,7 @@ export default async function Page({ params }: Props) {
     <div className="mx-auto max-w-4xl px-4 py-8">
       <article className="rounded-lg bg-white p-6 shadow-sm sm:p-8">
         <h1 className="mb-6 text-3xl font-bold text-gray-900 sm:text-4xl">{page.title}</h1>
-        <div
-          className="prose prose-sm max-w-none sm:prose-base"
-          dangerouslySetInnerHTML={{ __html: page.body }}
-        />
+        <PageContent page={page} />
       </article>
     </div>
   );
